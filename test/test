@@ -1,0 +1,21 @@
+#!/bin/bash
+
+_go_dir="/Users/luc/projects/bao/ldap-go/src/badassops/ldap"
+_test_dir="$_go_dir"/"test"
+_config="$_test_dir"/"config.ini"
+_app="ldap-tool"
+_env="bao"
+PATH=$_go_dir:$_test_dir:$PATH
+
+if [[ -f "$_app" ]] ; then
+	rm "$_app"
+fi
+go build "$_app".go
+
+case $1
+in
+	"-i")	$_app -i	;;
+	"-v")	$_app -v	;;
+	"-h")	$_app -h	;;
+	*)		$_app -c $_config -e $_env -m search $* ;;
+esac

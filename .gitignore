@@ -1,0 +1,19 @@
+# binary files
+**tar.gz
+ldap-tool
+
+# vim swap files
+**.swp
+**.swo
+
+# OSX
+**.DS_Store
+
+# test logs file
+logs/*
+
+# config with private into
+test/config.ini
+
+# saved files
+.saved/*
