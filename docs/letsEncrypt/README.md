@@ -1,4 +1,6 @@
-# Background
+# Let's Encrypt
+
+## Background
 This document explain how to setup Let’s Encrypt, to obtain a free certificate
 
 ### Technologies
@@ -8,7 +10,7 @@ The following technologies are used
 - Let’s Encrypted package
 - DNS provided by AWS Route53
 
-## Prerequisite
+### Prerequisite
 - the email to use to create the account, we will be using ops@co.badassops.com (example)
 - generate a password 16 length (no special charters) 
 ```
@@ -79,7 +81,7 @@ snap install certbot-dns-route53
 ln -s /snap/bin/certbot /usr/bin/certbot
 ```
 
-#### Configure cerbot
+### Configure cerbot
 ```
 certbot certonly --dns-route53 --dns-route53-propagation-seconds 60 -d "*.co.badassops.com" -d "co.badassops.com"
 ```
@@ -132,12 +134,12 @@ IMPORTANT NOTES:
 
 ```
 
-## Certs file
+#### Certs file
 - cert **/etc/letsencrypt/live/co.badassops.com/fullchain.pem**
 - ca **/etc/letsencrypt/live/co.badassops.com/chain.pem**
 - key **/etc/letsencrypt/live/co.badassops.com/privkey.pem**
 
-#### TEST
+### TEST
 ```
 certbot renew --dns-route53 --dry-run
 ```
@@ -162,5 +164,3 @@ certbot certonly --manual -d "*.co.badassops.com" -d "co.badassops.com"
 
 ## The End
 Congraculation you should be all set now : 🦄👏
- 
-

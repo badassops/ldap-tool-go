@@ -1,4 +1,4 @@
-## Self Service LDAP Password
+# Self Service LDAP Password
 
 ### Background
 This is an open source PHP web application that will allow an LDAP user to update their own password or SSH public key
@@ -33,7 +33,7 @@ chown root:root /usr/share/self-service-password/htdocs/images/*
   you can find and example of my nginx configuration [here](https://github.com/badassops/ldap-tool-go/blob/main/docs/selfService/example-nginx-self-service.conf)
 
 
-## The End
+### The End
 Congraculation you should be all set now : 🦄👏
  
 

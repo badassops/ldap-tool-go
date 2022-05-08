@@ -1,6 +1,6 @@
-## WORK IN PROGRESS!
+# WORK IN PROGRESS!
 
-## ldap-tool
+### ldap-tool
 A simple Go script to manage OpenLDAP users
 
 ### Background
@@ -13,11 +13,16 @@ The script is based on a certain LDAP settings
 
 ### History
 Using an UI interface such a phpLDAPadmin is not always possible, and so I decide 
-to build this tools.. 
-Orignally it was written in bash using the ldap CLI's, the script is meant to be able 
-to manage OpenLDAP user, such as add, modify, delete and several search capabilities 
+to build this tools. Orignally it was written in **bash** using the ldap CLI's and then
+in **Python**, but it was not always working on someone else's laptop do the specific command
+(*bash*) or module (*Python*), so I decided to write it in Go
 
-### 
+### Capabilities
+The script is meant to be able to manage OpenLDAP user such:
+- add (user)
+- modify (user)
+- delete (user)
+- search (user and group)
 
 ## Usage
 ```
@@ -44,9 +49,10 @@ Arguments:
   -v  --version      Show version
 
 ```
+
 ### TODO
 once the script has been completed, the capabilities to
-create, modify and delete a group
+ create, modify and delete a group
 
-
+### The End
 Your friendly BOFH 🦄 😈          
