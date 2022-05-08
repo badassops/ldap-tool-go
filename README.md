@@ -7,6 +7,7 @@ A simple Go script to manage OpenLDAP users
 The script is based on a certain LDAP settings
 - OpenLDAP
 - the use memberOf
+- the use of SSH schema
 - password length and use of special charachter is in the config file
 - the config file is toml formatted
 
@@ -43,3 +44,9 @@ Arguments:
   -v  --version      Show version
 
 ```
+### TODO
+once the script has been completed, the capabilities to
+create, modify and delete a group
+
+
+Your friendly BOFH 🦄 😈          

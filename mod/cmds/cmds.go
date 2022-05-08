@@ -69,7 +69,7 @@ func printUserRecord(conn *ldap.Connection, userID string, wildcard bool)  {
 	utils.PrintColor(utils.Cyan, fmt.Sprintf("\tshadowExpire: %s\n", conn.User.ShadowExpire.Data))
 	utils.PrintColor(utils.Cyan, fmt.Sprintf("\tshadowMax: %s\n", conn.User.ShadowMax.Data))
 	utils.PrintColor(utils.Cyan, fmt.Sprintf("\tshadowWarning: %s\n", conn.User.ShadowWarning.Data))
-	utils.PrintColor(utils.Cyan, fmt.Sprintf("\tsshPublicKey: %s\n", conn.User.ShadowWarning.Data))
+	utils.PrintColor(utils.Cyan, fmt.Sprintf("\tsshPublicKey: %s\n", conn.User.SSHPublicKey.Data))
 	utils.PrintLine(utils.Purple)
 	utils.PrintColor(utils.Purple, fmt.Sprintf("\tUser %s admins groups:\n", conn.User.UserName))
 	for _, adminGroup := range conn.User.AdminGroups.Data {
@@ -112,11 +112,16 @@ func Search(conn *ldap.Connection, mode string) {
 
 		case "users":
 			conn.SearchUsers()
+			utils.PrintLine(utils.Purple)
 
 		case "group":
+			utils.PrintLine(utils.Purple)
 		case "groups":
+			utils.PrintLine(utils.Purple)
 		case "admin":
+			utils.PrintLine(utils.Purple)
 		case "admins":
+			utils.PrintLine(utils.Purple)
 	}
 
 }

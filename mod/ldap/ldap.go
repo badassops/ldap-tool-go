@@ -184,7 +184,7 @@ func (c *Connection) SearchUsers() {
 			utils.PrintColor(utils.Green, fmt.Sprintf("\t\tdepartmentNumber: %s \n",
 				records.Entries[idx].GetAttributeValue("departmentNumber")))
 		}
-		utils.PrintColor(utils.Yellow, fmt.Sprintf("\nTotal records: %d \n", cnt))
+		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
 	}
 }
 
@@ -211,7 +211,7 @@ func (c *Connection) SearchGroup(group string, all bool) {
 			fmt.Printf("\n")
 		}
 		if all == true {
-			utils.PrintColor(utils.Yellow, fmt.Sprintf("\nTotal records: %d \n", cnt))
+			utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
 		}
 	}
 }
