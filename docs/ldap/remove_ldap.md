@@ -71,14 +71,19 @@ netgroup:       nis
 ```
 
 
-### Delete the left over files (optional)
-To delete
+### Delete the left over files and packages (optional)
+To **permanently** delete
 ```
 rm -rf /var/lib/slapd
 ```
-To save in case you need it back
+To **save** the ldap files (db files) in case you need it back
 ```
 mv /var/lib/slapd /var/lib/slapd-$(date "+%Y-%m-%d-%H-%M")
+```
+Remove the no longer needed packages
+```
+apt autoremove
+apt autoclean
 ```
 
 ## The End
