@@ -12,10 +12,12 @@ The following technologies are used
 
 ### Prerequisite
 - the email to use to create the account, we will be using ops@co.badassops.com (example)
+
 - generate a password 16 length (no special charters) 
 ```
 < /dev/urandom tr -dc A-Za-z0-9 | head -c${1:-16}
 ```
+
 - The domain that will be use is co.badassops.com (example)
 
 ### AWS
@@ -29,6 +31,7 @@ The following technologies are used
 #### IAM
 
 - Create a policy and called it cerbot 
+
 - Set description to: Policy for cert - Lets Encrypt cert request and renewal
 ```
 
@@ -63,8 +66,10 @@ The following technologies are used
 #### Allow an Instance to modify the Route 53 (optional)
 - Create an AIM role name cert with same description
 	Role -> AWS service -> EC2 -> permissions -> certbot -> Tag {Name : certbot}
+
 - Check if the instance that will run the certbot has the role attached
     if not then attach the role, normally this is done by terraform. 
+
 - To attach IAM role to an instance, make sure the aws-cli is configure correctly
 ```
 1. get the instance id
@@ -136,7 +141,9 @@ IMPORTANT NOTES:
 
 #### Certs file
 - cert **/etc/letsencrypt/live/co.badassops.com/fullchain.pem**
+
 - ca **/etc/letsencrypt/live/co.badassops.com/chain.pem**
+
 - key **/etc/letsencrypt/live/co.badassops.com/privkey.pem**
 
 ### TEST
@@ -156,11 +163,10 @@ script file location: /usr/local/sbin/renew_letsencript.sh
 0 6 1 1,3,6,9,12 * 1 * root /usr/local/sbin/renew_letsencript.sh> /tmp/renew_cert_cron.out 2>&1
 ```
 
- 
 ### Manual update cert
 ```
 certbot certonly --manual -d "*.co.badassops.com" -d "co.badassops.com"
 ```
 
-## The End
+### The End
 Congraculation you should be all set now : 🦄👏
