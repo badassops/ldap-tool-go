@@ -234,8 +234,9 @@ ln -s /etc/ldap/ldap.conf /etc/sudo-ldap.conf
 # THESE SHOULD ONLY BE EXECUTED ON THE PRIMARY LDAP SERVER ONLY
 
 create the group and sudoers LDAP configuration records
-content of the group.ldif file
-this is an example!, however we do need the group *nogroup*
+content of the group.ldif file 
+These is are example where we use the user *momo* and the group &vpn
+however we do need the group *nogroup*
 
 ```
 dn: cn=nogroup,ou=groups,dc=co,dc=badassops,dc=com
