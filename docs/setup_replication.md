@@ -42,9 +42,17 @@ ldapadd -Q -Y EXTERNAL -H ldapi:/// -f provider.ldif
 
 
 ### Create replicator user on the primary
-todo so create these 2 files with the content show below
 
-file replicator.ldif
+create variable in memory to make thing easier
+```
+_ldap_pass="$(cat /etc/ldap.secret)"
+_dn_admin="cn=admin,dc=co,dc=badassops,dc=com"
+```
+
+Create these 2 files with the content show below
+
+file replicator.ldif 
+note that the password is not set, this will be change later
 ```
 dn: cn=replicator,dc=co,dc=badassops,dc=com
 objectClass: simpleSecurityObject
@@ -71,19 +79,18 @@ olcLimits: dn.exact="cn=replicator,dc=co,dc=badassops,dc=com"
 then execute this commands
 ```
 
-#### Set variables
-_ldap_pass="$(cat /etc/ldap.secret)"
-_dn_admin="cn=admin,dc=co,dc=badassops,dc=com"
-
-``` 
+These will:
+- setup the user *replicator*
+- change the password of the user *replicator*
+- setup the access for the *replicator* users (from the file replicator.pass)
+```
 ldapadd -w $_ldap_pass -x -ZZ -D $_dn_admin -f replicator.ldif
 
 ldappasswd -H ldap://localhost -w $_ldap_pass -x -D $_dn_admin \
         -T replicator.pass cn=replicator,dc=co,dc=badassops,dc=com
-        
+
 ldapmodify -Q -Y EXTERNAL -H ldapi:/// -f replicator_acl.ldif
 ```
- 
 
 ### Create the consumer file
 this will be use on the secondaries servers (replicas)
@@ -115,16 +122,26 @@ olcSyncrepl: rid=0
 add: olcUpdateRef
 olcUpdateRef: ldap://ldap-primary.co.badassops.com
 On the secondary load the configuration and restart the service
+```
 
-
+```
 ldapadd -c -Q -Y EXTERNAL -H ldapi:/// -f consumer.ldif
-
 systemctl restart slapd
-Check replication by this command on both the primary and secondary, the result should show same values once the servers are in sync
+```
 
+### Check replication
 
+Check replication by this command on both the primary and secondary, 
+the result should show same values once the servers are in sync
+
+```
 ldapsearch -z1 -LLLQY EXTERNAL -H ldapi:/// -s base -b dc=co,dc=badassops,dc=com contextCSN
+```
+
 check TLS
-
-
+```
 ldapwhoami -H ldap://localhost -x -ZZ
+```
+
+## The End
+Congraculation you should be all set now : 🦄 👏

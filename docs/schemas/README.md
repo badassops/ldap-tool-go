@@ -1,0 +1,1 @@
+# THESE FILES NEED TO BE COPY UNDER /etc/ldap/schema

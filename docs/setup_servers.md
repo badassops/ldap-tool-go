@@ -431,7 +431,7 @@ shadowWarning: 14
 sshPublicKey:
 ```
 
-vpn.ldif
+memberof-groups.ldif
 ```
 dn: cn=vpn,ou=groups,dc=co,dc=badassops,dc=com
 objectClass: groupOfNames
@@ -452,7 +452,7 @@ member: uid=momo,ou=users,dc=co,dc=badassops,dc=com
 load the file into the ldap server
 ```
 ldapadd  -c -x -W -D cn=admin,dc=co,dc=badassops,dc=com -f momo.ldif
-ldapadd  -c -x -W -D cn=admin,dc=co,dc=badassops,dc=com -f vpn.ldif
+ldapadd  -c -x -W -D cn=admin,dc=co,dc=badassops,dc=com -f memberof-groups.ldif
 systemctl restart slapd
 ```
  
