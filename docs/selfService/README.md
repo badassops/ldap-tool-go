@@ -6,6 +6,8 @@ This is an open source PHP web application that will allow an LDAP user to updat
 ### Installation
 - install the required packages
 ```
+apt remove apache2 apache2-bin apache2-data
+apt install nginx
 apt install -y php-fpm php-gd smarty3
 ```
 - download the sources
@@ -27,7 +29,7 @@ cp image image /usr/share/self-service-password/htdocs/images
 chmod -444 /usr/share/self-service-password/htdocs/images/*
 chown root:root /usr/share/self-service-password/htdocs/images/*
 ```
-- setup php-fpm and nginx to serve the self service application (beyond this scope)
+- setup php-fpm and nginx to serve the self service application is beyond this scope
   you can find and example of my nginx configuration [here](https://github.com/badassops/ldap-tool-go/blob/main/docs/selfService/example-nginx-self-service.conf)
 
 
