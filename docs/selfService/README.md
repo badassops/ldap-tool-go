@@ -3,6 +3,11 @@
 ### Background
 This is an open source PHP web application that will allow an LDAP user to update their own password or SSH public key
 
+### Technology
+- running Ubuntu 20.04 or newer
+- OpenLDAP as the LDAP software
+- Nginx, web server to host the Self Service web interface
+
 ### Installation
 - install the required packages
 ```

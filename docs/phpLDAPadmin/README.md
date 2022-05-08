@@ -4,7 +4,7 @@
 This document lay out how to install phpLDAPAdmin, a web interface to manage ldap users
 
 ### Technology
-- running Ubuntu 20.04
+- running Ubuntu 20.04 or newer
 - OpenLDAP as the LDAP software
 - Nginx, web server to host the LDAP admin web interface
 

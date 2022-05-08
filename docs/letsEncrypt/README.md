@@ -6,7 +6,7 @@ This document explain how to setup Let’s Encrypt, to obtain a free certificate
 ### Technologies
 The following technologies are used
 
-- instances running Ubuntu 20.04 IN AWS
+- running Ubuntu 20.04 or newer
 - Let’s Encrypted package
 - DNS provided by AWS Route53
 
