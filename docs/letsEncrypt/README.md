@@ -142,11 +142,17 @@ IMPORTANT NOTES:
 certbot renew --dns-route53 --dry-run
 ```
 
-### Setup crontab to automatically update the cert
+### Setup crontab to automatically update the cert (optional)
 
-Depend on how the cert will be use and by which service, 
-we need to create cron jobs to update the cert automatically that call the renew_letsencript.sg script 
-the script can be found on github
+We need to create cron jobs to update the cert automatically
+my the script can be found [here](https://github.com/badassops/ldap-tool-go/blob/main/docs/letsEncrypt/renew_letsencript.sh)
+cron entry example (we need to renew every 3 months!)
+cron file location: **/etc/cron.d/renew_cert**
+script file location: /usr/local/sbin/renew_letsencript.sh
+```
+# renew the lets encrypt cert
+0 6 1 1,3,6,9,12 * 1 * root /usr/local/sbin/renew_letsencript.sh> /tmp/renew_cert_cron.out 2>&1
+```
 
  
 ### Manual update cert
