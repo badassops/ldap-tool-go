@@ -6,8 +6,8 @@ Note
 - all basic sudo rule will work
 - read about how to set this up at the SUDO web site
 
-### files openssh.ldif and sudo.ldif
-```## openssh.schema and sudo.schema
+### files openssh.schema and sudo.schema
+
 ```
 cp openssh.ldif sudo.ldif /etc/ldap/schema
 chmod 0444 /etc/ldap/schema/{openssh.schema,sudo.schema}
