@@ -18,6 +18,7 @@ import (
 	"path"
 	"time"
 	"runtime"
+	"strings"
 	"strconv"
 	"syscall"
 
@@ -48,8 +49,11 @@ const (
 	clearLine	= "\x1b[0G\x1b[2K\x1b[0m\r"
 	clearScreen	= "\x1b[H\x1b[2J"
 	HEADER		= "---------------"
+	LINE		= "_________________________________________________"
 	alphaNumeric = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 	specialChars = "@#$%^*(){}[]<>/\\"
+
+	USformat	= "Jan 2, 2006 15:04:05"
 )
 
 
@@ -211,10 +215,15 @@ func CreateColorMsg(messageColor string, messsage string) string {
 	return msg
 }
 
-// function so print the header after doing a clear screen
+// function print the header after doing a clear screen
 func PrintHeader(messageColor string, messsage string) {
 	fmt.Printf("%s", clearScreen)
-	fmt.Printf("%s %s %s %s %s\n", messageColor, HEADER, messsage, HEADER, Off)
+	fmt.Printf("\n\t%s %s %s %s %s\n\n", messageColor, HEADER, messsage, HEADER, Off)
+}
+
+// functiona spepartion line
+func PrintLine(lineColor string) {
+	fmt.Printf("\n\t%s %s %s\n\n", lineColor, LINE, Off)
 }
 
 // function to clear the screen
@@ -379,6 +388,13 @@ func GetEpoch(base string) int64  {
 	}
 }
 
+// function to make epoch time to human readable value
+func GetReadableEpoch(epoch int64) (time.Time, string) {
+	value := time.Unix(epoch, 0)
+	return value, value.Format(USformat)
+}
+
+// function to generate a radom string
 func GenerateRandom(useSpecialChar bool, length int) string {
 	charSet := alphaNumeric
 	if useSpecialChar {
@@ -390,4 +406,19 @@ func GenerateRandom(useSpecialChar bool, length int) string {
 		random[cnt] = charSet[rand.Intn(len(charSet))]
 	}
 	return string(random)
+}
+
+// function to check for given y/n
+func GetYN(keyboardInput string, defaultReturn bool) bool {
+	yesSelection := []string{"yes", "y"}
+
+	if keyboardInput == "" {
+		return defaultReturn
+	}
+	for _, selected := range yesSelection {
+        if strings.EqualFold(string(selected), keyboardInput) {
+            return true
+        }
+    }
+    return defaultReturn
 }

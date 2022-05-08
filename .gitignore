@@ -12,8 +12,9 @@ ldap-tool
 # test logs file
 logs/*
 
-# config with private into
+# config with private into and test scripts
 test/config.ini
+test/ldap
 
 # saved files
 .saved/*

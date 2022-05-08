@@ -138,21 +138,18 @@ func (c *Config) InitializeArgs() {
 				utils.CreateColorMsg(constants.Yellow, "modify"),
 				utils.CreateColorMsg(constants.Yellow, "delete"),
 	)
-	searchCmd := fmt.Sprintf("\t\t     search commands:\n\t\t\t %s (user), %s (group)\n",
+	searchCmd := fmt.Sprintf("\t\t     search commands:\n\t\t\t (user) %s, (group) %s, %s\n",
 				utils.CreateColorMsg(constants.Green, "search"),
 				utils.CreateColorMsg(constants.Green, "group"),
+				utils.CreateColorMsg(constants.Green, "admin"),
 	)
-	adminCMD := fmt.Sprintf("\t\t     get group members commands:\n\t\t\t %s (base group), %s (admin group)\n",
-				utils.CreateColorMsg(constants.Cyan, "group"),
-				utils.CreateColorMsg(constants.Cyan, "admin"),
-	)
-	searchAllCMD := fmt.Sprintf("\t\t     get all users and members of all groups commands:\n\t\t\t %s, %s, %s (admin groups)\n",
+	searchAllCMD := fmt.Sprintf("\t\t     get all records users and groups commands:\n\t\t\t (user) %s, (group) %s, %s\n",
 				utils.CreateColorMsg(constants.Blue, "users"),
 				utils.CreateColorMsg(constants.Blue, "groups"),
 				utils.CreateColorMsg(constants.Blue, "admins"),
 	)
 
-	HelpMessage := fmt.Sprintf("%s%s%s%s", baseCmd, searchCmd, adminCMD, searchAllCMD)
+	HelpMessage := fmt.Sprintf("%s%s%s", baseCmd, searchCmd, searchAllCMD)
 
 	errored := 0
 	allowedValues := []string{"create", "modify", "delete", "search", "group", "admin", "users", "groups", "admins"}

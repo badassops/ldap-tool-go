@@ -33,6 +33,7 @@ type (
 	}
 
 	UserRecord struct {
+		DN					string
 		UserName			string
 		FirstName			Record
 		LastName			Record
@@ -138,7 +139,7 @@ func (c *Connection) CheckUser(wildCard bool, user string) (*ldapv3.SearchResult
 	// wildcard should only return the DN value
 	if wildCard {
 		user = "*" + user + "*"
-		attributes = append(attributes, "uid")
+		//attributes = append(attributes, "uid")
 	}
 
 	searchBase :=fmt.Sprintf("(&(objectClass=inetOrgPerson)(uid=%s))", user)
@@ -149,6 +150,7 @@ func (c *Connection) CheckUser(wildCard bool, user string) (*ldapv3.SearchResult
 	}
 	if cnt == 1 {
 		UID, _ := strconv.Atoi(records.Entries[0].GetAttributeValue("uidNumber"))
+		c.User.DN				= records.Entries[0].DN
 		c.User.UserName			= records.Entries[0].GetAttributeValue("uid")
 		c.User.FirstName		= Record{records.Entries[0].GetAttributeValue("givenName"),			false}
 		c.User.LastName			= Record{records.Entries[0].GetAttributeValue("sn"),				false}
@@ -169,31 +171,20 @@ func (c *Connection) CheckUser(wildCard bool, user string) (*ldapv3.SearchResult
 	return records, cnt
 }
 
-func (c *Connection) SearchUser(user string, all bool) {
-	var records *ldapv3.SearchResult
-	var cnt int
-	var searchBase string
-	if all {
-		searchBase = fmt.Sprintf("(objectClass=person)")
-	} else {
-		searchBase = fmt.Sprintf("(&(objectClass=person)(uid=%s))", user)
-	}
-	records, cnt = c.search(searchBase, []string{""})
+func (c *Connection) SearchUsers() {
+	attributes := []string{}
+	searchBase := fmt.Sprintf("(objectClass=person)")
+	records, cnt := c.search(searchBase, attributes)
 	if cnt > 0 {
-		for _, entry := range records.Entries {
-			utils.PrintColor(utils.Blue, fmt.Sprintf("dn: %s \n", entry.DN))
-			//fmt.Printf("dn: %s \n", entry.DN)
-			//if ! all {
-			//	fmt.Printf("cn: %s \n", entry.GetAttributeValue("cn"))
-			//	fmt.Printf("gidNumber: %s \n", entry.GetAttributeValue("gidNumber"))
-			//}
-			//for _, member := range entry.GetAttributeValues("memberUid") {
-			//	utils.PrintColor(utils.Blue, fmt.Sprintf("memberUid: %s \n", member))
-			//}
+		for idx, entry := range records.Entries {
+			utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
+			utils.PrintColor(utils.Green, fmt.Sprintf("\t\tFull Name: %s %s\n",
+				records.Entries[idx].GetAttributeValue("givenName"),
+				records.Entries[idx].GetAttributeValue("sn")))
+			utils.PrintColor(utils.Green, fmt.Sprintf("\t\tdepartmentNumber: %s \n",
+				records.Entries[idx].GetAttributeValue("departmentNumber")))
 		}
-		if all == true {
-			utils.PrintColor(utils.Yellow, fmt.Sprintf("\nTotal records: %d \n", cnt))
-		}
+		utils.PrintColor(utils.Yellow, fmt.Sprintf("\nTotal records: %d \n", cnt))
 	}
 }
 

@@ -17,5 +17,5 @@ in
 	"-i")	$_app -i	;;
 	"-v")	$_app -v	;;
 	"-h")	$_app -h	;;
-	*)		$_app -c $_config -e $_env -m search $* ;;
+	*)		$_app -c $_config -e $_env -m $* ;;
 esac
