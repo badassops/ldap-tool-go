@@ -79,6 +79,7 @@ rm -rf /var/lib/slapd
 To save in case you need it back
 ```
 mv /var/lib/slapd /var/lib/slapd-$(date "+%Y-%m-%d-%H-%M")
+```
 
 ## The End
 Congraculation you should be all set now : 🦄👏
