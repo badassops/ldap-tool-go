@@ -39,6 +39,8 @@ type (
 		ShadowMax		int
 		ShadowWarning	int
 		Wait			int
+		PassLenght		int
+		PassComplex		bool
 		// from the configuration file
 		LogsDir         string
 		LogFile         string
@@ -80,6 +82,8 @@ type (
 		ShadowMax		int
 		ShadowWarning	int
 		Wait			int
+		PassLenght		int
+		PassComplex		bool
 	}
 
 	LogConfig struct {
@@ -251,6 +255,8 @@ func (c *Config) InitializeConfigs() {
 	c.ShadowMax			= configValues.Defaults.ShadowMax
 	c.ShadowWarning		= configValues.Defaults.ShadowWarning
 	c.Wait				= configValues.Defaults.Wait
+	c.PassLenght		= configValues.Defaults.PassLenght
+	c.PassComplex		= configValues.Defaults.PassComplex
 	c.LogsDir			= configValues.LogConfig.LogsDir
 	c.LogFile			= configValues.LogConfig.LogFile
 	c.LogMaxSize		= configValues.LogConfig.LogMaxSize

@@ -4,13 +4,17 @@
 A simple Go script to manage OpenLDAP users
 
 ### Background
-The script is based on a certain LDAP dn values
+The script is based on a certain LDAP settings
+- OpenLDAP
+- the use memberOf
+- password length and use of special charachter is in the config file
+- the config file is toml formatted
 
 ### History
-Orignally it was written in bash using the ldap CLI's, the script was mean to be able 
-to manage OpenLDAP user, such as add, modify, delete and severel search capabilities 
 Using an UI interface such a phpLDAPadmin is not always possible, and so I decide 
-to build this tools
+to build this tools.. 
+Orignally it was written in bash using the ldap CLI's, the script is meant to be able 
+to manage OpenLDAP user, such as add, modify, delete and several search capabilities 
 
 ### 
 
@@ -31,12 +35,11 @@ Arguments:
   -m  --mode         base commands:
 			 create, modify, delete
 		     search commands:
-			 search (user), group (group)
-		     get group members commands:
-			 group (base group), admin (admin group)
-		     get all users and members of all groups commands:
-			 users, groups, admins (admin groups)
+			 (user) search, (group) group, admin
+		     get all records users and groups commands:
+			 (user) users, (group) groups, admins
 
   -i  --info         Show information
   -v  --version      Show version
+
 ```
