@@ -4,7 +4,7 @@ the sudo schema will allow to store SUDO rules in LDAP
 Note
 - the LDAP sudo schema has limited feature
 - all basic sudo rule will work
-- read about how to set this up at the SUDO web site
+- read about how to set this up at the [SUDO web site](https://www.sudo.ws/docs/man/1.8.17/sudoers.ldap.man)
 
 ### files openssh.schema and sudo.schema
 
