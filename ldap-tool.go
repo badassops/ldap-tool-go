@@ -19,7 +19,8 @@ import (
 	"badassops.ldap/logs"
 	"badassops.ldap/configurator"
 	"badassops.ldap/ldap"
-	"badassops.ldap/cmds"
+	"badassops.ldap/cmds/search/user"
+	"badassops.ldap/cmds/search/group"
 )
 
 func main() {
@@ -78,12 +79,12 @@ func main() {
 		case "create":	// cmds.Create(conn)
 		case "modify":	// cmds.Modify(conn)
 		case "delete":	// cmds.Delete(conn)
-		case "search":	cmds.Search(conn, "user")
-		case "group":	cmds.Search(conn, "group")
-		case "admin":	cmds.Search(conn, "admin")
-		case "users":	cmds.Search(conn, "users")
-		case "groups":	cmds.Search(conn, "groups")
-		case "admins":	cmds.Search(conn, "admins")
+		case "search":	user.Search(conn, "user")
+		case "users":	user.Search(conn, "users")
+		case "group":	group.Search(conn, "group")
+		case "groups":	group.Search(conn, "groups")
+		//case "admin":	search.Search(conn, "admin")
+		//case "admins":	search.Search(conn, "admins")
 	}
 
 	utils.ReleaseIT(config.LockFile, LockPid)

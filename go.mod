@@ -3,16 +3,18 @@ module ldap
 go 1.18
 
 require (
+	badassops.ldap/cmds/search/group v0.0.0-00010101000000-000000000000
+	badassops.ldap/cmds/search/user v0.0.0-00010101000000-000000000000
 	badassops.ldap/configurator v0.0.0-00010101000000-000000000000
 	badassops.ldap/constants v0.0.0-00010101000000-000000000000
 	badassops.ldap/initializer v0.0.0-00010101000000-000000000000
 	badassops.ldap/ldap v0.0.0-00010101000000-000000000000
 	badassops.ldap/logs v0.0.0-00010101000000-000000000000
 	badassops.ldap/utils v0.0.0-00010101000000-000000000000
-	badassops.ldap/cmds v0.0.0-00010101000000-000000000000
 )
 
 require (
+	badassops.ldap/cmds/search/common v0.0.1 // indirect
 	github.com/BurntSushi/toml v1.1.0 // indirect
 	github.com/akamensky/argparse v1.3.1 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
@@ -34,4 +36,8 @@ replace badassops.ldap/constants => ./mod/constants
 
 replace badassops.ldap/ldap => ./mod/ldap
 
-replace badassops.ldap/cmds => ./mod/cmds
+replace badassops.ldap/cmds/search/common => ./mod/cmds/search/common
+
+replace badassops.ldap/cmds/search/user => ./mod/cmds/search/user
+
+replace badassops.ldap/cmds/search/group => ./mod/cmds/search/group

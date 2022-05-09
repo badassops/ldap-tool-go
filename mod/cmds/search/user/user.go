@@ -6,7 +6,7 @@
 // Version		:	0.1
 //
 
-package cmds
+package user
 
 import (
 	"bufio"
@@ -18,25 +18,22 @@ import (
 	"badassops.ldap/constants"
 	"badassops.ldap/utils"
 	"badassops.ldap/ldap"
-
-	// ldapv3 "gopkg.in/ldap.v2"
+	"badassops.ldap/cmds/search/common"
 )
 
-func printUserRecord(conn *ldap.Connection, userID string, wildcard bool)  {
+func printUserRecord(conn *ldap.Connection, userID string, wildcard bool) int {
 	if wildcard {
 			userID = "*" + userID + "*"
 	}
-	records, cnt := conn.CheckUser(true, userID)
+	records, cnt := conn.CheckUser(userID)
 	if cnt == 0 {
-		utils.PrintColor(constants.Red, fmt.Sprintf("\tNo user match %s\n", userID))
-		return
+		return 0
 	}
-	fmt.Printf("\n")
 	if wildcard {
 		for _, entry := range records.Entries {
 			utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s \n", entry.DN))
 		}
-		return
+		return cnt
 	}
 	FirstName := conn.User.FirstName.Data
 	LastName := conn.User.LastName.Data
@@ -83,45 +80,45 @@ func printUserRecord(conn *ldap.Connection, userID string, wildcard bool)  {
 	utils.PrintColor(utils.Purple, fmt.Sprintf("\tUser %s password information\n", conn.User.UserName))
 	utils.PrintColor(utils.Cyan, fmt.Sprintf("\tPassword last changed on %s\n", passChanged))
 	utils.PrintColor(utils.Red, fmt.Sprintf("\tPassword will expired on %s\n", passExpired))
-	utils.PrintLine(utils.Purple)
+	return cnt
 }
 
 func Search(conn *ldap.Connection, mode string) {
 	utils.PrintHeader(constants.Purple, "Search " +  mode)
 	reader := bufio.NewReader(os.Stdin)
+	givenValue := ""
+	wildCard := false
+	cnt := 0
+	if strings.HasSuffix(mode, "s") == false {
+		givenValue, wildCard = common.EnterValue(mode)
+		if givenValue == "" {
+			return
+		}
+	}
 	switch mode {
 		case "user":
-			fmt.Printf("\tEnter userid to be use: ")
-			userID, _ := reader.ReadString('\n')
-			userID = strings.TrimSuffix(userID, "\n")
-
-			fmt.Printf("\tUse wildcard (default to N)? [y/n]: ")
-			wildCard, _ := reader.ReadString('\n')
-			wildCard = strings.TrimSuffix(wildCard, "\n")
-
-			if utils.GetYN(wildCard, false) == false {
-				printUserRecord(conn, userID, false)
-				return
+			if !wildCard {
+				cnt = printUserRecord(conn, givenValue, false)
 			} else {
-				printUserRecord(conn, userID, true)
+				utils.PrintLine(utils.Purple)
+				cnt = printUserRecord(conn, givenValue, true)
 				fmt.Printf("\n\tSelect the userid from the above list: ")
-				userID, _ := reader.ReadString('\n')
-				userID = strings.TrimSuffix(userID, "\n")
-				printUserRecord(conn, userID, false)
+				givenValue, _ = reader.ReadString('\n')
+				givenValue = strings.TrimSuffix(givenValue, "\n")
+				if givenValue == "" {
+					utils.PrintColor(utils.Red, fmt.Sprintf("\tNo user was given aborting...\n"))
+					return
+				}
+				cnt = printUserRecord(conn, givenValue, false)
 			}
 
 		case "users":
-			conn.SearchUsers()
-			utils.PrintLine(utils.Purple)
+			cnt = conn.SearchUsers()
 
-		case "group":
-			utils.PrintLine(utils.Purple)
-		case "groups":
-			utils.PrintLine(utils.Purple)
-		case "admin":
-			utils.PrintLine(utils.Purple)
-		case "admins":
-			utils.PrintLine(utils.Purple)
 	}
-
+	if cnt == 0 {
+		utils.PrintColor(constants.Red, fmt.Sprintf("\tNo user match %s\n", givenValue))
+		return
+	}
+	utils.PrintLine(utils.Purple)
 }

@@ -132,16 +132,8 @@ func New(config *configurator.Config) *Connection {
 	}
 }
 
-func (c *Connection) CheckUser(wildCard bool, user string) (*ldapv3.SearchResult, int) {
+func (c *Connection) CheckUser(user string) (*ldapv3.SearchResult, int) {
 	attributes := []string{}
-
-	orginalUser := user
-	// wildcard should only return the DN value
-	if wildCard {
-		user = "*" + user + "*"
-		//attributes = append(attributes, "uid")
-	}
-
 	searchBase :=fmt.Sprintf("(&(objectClass=inetOrgPerson)(uid=%s))", user)
 	records, cnt := c.search(searchBase, attributes)
 
@@ -166,54 +158,70 @@ func (c *Connection) CheckUser(wildCard bool, user string) (*ldapv3.SearchResult
 		c.User.ShadowLastChange	= Record{records.Entries[0].GetAttributeValue("shadowLastChange"),	false}
 		c.User.ShadowExpire		= Record{records.Entries[0].GetAttributeValue("shadowExpire"),		false}
 		c.User.ShadowWarning	= Record{records.Entries[0].GetAttributeValue("shadowWarning"),		false}
-		c.userGroups(orginalUser)
+		c.userGroups(user)
 	 }
 	return records, cnt
 }
 
-func (c *Connection) SearchUsers() {
+func (c *Connection) SearchUsers() int {
 	attributes := []string{}
 	searchBase := fmt.Sprintf("(objectClass=person)")
 	records, cnt := c.search(searchBase, attributes)
-	if cnt > 0 {
-		for idx, entry := range records.Entries {
-			utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
-			utils.PrintColor(utils.Green, fmt.Sprintf("\t\tFull Name: %s %s\n",
-				records.Entries[idx].GetAttributeValue("givenName"),
-				records.Entries[idx].GetAttributeValue("sn")))
-			utils.PrintColor(utils.Green, fmt.Sprintf("\t\tdepartmentNumber: %s \n",
-				records.Entries[idx].GetAttributeValue("departmentNumber")))
-		}
-		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
+	if cnt == 0 {
+		return 0
 	}
+	for idx, entry := range records.Entries {
+		utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
+		utils.PrintColor(utils.Green, fmt.Sprintf("\tFull Name: %s %s\n",
+			records.Entries[idx].GetAttributeValue("givenName"),
+			records.Entries[idx].GetAttributeValue("sn")))
+		utils.PrintColor(utils.Green, fmt.Sprintf("\tdepartmentNumber: %s \n",
+			records.Entries[idx].GetAttributeValue("departmentNumber")))
+		fmt.Printf("\n")
+	}
+	utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
+	return cnt
 }
 
-func (c *Connection) SearchGroup(group string, all bool) {
+func (c *Connection) SearchGroup(group string, all bool, members bool, wildcard bool) int {
 	var records *ldapv3.SearchResult
 	var cnt int
 	var searchBase string
 	if all {
 		searchBase = fmt.Sprintf("(objectClass=posixGroup)")
 	} else {
-		searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
+		if wildcard {
+			wildcardGroup := "*" + group + "*"
+			searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", wildcardGroup)
+		} else {
+			searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
+		}
 	}
 	records, cnt = c.search(searchBase, []string{"cn", "gidNumber", "memberUid"})
-	if cnt > 0 {
-		for _, entry := range records.Entries {
-			fmt.Printf("dn: %s \n", entry.DN)
-			if ! all {
-				fmt.Printf("cn: %s \n", entry.GetAttributeValue("cn"))
-				fmt.Printf("gidNumber: %s \n", entry.GetAttributeValue("gidNumber"))
-			}
+	if cnt == 0 {
+		return 0
+	}
+	for _, entry := range records.Entries {
+		utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s \n", entry.DN))
+		if all {
+			utils.PrintColor(utils.Cyan,
+				fmt.Sprintf("\tcn: %s\n", entry.GetAttributeValue("cn")))
+		}
+		if members {
+			utils.PrintColor(utils.Cyan,
+				fmt.Sprintf("\tgidNumber: %s\n", entry.GetAttributeValue("gidNumber")))
 			for _, member := range entry.GetAttributeValues("memberUid") {
-				utils.PrintColor(utils.Blue, fmt.Sprintf("memberUid: %s \n", member))
+				utils.PrintColor(utils.Cyan, fmt.Sprintf("\tmemberUid: %s\n", member))
 			}
+		}
+		if all == true && members == true  {
 			fmt.Printf("\n")
 		}
-		if all == true {
-			utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
-		}
 	}
+	if all == true && members == true  {
+		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
+	}
+	return cnt
 }
 
 func (c *Connection) userGroups(user string) {
