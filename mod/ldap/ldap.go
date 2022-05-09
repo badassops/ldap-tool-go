@@ -224,6 +224,45 @@ func (c *Connection) SearchGroup(group string, all bool, members bool, wildcard 
 	return cnt
 }
 
+func (c *Connection) SearchAdminGroup(group string, all bool, members bool, wildcard bool) int {
+	var records *ldapv3.SearchResult
+	var cnt int
+	var searchBase string
+	if all {
+		searchBase = fmt.Sprintf("(objectClass=groupOfNames)")
+	} else {
+		if wildcard {
+			wildcardGroup := "*" + group + "*"
+			searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", wildcardGroup)
+		} else {
+			searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
+		}
+	}
+	records, cnt = c.search(searchBase, []string{"cn", "member"})
+	if cnt == 0 {
+		return 0
+	}
+	for _, entry := range records.Entries {
+		utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s \n", entry.DN))
+		if all {
+			utils.PrintColor(utils.Cyan,
+				fmt.Sprintf("\tcn: %s\n", entry.GetAttributeValue("cn")))
+		}
+		if members {
+			for _, member := range entry.GetAttributeValues("member") {
+				utils.PrintColor(utils.Cyan, fmt.Sprintf("\tmember: %s\n", member))
+			}
+		}
+		if all == true && members == true  {
+			fmt.Printf("\n")
+		}
+	}
+	if all == true && members == true  {
+		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
+	}
+	return cnt
+}
+
 func (c *Connection) userGroups(user string) {
 
 	searchBase := fmt.Sprintf("(&(objectClass=groupOfNames)(member=uid=%s,%s))", user, c.Config.UserDN)

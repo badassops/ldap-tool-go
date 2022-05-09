@@ -3,6 +3,7 @@ module ldap
 go 1.18
 
 require (
+	badassops.ldap/cmds/search/admin v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/search/group v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/search/user v0.0.0-00010101000000-000000000000
 	badassops.ldap/configurator v0.0.0-00010101000000-000000000000
@@ -41,3 +42,7 @@ replace badassops.ldap/cmds/search/common => ./mod/cmds/search/common
 replace badassops.ldap/cmds/search/user => ./mod/cmds/search/user
 
 replace badassops.ldap/cmds/search/group => ./mod/cmds/search/group
+
+replace badassops.ldap/cmds/search/group => ./mod/cmds/search/group
+
+replace badassops.ldap/cmds/search/admin => ./mod/cmds/search/admin

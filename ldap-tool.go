@@ -21,6 +21,7 @@ import (
 	"badassops.ldap/ldap"
 	"badassops.ldap/cmds/search/user"
 	"badassops.ldap/cmds/search/group"
+	"badassops.ldap/cmds/search/admin"
 )
 
 func main() {
@@ -83,8 +84,8 @@ func main() {
 		case "users":	user.Search(conn, "users")
 		case "group":	group.Search(conn, "group")
 		case "groups":	group.Search(conn, "groups")
-		//case "admin":	search.Search(conn, "admin")
-		//case "admins":	search.Search(conn, "admins")
+		case "admin":	admin.Search(conn, "admin")
+		case "admins":	admin.Search(conn, "admins")
 	}
 
 	utils.ReleaseIT(config.LockFile, LockPid)
