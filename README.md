@@ -6,10 +6,12 @@ A simple Go script to manage OpenLDAP users
 ### Background
 The script is based on a certain LDAP settings
 - OpenLDAP
-- the use memberOf
-- the use of SSH schema
+- the memberOf ldap plugin
+- the SSH schema
+- the SUDO schema
 - password length and use of special charachter is in the config file
 - the config file is toml formatted
+- Runs on OSX or Linux (Ubuntu 20.04 or newer)
 
 ### History
 Using an UI interface such a phpLDAPadmin is not always possible, and so I decide 
@@ -50,9 +52,21 @@ Arguments:
 
 ```
 
+### Build or run the code the code
+To build the buanry as simple as
+```
+go build ldap-tools.go
+```
+
+To run the code
+```
+go run ldap-tools.go -c <your-config-file> -m <mode>
+```
+
 ### TODO
-once the script has been completed, the capabilities to
+- once the script has been completed, the capabilities to
  create, modify and delete a group
+- create binaries for OSX and Linux
 
 ### The End
 Your friendly BOFH 🦄 😈          
