@@ -37,11 +37,11 @@ func main() {
 	config.InitializeArgs()
 
 	// these are hardcoded!
-	if ok := utils.IsUser("luc"); !ok {
+	if ok := utils.IsUser("root"); !ok {
 		utils.PrintColor(constants.Red, "The program has to be run as root or use sudo, aborting..\n")
 		os.Exit(0)
 	}
-	if ok := utils.CheckFileSettings(config.ConfigFile, "luc", []string{"0400", "0600"}); !ok {
+	if ok := utils.CheckFileSettings(config.ConfigFile, "root", []string{"0400", "0600"}); !ok {
 		utils.PrintColor(constants.Red, "Aborting..\n")
 		os.Exit(0)
 	}

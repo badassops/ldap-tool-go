@@ -217,7 +217,7 @@ func CreateColorMsg(messageColor string, messsage string) string {
 
 // function print the header after doing a clear screen
 func PrintHeader(messageColor string, messsage string) {
-	// fmt.Printf("%s", clearScreen)
+	fmt.Printf("%s", clearScreen)
 	fmt.Printf("\n\t%s %s %s %s %s\n\n", messageColor, HEADER, messsage, HEADER, Off)
 }
 

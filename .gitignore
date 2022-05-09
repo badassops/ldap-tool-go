@@ -1,6 +1,9 @@
 # binary files
 **tar.gz
 ldap-tool
+ldap-tool_Darwin_x86_64
+ldap-tool_Linux_x86_64
+release/
 
 # vim swap files
 **.swp

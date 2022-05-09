@@ -1,21 +1,49 @@
 #!/bin/bash
 
-_go_dir="/Users/luc/projects/bao/ldap-go/src/badassops/ldap"
+_go_dir="/Users/luc/projects/bao/ldap-go/ldap"
 _test_dir="$_go_dir"/"test"
 _config="$_test_dir"/"config.ini"
-_app="ldap-tool"
-_env="bao"
 PATH=$_go_dir:$_test_dir:$PATH
 
-if [[ -f "$_app" ]] ; then
-	rm "$_app"
-fi
-go build "$_app".go
+_src="ldap-tool.go"
+_env="bao"
+
+function _whatAmI() {
+	case "$(uname -s)"
+	in
+		"Darwin")	_bin="ldap-tool_Darwin_x86_64" ;;
+		"Linux")	_bin="ldap-tool_Linux_x86_64" ;;
+	esac
+}
+
+function _cleanUP() {
+	echo "... cleanup ..."
+	rm -f "$_bin" "$_bin".tar.gz
+}
+
+function _buildBin() {
+	echo "... build binary ..."
+	go build -o $_bin "$_src"
+}
+
+function _createPackages() {
+	echo "... build tar.gz ..."
+	tar zcf "$_bin".tar.gz "$_bin"
+	mkdir -p release
+	mv "$_bin".tar.gz release 
+}
+
+_whatAmI
+_cleanUP
+_buildBin
+_createPackages
+
+sleep 5
 
 case $1
 in
-	"-i")	$_app -i	;;
-	"-v")	$_app -v	;;
-	"-h")	$_app -h	;;
-	*)		$_app -c $_config -e $_env -m $* ;;
+	"-i")	sudo $_bin -i	;;
+	"-v")	sudo $_bin -v	;;
+	"-h")	sudo $_bin -h	;;
+	*)		sudo $_bin -c $_config -e $_env -m $* ;;
 esac
