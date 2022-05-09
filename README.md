@@ -53,10 +53,11 @@ Arguments:
 ```
 
 ### Build or run the code the code
-To build the buanry as simple as
+To build the code into a single binary as simple as
 ```
 go build ldap-tools.go
 ```
+If everything is well, then this will produce a binary called **ldap-tools** 
 
 To run the code
 ```
