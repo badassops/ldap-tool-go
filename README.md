@@ -1,5 +1,13 @@
 # WORK IN PROGRESS!
 
+## Progress
+- search completed (May 9, 2022)
+
+TODO: (in order)
+- create
+- delete
+- modify
+
 ### ldap-tool
 A simple Go script to manage OpenLDAP users
 
