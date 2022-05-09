@@ -1,6 +1,6 @@
 #!/bin/bash
 
-_go_dir="/Users/luc/projects/bao/ldap-go/ldap"
+_go_dir="."
 _test_dir="$_go_dir"/"test"
 _config="$_test_dir"/"config.ini"
 PATH=$_go_dir:$_test_dir:$PATH
