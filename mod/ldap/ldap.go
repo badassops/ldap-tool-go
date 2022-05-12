@@ -11,10 +11,10 @@ package ldap
 import (
 	"fmt"
 	"net"
-	"strings"
 	"strconv"
 	"time"
 
+	"badassops.ldap/vars"
 	"badassops.ldap/utils"
 	"badassops.ldap/configurator"
 
@@ -22,41 +22,9 @@ import (
 )
 
 type (
-	Record struct {
-		Data	string
-		Changed	bool
-	}
-
-	MemberOf struct {
-		Data	[]string
-		Changed	bool
-	}
-
-	UserRecord struct {
-		DN					string
-		UserName			string
-		FirstName			Record
-		LastName			Record
-		Email				Record
-		UID					int
-		GID					Record
-		GroupName			string
-		Groups				[]string
-		Shell				Record
-		HomeDir				string
-		Password			Record
-		SSHPublicKey		Record
-		AdminGroups			MemberOf
-		VPNGroups			MemberOf
-		ShadowMax			Record
-		ShadowLastChange	Record
-		ShadowExpire		Record
-		ShadowWarning		Record
-	}
-
 	Connection struct {
 		Conn		*ldapv3.Conn
-		User		UserRecord
+		User		vars.UserRecord
 		Config		*configurator.Config
 		LockFile	string
 		LockPid		int
@@ -68,21 +36,18 @@ func New(config *configurator.Config) *Connection {
 	// set variable for the ldap connection
 	var ppolicy *ldapv3.ControlBeheraPasswordPolicy
 
-	// check if we can search the server
-	timeout := time.Second
-	dialConn, err := net.DialTimeout("tcp", net.JoinHostPort(config.Server, "389"), timeout)
+	// check if we can search the server, timeout set to 15 seconds
+	timeout := 15 * time.Second
+	dialConn, err := net.DialTimeout("tcp", net.JoinHostPort(config.ServerValues.Server, "389"), timeout)
 	if err != nil {
-		utils.ReleaseIT(config.LockFile, config.LockPID)
+		utils.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
 		utils.ExitWithMesssage(err.Error())
 	}
 	dialConn.Close()
 
-	// set to expire by default as today + ShadowMax
-	currExpired := strconv.FormatInt(utils.GetEpoch("days") + int64(config.ShadowMax), 10)
-
-	ServerConn, err := ldapv3.Dial("tcp", fmt.Sprintf("%s:%d", config.Server ,389))
+	ServerConn, err := ldapv3.Dial("tcp", fmt.Sprintf("%s:%d", config.ServerValues.Server ,389))
 	if err != nil {
-		utils.ReleaseIT(config.LockFile, config.LockPID)
+		utils.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
 		utils.ExitWithMesssage(err.Error())
 	}
 
@@ -90,7 +55,7 @@ func New(config *configurator.Config) *Connection {
 	// if config.TLS {
 	// 	err := ServerConn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 	// 	if err != nil {
-	//		utils.ReleaseIT(config.LockFile, config.LockPID)
+	//		utils.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
 	// 		utils.ExitIfError(err)
 	// 	}
 	// }
@@ -100,7 +65,7 @@ func New(config *configurator.Config) *Connection {
 	controls = append(controls, ldapv3.NewControlBeheraPasswordPolicy())
 
 	// bind to the ldap server
-	bindRequest := ldapv3.NewSimpleBindRequest(config.Admin, config.AdminPass, controls)
+	bindRequest := ldapv3.NewSimpleBindRequest(config.ServerValues.Admin, config.ServerValues.AdminPass, controls)
 	request, err := ServerConn.SimpleBind(bindRequest)
 	ppolicyControl := ldapv3.FindControl(request.Controls, ldapv3.ControlTypeBeheraPasswordPolicy)
 	if ppolicyControl != nil {
@@ -111,59 +76,68 @@ func New(config *configurator.Config) *Connection {
 		if ppolicy != nil && ppolicy.Error >= 0 {
 			errStr += ":" + ppolicy.ErrorString
 		}
-		utils.ReleaseIT(config.LockFile, config.LockPID)
+		utils.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
 		utils.ExitWithMesssage(errStr)
 	}
 
 	// the rest of the values will be filled during the process
     return &Connection {
-		Conn:			ServerConn,
-		User: UserRecord{
-			Shell:			Record{ Data: config.Shell,							Changed: false },
-			GID:			Record{ Data: strconv.Itoa(config.GroupId),			Changed: false },
-			GroupName:		config.GroupName,
-			ShadowMax:		Record{ Data: strconv.Itoa(config.ShadowMax),		Changed: false },
-			ShadowWarning:	Record{ Data: strconv.Itoa(config.ShadowWarning),	Changed: false },
-			ShadowExpire:	Record{ Data: currExpired,							Changed: false },
-		},
-		Config:				config,
-		LockFile:			config.LockFile,
-        LockPid:			config.LockPID,
+		Conn:		ServerConn,
+		Config:		config,
+		User:		vars.User,
+		LockFile:	config.DefaultValues.LockFile,
+        LockPid:	config.LockPID,
 	}
 }
 
-func (c *Connection) CheckUser(user string) (*ldapv3.SearchResult, int) {
+func (c *Connection) GetUser(user string) int {
 	attributes := []string{}
 	searchBase :=fmt.Sprintf("(&(objectClass=inetOrgPerson)(uid=%s))", user)
 	records, cnt := c.search(searchBase, attributes)
-
-	if cnt == 0  {
-		return records, 0
-	}
 	if cnt == 1 {
-		UID, _ := strconv.Atoi(records.Entries[0].GetAttributeValue("uidNumber"))
-		c.User.DN				= records.Entries[0].DN
-		c.User.UserName			= records.Entries[0].GetAttributeValue("uid")
-		c.User.FirstName		= Record{records.Entries[0].GetAttributeValue("givenName"),			false}
-		c.User.LastName			= Record{records.Entries[0].GetAttributeValue("sn"),				false}
-		c.User.Email			= Record{records.Entries[0].GetAttributeValue("mail"),				false}
-		c.User.UID				= UID
-		c.User.GID				= Record{records.Entries[0].GetAttributeValue("gidNumber"),			false}
-		c.User.GroupName		= records.Entries[0].GetAttributeValue("departmentNumber")
-		c.User.Shell			= Record{records.Entries[0].GetAttributeValue("loginShell"),		false}
-		c.User.HomeDir			= records.Entries[0].GetAttributeValue("homeDirectory")
-		c.User.Password			= Record{records.Entries[0].GetAttributeValue("userPassword"),		false}
-		c.User.SSHPublicKey		= Record{records.Entries[0].GetAttributeValue("sshPublicKey"),		false}
-		c.User.ShadowMax		= Record{records.Entries[0].GetAttributeValue("shadowMax"),			false}
-		c.User.ShadowLastChange	= Record{records.Entries[0].GetAttributeValue("shadowLastChange"),	false}
-		c.User.ShadowExpire		= Record{records.Entries[0].GetAttributeValue("shadowExpire"),		false}
-		c.User.ShadowWarning	= Record{records.Entries[0].GetAttributeValue("shadowWarning"),		false}
-		c.userGroups(user)
-	 }
-	return records, cnt
+		c.User.DN = records.Entries[0].DN
+		for _, field := range vars.Fields{
+			switch field {
+				case "shadowWarning", "shadowMax", "uidNumber", "gidNumber":
+					value, _ := strconv.Atoi(records.Entries[0].GetAttributeValue(field))
+					c.User.Ints[field] = vars.IntRecord{Value: value  , Changed: false}
+				default:
+					c.User.Strings[field] =
+						vars.StringRecord{Value: records.Entries[0].GetAttributeValue(field) , Changed: false}
+			}
+		}
+		c.userGroups()
+	}
+	return cnt
 }
 
-func (c *Connection) SearchUsers() int {
+func (c *Connection) GetGroup(group string, groupType string) int {
+	attributes := []string{}
+	var searchBase string
+	switch groupType{
+		case "posix":
+			searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
+		case "memberof":
+			searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
+	}
+	_, cnt := c.search(searchBase, attributes)
+	return cnt
+}
+
+func (c *Connection) SearchUser(user string) int {
+	attributes := []string{}
+	searchBase := fmt.Sprintf("(&(objectClass=inetOrgPerson)(uid=%s))", user)
+	records, cnt := c.search(searchBase, attributes)
+	if cnt == 0 {
+		return 0
+	}
+	for _, entry := range records.Entries {
+		utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
+	}
+	return cnt
+}
+
+func (c *Connection) SearchUsers(baseInfo bool) int {
 	attributes := []string{}
 	searchBase := fmt.Sprintf("(objectClass=person)")
 	records, cnt := c.search(searchBase, attributes)
@@ -172,119 +146,74 @@ func (c *Connection) SearchUsers() int {
 	}
 	for idx, entry := range records.Entries {
 		utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
-		utils.PrintColor(utils.Green, fmt.Sprintf("\tFull Name: %s %s\n",
-			records.Entries[idx].GetAttributeValue("givenName"),
-			records.Entries[idx].GetAttributeValue("sn")))
-		utils.PrintColor(utils.Green, fmt.Sprintf("\tdepartmentNumber: %s \n",
-			records.Entries[idx].GetAttributeValue("departmentNumber")))
-		fmt.Printf("\n")
+		if baseInfo {
+			userBaseInfo := fmt.Sprintf("\tFull namae: %s %s\n\t\tdepartmentNumber %s",
+				records.Entries[idx].GetAttributeValue("givenName"),
+				records.Entries[idx].GetAttributeValue("sn"),
+				records.Entries[idx].GetAttributeValue("departmentNumber"))
+			utils.PrintColor(utils.Cyan, userBaseInfo)
+			fmt.Printf("\n")
+		}
 	}
 	utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
 	return cnt
 }
 
-func (c *Connection) SearchGroup(group string, all bool, members bool, wildcard bool) int {
-	var records *ldapv3.SearchResult
-	var cnt int
+func (c *Connection) SearchGroup(group string, groupType string, baseInfo bool) int {
+	attributes := []string{}
 	var searchBase string
-	if all {
-		searchBase = fmt.Sprintf("(objectClass=posixGroup)")
-	} else {
-		if wildcard {
-			wildcardGroup := "*" + group + "*"
-			searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", wildcardGroup)
-		} else {
+	var memberField string
+	switch groupType{
+		case "posix":
 			searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
-		}
-	}
-	records, cnt = c.search(searchBase, []string{"cn", "gidNumber", "memberUid"})
-	if cnt == 0 {
-		return 0
-	}
-	for _, entry := range records.Entries {
-		utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s \n", entry.DN))
-		if all {
-			utils.PrintColor(utils.Cyan,
-				fmt.Sprintf("\tcn: %s\n", entry.GetAttributeValue("cn")))
-		}
-		if members {
-			utils.PrintColor(utils.Cyan,
-				fmt.Sprintf("\tgidNumber: %s\n", entry.GetAttributeValue("gidNumber")))
-			for _, member := range entry.GetAttributeValues("memberUid") {
-				utils.PrintColor(utils.Cyan, fmt.Sprintf("\tmemberUid: %s\n", member))
-			}
-		}
-		if all == true && members == true  {
-			fmt.Printf("\n")
-		}
-	}
-	if all == true && members == true  {
-		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
-	}
-	return cnt
-}
-
-func (c *Connection) SearchAdminGroup(group string, all bool, members bool, wildcard bool) int {
-	var records *ldapv3.SearchResult
-	var cnt int
-	var searchBase string
-	if all {
-		searchBase = fmt.Sprintf("(objectClass=groupOfNames)")
-	} else {
-		if wildcard {
-			wildcardGroup := "*" + group + "*"
-			searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", wildcardGroup)
-		} else {
+			memberField = "memberUid"
+		case "memberof":
 			searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
-		}
+			memberField = "member"
 	}
-	records, cnt = c.search(searchBase, []string{"cn", "member"})
+	records, cnt := c.search(searchBase, attributes)
 	if cnt == 0 {
 		return 0
 	}
-	for _, entry := range records.Entries {
-		utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s \n", entry.DN))
-		if all {
-			utils.PrintColor(utils.Cyan,
-				fmt.Sprintf("\tcn: %s\n", entry.GetAttributeValue("cn")))
-		}
-		if members {
-			for _, member := range entry.GetAttributeValues("member") {
-				utils.PrintColor(utils.Cyan, fmt.Sprintf("\tmember: %s\n", member))
+	fmt.Printf("\n")
+	for idx, entry := range records.Entries {
+		if baseInfo {
+			utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
+			utils.PrintColor(utils.Blue, fmt.Sprintf("\tcn: %s\n",
+				records.Entries[idx].GetAttributeValue("cn")))
+			if groupType == "posix" {
+				utils.PrintColor(utils.Cyan,
+					fmt.Sprintf("\tgidNumber: %s\n", entry.GetAttributeValue("gidNumber")))
 			}
-		}
-		if all == true && members == true  {
-			fmt.Printf("\n")
+			for _, member := range entry.GetAttributeValues(memberField) {
+                utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %s\n", memberField, member))
+            }
+		} else {
+			utils.PrintColor(utils.Blue, fmt.Sprintf("\tcn: %s\n",
+				records.Entries[idx].GetAttributeValue("cn")))
 		}
 	}
-	if all == true && members == true  {
+	if ! baseInfo {
 		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
 	}
 	return cnt
 }
 
-func (c *Connection) userGroups(user string) {
-
-	searchBase := fmt.Sprintf("(&(objectClass=groupOfNames)(member=uid=%s,%s))", user, c.Config.UserDN)
+func (c *Connection) userGroups() {
+	searchBase := fmt.Sprintf("(&(objectClass=groupOfNames)(member=%s))", c.User.DN)
 	records, cnt := c.search(searchBase, []string{"dn"})
 	if cnt > 0 {
-		var adminGroups []string
-		var vpnGroups []string
 		for _, entry := range records.Entries {
-			if strings.Contains(entry.DN, "vpn") {
-				vpnGroups = append(vpnGroups, entry.DN)
-			} else {
-				adminGroups = append(adminGroups, entry.DN)
+			if utils.InList(c.User.Groups, entry.DN) == false {
+				c.User.Groups = append(c.User.Groups, entry.DN)
 			}
 		}
-		c.User.AdminGroups = MemberOf{adminGroups, false}
-		c.User.VPNGroups = MemberOf{vpnGroups, false}
 	}
 }
 
 func (c *Connection) search(searchBase string, searchAttribute []string) (*ldapv3.SearchResult, int) {
 	searchRecords := ldapv3.NewSearchRequest(
-		c.Config.BaseDN,
+		c.Config.ServerValues.BaseDN,
 		ldapv3.ScopeWholeSubtree,
 		ldapv3.NeverDerefAliases, 0, 0, false,
 		searchBase,

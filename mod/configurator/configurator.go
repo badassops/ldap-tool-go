@@ -11,8 +11,10 @@ package configurator
 import (
 	"fmt"
 	"os"
+	"strconv"
 
-	"badassops.ldap/constants"
+	"badassops.ldap/consts"
+	"badassops.ldap/vars"
 	"badassops.ldap/utils"
 
 	"github.com/akamensky/argparse"
@@ -21,8 +23,8 @@ import (
 
 type (
 	GroupMap struct {
-			Name	string
-			Gid		int
+		Name	string
+		Gid		int
 	}
 
 	Config struct {
@@ -30,42 +32,11 @@ type (
 		Env				string
 		Cmd				string
 		// from the configuration file
-		Shell			string
-		ValidShells		[]string
-		UserSearch		string
-		GroupSearch		string
-		GroupName		string
-		GroupId			int
-		ShadowMax		int
-		ShadowWarning	int
-		Wait			int
-		PassLenght		int
-		PassComplex		bool
-		// from the configuration file
-		LogsDir         string
-		LogFile         string
-		LogMaxSize      int
-		LogMaxBackups   int
-		LogMaxAge		int
-
+		DefaultValues	Defaults
+		LogValues		LogConfig
 		ValidEnvs		[]string
-
-		Admins			[]string
-		VPNs			[]string
-		Groups			[]string
-		GroupsMap		[]GroupMap
-
-		Server			string
-		BaseDN			string
-		Admin			string
-		AdminPass		string
-		UserDN			string
-		GroupDN			string
-		EmailDomain		string
-		TLS				bool
-		Enabled			bool
-		LockFile		string
-
+		GroupValues		Groups
+		ServerValues	Server
 		// passed by main
 		LockPID			int
 	}
@@ -138,26 +109,24 @@ func Configurator() *Config {
 
 func (c *Config) InitializeArgs() {
 	baseCmd := fmt.Sprintf("base commands:\n\t\t\t %s, %s, %s\n",
-				utils.CreateColorMsg(constants.Yellow, "create"),
-				utils.CreateColorMsg(constants.Yellow, "modify"),
-				utils.CreateColorMsg(constants.Yellow, "delete"),
+				utils.CreateColorMsg(consts.Yellow, "create"),
+				utils.CreateColorMsg(consts.Yellow, "modify"),
+				utils.CreateColorMsg(consts.Yellow, "delete"),
 	)
-	searchCmd := fmt.Sprintf("\t\t     search commands:\n\t\t\t (user) %s, (group) %s, %s\n",
-				utils.CreateColorMsg(constants.Green, "search"),
-				utils.CreateColorMsg(constants.Green, "group"),
-				utils.CreateColorMsg(constants.Green, "admin"),
+	searchCmd := fmt.Sprintf("\t\t     search commands:\n\t\t\t (user) %s, (group) %s\n",
+				utils.CreateColorMsg(consts.Green, "search"),
+				utils.CreateColorMsg(consts.Green, "group"),
 	)
-	searchAllCMD := fmt.Sprintf("\t\t     get all records users and groups commands:\n\t\t\t (user) %s, (group) %s, %s\n",
-				utils.CreateColorMsg(constants.Blue, "users"),
-				utils.CreateColorMsg(constants.Blue, "groups"),
-				utils.CreateColorMsg(constants.Blue, "admins"),
+	searchAllCMD := fmt.Sprintf("\t\t     get all records users and groups commands:\n\t\t\t (user) %s, (group) %s\n",
+				utils.CreateColorMsg(consts.Blue, "users"),
+				utils.CreateColorMsg(consts.Blue, "groups"),
 	)
 
 	HelpMessage := fmt.Sprintf("%s%s%s", baseCmd, searchCmd, searchAllCMD)
 
 	errored := 0
-	allowedValues := []string{"create", "modify", "delete", "search", "group", "admin", "users", "groups", "admins"}
-	parser := argparse.NewParser(constants.MyProgname, constants.MyDescription)
+	allowedValues := []string{"create", "modify", "delete", "search", "group", "users", "groups"}
+	parser := argparse.NewParser(vars.MyProgname, vars.MyDescription)
 	configFile := parser.String("c", "configFile",
 		&argparse.Options{
 		Required:	false,
@@ -199,34 +168,34 @@ func (c *Config) InitializeArgs() {
 
 	if *showVersion {
 		utils.ClearScreen()
-		utils.PrintColor(constants.Yellow, constants.MyProgname + " version: " + constants.MyVersion + "\n")
+		utils.PrintColor(consts.Yellow, vars.MyProgname + " version: " + vars.MyVersion + "\n")
 		os.Exit(0)
 	}
 
 	if *showInfo {
 		utils.ClearScreen()
-		utils.PrintColor(constants.Yellow, constants.MyDescription + "\n")
-		utils.PrintColor(constants.Cyan, constants.MyInfo)
+		utils.PrintColor(consts.Yellow, vars.MyDescription + "\n")
+		utils.PrintColor(consts.Cyan, vars.MyInfo)
 		os.Exit(0)
 	}
 
 	if len(*configFile) == 0 {
-		utils.PrintColor(constants.Red, "the flag -c/--config is required\n")
+		utils.PrintColor(consts.Red, "the flag -c/--config is required\n")
 		errored = 1
 	}
 
 	if len(*ldapCmd) == 0 {
-		utils.PrintColor(constants.Red, "the flag -m/--mode is required\n")
+		utils.PrintColor(consts.Red, "the flag -m/--mode is required\n")
 		errored = 1
 	}
 
 	if errored == 1 {
-		utils.PrintColor(constants.Red, "Aborting..\n")
+		utils.PrintColor(consts.Red, "Aborting..\n")
 		os.Exit(1)
 	}
 
 	if ok, _ := utils.Exist(*configFile, true, false); !ok {
-		utils.PrintColor(constants.Red, "Configuration file " + *configFile + " does not exist\n")
+		utils.PrintColor(consts.Red, "Configuration file " + *configFile + " does not exist\n")
 		os.Exit(1)
 	}
 
@@ -239,41 +208,51 @@ func (c *Config) InitializeArgs() {
 func (c *Config) InitializeConfigs() {
 	var configValues tomlConfig
 	if _, err := toml.DecodeFile(c.ConfigFile, &configValues); err != nil {
-		utils.PrintColor(constants.Red, "Error reading the configuration file\n")
+		utils.PrintColor(consts.Red, "Error reading the configuration file\n")
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
 	// from the configuration file
-	c.LockFile			= configValues.Defaults.LockFile
-	c.Shell				= configValues.Defaults.Shell
-	c.ValidShells		= configValues.Defaults.ValidShells
-	c.UserSearch		= configValues.Defaults.UserSearch
-	c.GroupSearch		= configValues.Defaults.GroupSearch
-	c.GroupName			= configValues.Defaults.GroupName
-	c.GroupId			= configValues.Defaults.GroupId
-	c.ShadowMax			= configValues.Defaults.ShadowMax
-	c.ShadowWarning		= configValues.Defaults.ShadowWarning
-	c.Wait				= configValues.Defaults.Wait
-	c.PassLenght		= configValues.Defaults.PassLenght
-	c.PassComplex		= configValues.Defaults.PassComplex
-	c.LogsDir			= configValues.LogConfig.LogsDir
-	c.LogFile			= configValues.LogConfig.LogFile
-	c.LogMaxSize		= configValues.LogConfig.LogMaxSize
-	c.LogMaxBackups		= configValues.LogConfig.LogMaxBackups
-	c.LogMaxAge			= configValues.LogConfig.LogMaxAge
+	c.DefaultValues		= configValues.Defaults
+	c.LogValues			= configValues.LogConfig
 	c.ValidEnvs			= configValues.Envs.ValidEnvs
-	c.Admins			= configValues.Groups.Admins
-	c.VPNs				= configValues.Groups.VPNs
-	c.Groups			= configValues.Groups.Groups
-	c.GroupsMap			= configValues.Groups.GroupsMap
-	c.Server			= configValues.Servers[c.Env].Server
-	c.BaseDN			= configValues.Servers[c.Env].BaseDN
-	c.Admin				= configValues.Servers[c.Env].Admin
-	c.AdminPass			= configValues.Servers[c.Env].AdminPass
-	c.UserDN			= configValues.Servers[c.Env].UserDN
-	c.GroupDN			= configValues.Servers[c.Env].GroupDN
-	c.EmailDomain		= configValues.Servers[c.Env].EmailDomain
-	c.TLS				= configValues.Servers[c.Env].TLS
-	c.Enabled			= configValues.Servers[c.Env].Enabled
+	c.GroupValues		= configValues.Groups
+	c.ServerValues		= configValues.Servers[c.Env]
+}
+
+// function to set the default values from the config file to the user record
+func (c *Config)InitializeUserRecord() {
+	// set to expire by default as today + ShadowMax
+	currExpired := strconv.FormatInt(utils.GetEpoch("days") + int64(c.DefaultValues.ShadowMax), 10)
+
+	vars.User.Strings["loginShell"] =
+		vars.StringRecord{
+			Value: c.DefaultValues.Shell,
+			Changed :false}
+
+	vars.User.Ints["gidNumber"] =
+		vars.IntRecord{
+			Value: c.DefaultValues.GroupId,
+			Changed :false}
+
+	vars.User.Strings["departmentNumber"] =
+		vars.StringRecord{
+			Value: c.DefaultValues.GroupName,
+			Changed: false}
+
+	vars.User.Ints["shadowMax"] =
+		vars.IntRecord{
+			Value: c.DefaultValues.ShadowMax,
+			Changed: false}
+
+	vars.User.Ints["shadowWarning"] =
+		vars.IntRecord{
+			Value: c.DefaultValues.ShadowWarning,
+			Changed: false}
+
+	vars.User.Strings["shadowExpire"] =
+		vars.StringRecord{
+			Value: currExpired,
+			Changed: false}
 }

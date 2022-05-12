@@ -9,31 +9,39 @@
 package initializer
 
 import (
-	"badassops.ldap/constants"
+	"badassops.ldap/consts"
+	"badassops.ldap/vars"
 )
 
 func Init() {
-	constants.UserLdapData.LoginName			= ""
-	constants.UserLdapData.FirstName			= ""
-	constants.UserLdapData.LastName				= ""
-	constants.UserLdapData.UidNumber			= ""
-	constants.UserLdapData.GidNumber			= ""
-	constants.UserLdapData.Email				= ""
-	constants.UserLdapData.Department			= ""
-	constants.UserLdapData.Shell				= ""
-	constants.UserLdapData.Password				= ""
-	constants.UserLdapData.ShadowMax			= constants.ShadowMax
-	constants.UserLdapData.ShadowExpired		= ""
-	constants.UserLdapData.ShadowWarning		= constants.ShadowWarning
-	constants.UserLdapData.ShadowLastChange		= ""
-	constants.UserLdapData.SSHPublicKey			= ""
-	constants.UserLdapData.AdminGroups			= []string{}
-	constants.UserLdapData.VPNGroups			= []string{}
-	constants.UserLdapData.HomeDirectory		= ""
+	// ldap fields that will be used
+	vars.Fields	= []string{"uid", "givenName", "sn", "cn", "displayName",
+		"gecos", "uidNumber", "gidNumber", "departmentNumber",
+		"mail", "homeDirectory", "loginShell", "userPassword",
+		"shadowLastChange", "shadowExpire", "shadowWarning", "shadowMax",
+		"sshPublicKey"}
 
-	constants.ServerLog.LogsDir					= constants.LogsDir
-	constants.ServerLog.LogFile					= constants.LogFile
-	constants.ServerLog.LogMaxSize				= constants.LogMaxSize
-	constants.ServerLog.LogMaxBackups			= constants.LogMaxBackups
-	constants.ServerLog.LogMaxAge				= constants.LogMaxAge
+	vars.Logs.LogsDir		= vars.LogsDir
+	vars.Logs.LogFile		= vars.LogFile
+	vars.Logs.LogMaxSize	= vars.LogMaxSize
+	vars.Logs.LogMaxBackups	= vars.LogMaxBackups
+	vars.Logs.LogMaxAge		= vars.LogMaxAge
+
+	vars.User.Strings	= make(map[string]vars.StringRecord)
+	vars.User.Ints		= make(map[string]vars.IntRecord)
+	vars.User.Groups	= []string{}
+
+	for _, name := range vars.Fields {
+		// NOTE shadowLastChange, shadowExpire is a string and will need to
+		//		be converted to in64 during operation
+		switch name {
+			case "shadowWarning": vars.User.Ints[name] =
+						vars.IntRecord{Value: consts.ShadowWarning, Changed: false}
+			case "shadowMax": vars.User.Ints[name] =
+						vars.IntRecord{Value: consts.ShadowMax, Changed: false}
+			case "uidNumber", "gidNumber": vars.User.Ints[name] = vars.IntRecord{Changed: false}
+			default:
+				vars.User.Strings[name] = vars.StringRecord{Value: "", Changed: false}
+		}
+	}
 }

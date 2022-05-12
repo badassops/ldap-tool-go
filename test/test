@@ -42,8 +42,13 @@ sleep 5
 
 case $1
 in
-	"-i")	sudo $_bin -i	;;
-	"-v")	sudo $_bin -v	;;
-	"-h")	sudo $_bin -h	;;
-	*)		sudo $_bin -c $_config -e $_env -m $* ;;
+	"-i")	sudo $_bin -i
+			;;
+	"-v")	sudo $_bin -v
+			;;
+	"-h")	sudo $_bin -h
+			;;
+	*)		sudo $_bin -c $_config -e $_env -m $*
+			sudo rm -f $_bin
+			;;
 esac

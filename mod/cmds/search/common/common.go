@@ -12,26 +12,132 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
+	"badassops.ldap/consts"
 	"badassops.ldap/utils"
+	"badassops.ldap/ldap"
 )
 
-func EnterValue(dataID string) (string, bool) {
+var (
+	displayFields = []string{"uid", "givenName", "sn", "cn", "displayName",
+        "gecos", "uidNumber", "gidNumber", "departmentNumber",
+        "mail", "homeDirectory", "loginShell", "userPassword",
+        "shadowWarning", "shadowMax", "sshPublicKey"}
+
+)
+
+func printUserRecord(conn *ldap.Connection, userName string) {
+	// the values are in days so we need to multiple by 86400
+	value, _ := strconv.ParseInt(conn.User.Strings["shadowLastChange"].Value, 10, 64)
+	 _, passChanged := utils.GetReadableEpoch(value * 86400)
+
+	value, _ = strconv.ParseInt(conn.User.Strings["shadowExpire"].Value, 10, 64)
+	_, passExpired := utils.GetReadableEpoch(value * 86400)
+
+	utils.PrintLine(utils.Purple)
+	for _, field := range displayFields {
+		switch field {
+			case "uidNumber", "gidNumber", "shadowWarning", "shadowMax":
+				utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %v\n", field, conn.User.Ints[field].Value))
+			default:
+				utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %s\n", field, conn.User.Strings[field].Value))
+		}
+	}
+
+	utils.PrintLine(utils.Purple)
+	utils.PrintColor(utils.Purple, fmt.Sprintf("\tUser %s groups:\n", userName))
+	for _, group := range conn.User.Groups {
+		utils.PrintColor(utils.Cyan, fmt.Sprintf("\tdn: %s\n", group))
+	}
+
+	utils.PrintLine(utils.Purple)
+	utils.PrintColor(utils.Purple, fmt.Sprintf("\tUser %s password information\n", userName))
+	utils.PrintColor(utils.Cyan, fmt.Sprintf("\tPassword last changed on %s\n", passChanged))
+	utils.PrintColor(utils.Red, fmt.Sprintf("\tPassword will expired on %s\n", passExpired))
+}
+
+func User(conn *ldap.Connection, firstTime bool) {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Printf("\tEnter %s to be use: ", dataID)
+	fmt.Printf("\tEnter user login name to be use: ")
 	enterData, _ := reader.ReadString('\n')
 	enterData = strings.TrimSuffix(enterData, "\n")
 
 	if enterData == "" {
-		utils.PrintColor(utils.Red, fmt.Sprintf("\n\tNo %s was given aborting...\n", dataID))
-		return "", false
+		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tNo users was given aborting...\n"))
+		return
 	}
-	fmt.Printf("\tUse wildcard (default to N)? [y/n]: ")
-	wildCard, _ := reader.ReadString('\n')
-	wildCard = strings.TrimSuffix(wildCard, "\n")
-	if utils.GetYN(wildCard, false) == false {
-		return enterData, false
+
+	if firstTime {
+		fmt.Printf("\tUse wildcard (default to N)? [y/n]: ")
+		wildCard, _ := reader.ReadString('\n')
+		wildCard = strings.TrimSuffix(wildCard, "\n")
+		if utils.GetYN(wildCard, false) == true {
+			enterData = "*" + enterData + "*"
+			conn.SearchUser(enterData)
+			fmt.Printf("\n\tSelect the userid from the above list:\n")
+			User(conn, false)
+			return
+		}
 	}
-	return enterData, true
+
+	if conn.GetUser(enterData) == 0 {
+		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tUser %s was not found, aborting...\n", enterData))
+		return
+	}
+	printUserRecord(conn, enterData)
+	return
+}
+
+// Need to be global since calling the functionb recursive
+var (
+	groupType string
+)
+
+func Group(conn *ldap.Connection, firstTime bool) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("\tEnters the group name to be use: ")
+	enterData, _ := reader.ReadString('\n')
+	enterData = strings.TrimSuffix(enterData, "\n")
+
+	if enterData == "" {
+		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tNo group was given aborting...\n"))
+		if firstTime {
+			return
+		} else {
+			// need to break the recursive
+			utils.ReleaseIT(conn.LockFile, conn.LockPid)
+			utils.PrintLine(utils.Purple)
+			os.Exit(1)
+		}
+	}
+
+	if firstTime {
+		fmt.Printf("\tGroup type [p]osix or [m]emberOf (default to posix) [p/n]: ")
+		enterType, _ := reader.ReadString('\n')
+		enterType = strings.TrimSuffix(enterType, "\n")
+		switch enterType {
+			case "p", "posix", "":	groupType = "posix"
+			case "m", "memberof":	groupType = "memberof"
+			default:				groupType = "posix"
+		}
+
+		fmt.Printf("\tUse wildcard (default to N)? [y/n]: ")
+		wildCard, _ := reader.ReadString('\n')
+		wildCard = strings.TrimSuffix(wildCard, "\n")
+		if utils.GetYN(wildCard, false) == true {
+			enterData = "*" + enterData + "*"
+			conn.SearchGroup(enterData, groupType, false)
+			fmt.Printf("\n\tSelect the group name from the above list:\n")
+			Group(conn, false)
+		}
+	}
+
+	utils.PrintLine(utils.Purple)
+	fmt.Printf(" data %s type %s \n", enterData, groupType)
+	if cnt := conn.SearchGroup(enterData, groupType, true) ; cnt == 0 {
+		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tGroup %s was not found, aborting...\n", enterData))
+	}
+	return
 }

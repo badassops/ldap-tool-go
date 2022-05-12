@@ -12,16 +12,28 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"badassops.ldap/utils"
-	"badassops.ldap/initializer"
 
-	"badassops.ldap/constants"
-	"badassops.ldap/logs"
+	"badassops.ldap/consts"
+	"badassops.ldap/utils"
+
+	"badassops.ldap/initializer"
 	"badassops.ldap/configurator"
+	"badassops.ldap/logs"
 	"badassops.ldap/ldap"
-	"badassops.ldap/cmds/search/user"
-	"badassops.ldap/cmds/search/group"
-	"badassops.ldap/cmds/search/admin"
+
+	// the search function
+	searchUser "badassops.ldap/cmds/search/user"
+	searchGroup "badassops.ldap/cmds/search/group"
+
+	// the base functions ; create, modify and delete
+	//createUser "badassops.ldap/cmds/create/user"
+	//modifyUser "badassops.ldap/cmds/modify/user"
+	//removeUser "badassops.ldap/cmds/remove/user"
+
+	// for future version
+	//createGroup "badassops.ldap/cmds/create/group"
+	//modifyGroup "badassops.ldap/cmds/modify/group"
+	//removeGroup "badassops.ldap/cmds/remove/group"
 )
 
 func main() {
@@ -38,20 +50,23 @@ func main() {
 
 	// these are hardcoded!
 	if ok := utils.IsUser("root"); !ok {
-		utils.PrintColor(constants.Red, "The program has to be run as root or use sudo, aborting..\n")
+		utils.PrintColor(consts.Red, "The program has to be run as root or use sudo, aborting..\n")
 		os.Exit(0)
 	}
 	if ok := utils.CheckFileSettings(config.ConfigFile, "root", []string{"0400", "0600"}); !ok {
-		utils.PrintColor(constants.Red, "Aborting..\n")
+		utils.PrintColor(consts.Red, "Aborting..\n")
 		os.Exit(0)
 	}
 
 	// get the configuration
 	config.InitializeConfigs()
 
+	// initialize the user record
+	config.InitializeUserRecord()
+
 	// only if the given server was enabled
-	if config.Enabled == false {
-		utils.PrintColor(constants.Red, fmt.Sprintf("The given server %s is not enabled, aborting..\n", config.Env ))
+	if config.ServerValues.Enabled == false {
+		utils.PrintColor(consts.Red, fmt.Sprintf("The given server %s is not enabled, aborting..\n", config.Env ))
 		os.Exit(0)
 	}
 
@@ -60,34 +75,32 @@ func main() {
 
 	// initialize the logger system
 	LogConfig := &logs.LogConfig {
-        LogsDir:        config.LogsDir,
-        LogFile:        config.LogFile,
-        LogMaxSize:     config.LogMaxSize,
-        LogMaxBackups:  config.LogMaxBackups,
-        LogMaxAge:      config.LogMaxAge,
+        LogsDir:        config.LogValues.LogsDir,
+        LogFile:        config.LogValues.LogFile,
+        LogMaxSize:     config.LogValues.LogMaxSize,
+        LogMaxBackups:  config.LogValues.LogMaxBackups,
+        LogMaxAge:      config.LogValues.LogMaxAge,
     }
 
 	logs.InitLogs(LogConfig)
 	logs.Log("System all clear", "INFO")
 
 	// create lock all initializing has been done
-	utils.LockIT(config.LockFile, LockPid, info)
+	utils.LockIT(config.DefaultValues.LockFile, LockPid, info)
 
 	// add a new ldap record
 	conn := ldap.New(config)
 
 	switch config.Cmd {
-		case "create":	// cmds.Create(conn)
-		case "modify":	// cmds.Modify(conn)
-		case "delete":	// cmds.Delete(conn)
-		case "search":	user.Search(conn, "user")
-		case "users":	user.Search(conn, "users")
-		case "group":	group.Search(conn, "group")
-		case "groups":	group.Search(conn, "groups")
-		case "admin":	admin.Search(conn, "admin")
-		case "admins":	admin.Search(conn, "admins")
+	//	case "create":	create.Create(conn)
+	//	case "modify":	// cmds.Modify(conn)
+	//	case "delete":	// cmds.Delete(conn)
+		case "search":	searchUser.User(conn)
+		case "users":	searchUser.Users(conn)
+		case "group":	searchGroup.Group(conn)
+		case "groups":	searchGroup.Groups(conn)
 	}
 
-	utils.ReleaseIT(config.LockFile, LockPid)
+	utils.ReleaseIT(config.DefaultValues.LockFile, LockPid)
 	os.Exit(0)
 }

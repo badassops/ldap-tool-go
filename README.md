@@ -38,8 +38,8 @@ The script is meant to be able to manage OpenLDAP user such:
 ```
 usage: ldap-tool [-h|--help] [-c|--configFile "<value>"] [-e|--environment
                  "<value>"] [-m|--mode
-                 (create|modify|delete|search|group|admin|users|groups|admins)]
-                 [-i|--info] [-v|--version]
+                 (create|modify|delete|search|group|users|groups)] [-i|--info]
+                 [-v|--version]
 
                  Simple script to manage LDAP users
 
@@ -51,13 +51,12 @@ Arguments:
   -m  --mode         base commands:
 			 create, modify, delete
 		     search commands:
-			 (user) search, (group) group, admin
+			 (user) search, (group) group
 		     get all records users and groups commands:
-			 (user) users, (group) groups, admins
+			 (user) users, (group) groups
 
   -i  --info         Show information
   -v  --version      Show version
-
 ```
 
 ### Build or run the code the code

@@ -14,52 +14,32 @@ import (
 	"os"
 	"strings"
 
-	"badassops.ldap/constants"
+	"badassops.ldap/consts"
 	"badassops.ldap/utils"
 	"badassops.ldap/ldap"
 	"badassops.ldap/cmds/search/common"
 )
 
-func Search(conn *ldap.Connection, mode string) {
-	utils.PrintHeader(constants.Purple, "Search " +  mode)
-	reader := bufio.NewReader(os.Stdin)
-	givenValue := ""
-	wildCard := false
-	cnt := 0
-	if strings.HasSuffix(mode, "s") == false {
-		givenValue, wildCard = common.EnterValue(mode)
-		if givenValue == "" {
-			return
-		}
-	}
-	switch mode {
-		case "group":
-			utils.PrintLine(utils.Purple)
-			if !wildCard {
-				cnt = conn.SearchGroup(givenValue, false, true, false)
-			} else {
-				cnt = conn.SearchGroup(givenValue, false, false, true)
-				if cnt == 0 {
-					utils.PrintColor(constants.Red, fmt.Sprintf("\tNo group match %s\n", givenValue))
-					return
-				}
-				fmt.Printf("\n\tSelect the group from the above list: ")
-				givenValue, _ = reader.ReadString('\n')
-				givenValue = strings.TrimSuffix(givenValue, "\n")
-				if givenValue == "" {
-					utils.PrintColor(utils.Red, fmt.Sprintf("\tNo group was given aborting...\n"))
-					return
-				}
-				utils.PrintLine(utils.Purple)
-				cnt = conn.SearchGroup(givenValue, false, true, false)
-			}
 
-		case "groups":
-			cnt = conn.SearchGroup("", true, true, false)
+func Group(conn *ldap.Connection) {
+	utils.PrintHeader(consts.Purple, "Search Group")
+	common.Group(conn, true)
+    utils.PrintLine(utils.Purple)
+}
+
+func Groups(conn *ldap.Connection) {
+	var groupType string
+	reader := bufio.NewReader(os.Stdin)
+	utils.PrintHeader(consts.Purple, "Search Groups")
+	fmt.Printf("\tGroup type [p]osix or [m]emberOf (default to posix) [p/n]: ")
+	enterType, _ := reader.ReadString('\n')
+	enterType = strings.TrimSuffix(enterType, "\n")
+	switch enterType {
+		case "p", "posix", "":	groupType = "posix"
+		case "m", "memberof":	groupType = "memberof"
+		default:				groupType = "posix"
 	}
-	if cnt == 0 {
-		utils.PrintColor(constants.Red, fmt.Sprintf("\tNo group match %s\n", givenValue))
-		return
-	}
-	utils.PrintLine(utils.Purple)
+	utils.PrintColor(consts.Purple, fmt.Sprintf("\n\t__________ all group and the members __________\n"))
+	conn.SearchGroup("*", groupType, true)
+    utils.PrintLine(utils.Purple)
 }
