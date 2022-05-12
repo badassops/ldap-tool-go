@@ -111,17 +111,24 @@ func (c *Connection) GetUser(user string) int {
 	return cnt
 }
 
-func (c *Connection) GetGroup(group string, groupType string) int {
+func (c *Connection) GetGroup(group string) (int, string) {
 	attributes := []string{}
+	groupTypes := []string{"posix", "memberof"}
+	var cnt int
 	var searchBase string
-	switch groupType{
-		case "posix":
-			searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
-		case "memberof":
-			searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
+	for cnt, groupType := range groupTypes {
+		switch groupType {
+			case "posix":
+				searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
+			case "memberof":
+				searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
+		}
+		_, cnt = c.search(searchBase, attributes)
+		if cnt > 0 {
+			return cnt, groupType
+		}
 	}
-	_, cnt := c.search(searchBase, attributes)
-	return cnt
+	return cnt, "nofound"
 }
 
 func (c *Connection) SearchUser(user string) int {
@@ -159,10 +166,16 @@ func (c *Connection) SearchUsers(baseInfo bool) int {
 	return cnt
 }
 
-func (c *Connection) SearchGroup(group string, groupType string, baseInfo bool) int {
-	attributes := []string{}
+func (c *Connection) SearchGroup(group string, baseInfo bool) int {
 	var searchBase string
 	var memberField string
+	var cnt int
+	var groupType string
+	attributes := []string{}
+	cnt, groupType = c.GetGroup(group)
+	if cnt == 0 {
+		return 0
+	}
 	switch groupType{
 		case "posix":
 			searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
@@ -172,9 +185,6 @@ func (c *Connection) SearchGroup(group string, groupType string, baseInfo bool) 
 			memberField = "member"
 	}
 	records, cnt := c.search(searchBase, attributes)
-	if cnt == 0 {
-		return 0
-	}
 	fmt.Printf("\n")
 	for idx, entry := range records.Entries {
 		if baseInfo {
@@ -186,8 +196,8 @@ func (c *Connection) SearchGroup(group string, groupType string, baseInfo bool) 
 					fmt.Sprintf("\tgidNumber: %s\n", entry.GetAttributeValue("gidNumber")))
 			}
 			for _, member := range entry.GetAttributeValues(memberField) {
-                utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %s\n", memberField, member))
-            }
+				utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %s\n", memberField, member))
+			}
 		} else {
 			utils.PrintColor(utils.Blue, fmt.Sprintf("\tcn: %s\n",
 				records.Entries[idx].GetAttributeValue("cn")))
@@ -197,6 +207,41 @@ func (c *Connection) SearchGroup(group string, groupType string, baseInfo bool) 
 		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
 	}
 	return cnt
+}
+
+func (c *Connection) SearchGroups() {
+	var searchBase string
+	var memberField string
+	attributes := []string{}
+	groupTypes := []string{"posix", "memberof"}
+	group := "*"
+	for _, groupType := range groupTypes {
+		switch groupType{
+			case "posix":
+				searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
+				memberField = "memberUid"
+			case "memberof":
+				searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
+				memberField = "member"
+		}
+		records, cnt := c.search(searchBase, attributes)
+		fmt.Printf("\n")
+		for idx, entry := range records.Entries {
+			utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
+			utils.PrintColor(utils.Blue, fmt.Sprintf("\tcn: %s\n",
+				records.Entries[idx].GetAttributeValue("cn")))
+			if groupType == "posix" {
+				utils.PrintColor(utils.Cyan,
+				fmt.Sprintf("\tgidNumber: %s\n", entry.GetAttributeValue("gidNumber")))
+			}
+			for _, member := range entry.GetAttributeValues(memberField) {
+				utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %s\n", memberField, member))
+			}
+			fmt.Printf("\n")
+		}
+		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
+		//fmt.Printf("\n")
+	}
 }
 
 func (c *Connection) userGroups() {

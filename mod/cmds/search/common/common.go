@@ -90,15 +90,16 @@ func User(conn *ldap.Connection, firstTime bool) {
 	return
 }
 
-// Need to be global since calling the functionb recursive
+// Need to be global since the function is called recursive
 var (
 	groupType string
+	enterData string
 )
 
 func Group(conn *ldap.Connection, firstTime bool) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("\tEnters the group name to be use: ")
-	enterData, _ := reader.ReadString('\n')
+	enterData, _ = reader.ReadString('\n')
 	enterData = strings.TrimSuffix(enterData, "\n")
 
 	if enterData == "" {
@@ -114,29 +115,23 @@ func Group(conn *ldap.Connection, firstTime bool) {
 	}
 
 	if firstTime {
-		fmt.Printf("\tGroup type [p]osix or [m]emberOf (default to posix) [p/n]: ")
-		enterType, _ := reader.ReadString('\n')
-		enterType = strings.TrimSuffix(enterType, "\n")
-		switch enterType {
-			case "p", "posix", "":	groupType = "posix"
-			case "m", "memberof":	groupType = "memberof"
-			default:				groupType = "posix"
-		}
-
 		fmt.Printf("\tUse wildcard (default to N)? [y/n]: ")
 		wildCard, _ := reader.ReadString('\n')
 		wildCard = strings.TrimSuffix(wildCard, "\n")
 		if utils.GetYN(wildCard, false) == true {
 			enterData = "*" + enterData + "*"
-			conn.SearchGroup(enterData, groupType, false)
+			// conn.SearchGroup(enterData, groupType, false)
+			conn.SearchGroup(enterData, false)
 			fmt.Printf("\n\tSelect the group name from the above list:\n")
 			Group(conn, false)
 		}
+	} else {
+		// from recursive
+		return
 	}
 
 	utils.PrintLine(utils.Purple)
-	fmt.Printf(" data %s type %s \n", enterData, groupType)
-	if cnt := conn.SearchGroup(enterData, groupType, true) ; cnt == 0 {
+	if cnt := conn.SearchGroup(enterData, true) ; cnt == 0 {
 		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tGroup %s was not found, aborting...\n", enterData))
 	}
 	return
