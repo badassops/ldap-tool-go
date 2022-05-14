@@ -9,11 +9,15 @@
 package initializer
 
 import (
+	"strconv"
+
 	"badassops.ldap/consts"
 	"badassops.ldap/vars"
+	"badassops.ldap/utils"
+	"badassops.ldap/configurator"
 )
 
-func Init() {
+func Init(conf *configurator.Config) {
 	// ldap fields that will be used
 	vars.Fields	= []string{"uid", "givenName", "sn", "cn", "displayName",
 		"gecos", "uidNumber", "gidNumber", "departmentNumber",
@@ -30,6 +34,7 @@ func Init() {
 	vars.User.Strings	= make(map[string]vars.StringRecord)
 	vars.User.Ints		= make(map[string]vars.IntRecord)
 	vars.User.Groups	= []string{}
+	vars.RecordFields	= make(map[int]vars.RecordField)
 
 	for _, name := range vars.Fields {
 		// NOTE shadowLastChange, shadowExpire is a string and will need to
@@ -44,4 +49,84 @@ func Init() {
 				vars.User.Strings[name] = vars.StringRecord{Value: "", Changed: false}
 		}
 	}
+
+	vars.RecordFields[0] =
+		vars.RecordField{ FieldName: "uid",
+			Prompt: "Enter userid (login name) to be use: ",
+			Default: "",
+			NoEmpty: true,
+			UseDefault: false,
+		}
+
+	vars.RecordFields[1] =
+		vars.RecordField{ FieldName: "givenName",
+			Prompt: "Enter First name: ",
+			Default: "",
+			NoEmpty: true,
+			UseDefault: false,
+		}
+
+	vars.RecordFields[2] =
+		vars.RecordField{ FieldName: "sn",
+			Prompt: "Enter Last name: ",
+			Default: "",
+			NoEmpty: true,
+			UseDefault: false,
+		}
+
+	vars.RecordFields[3] =
+		vars.RecordField{ FieldName: "mail",
+			Prompt: "Enter email: ",
+			Default: "",
+			NoEmpty: false,
+			UseDefault: true,
+		}
+
+	vars.RecordFields[4] =
+		vars.RecordField{ FieldName: "uidNumber",
+			Prompt: "Enter user's UID: ",
+			Default: "",
+			NoEmpty: false,
+			UseDefault: true,
+		}
+
+	vars.RecordFields[5] =
+		vars.RecordField{ FieldName: "departmentNumber",
+			Prompt: "Enter department: ",
+			Default: conf.DefaultValues.GroupName,
+			NoEmpty: false,
+			UseDefault: true,
+		}
+
+	vars.RecordFields[6] =
+		vars.RecordField{ FieldName: "loginShell",
+			Prompt: "Enter shell: ",
+			Default: conf.DefaultValues.Shell,
+			NoEmpty: false,
+			UseDefault: true,
+		}
+
+	vars.RecordFields[7] =
+		vars.RecordField{ FieldName: "userPassword",
+			Prompt: "Enter password: ",
+			Default: utils.GenerateRandom(true, 25),
+			NoEmpty: false,
+			UseDefault: true,
+		}
+
+	vars.RecordFields[8] =
+		vars.RecordField{ FieldName: "shadowMax",
+			Prompt: "Enter new max password age",
+			Default: strconv.Itoa(conf.DefaultValues.ShadowMax),
+			NoEmpty: false,
+			UseDefault: true,
+		}
+
+	vars.RecordFields[9] =
+		vars.RecordField{ FieldName: "sshPublicKey",
+			Prompt: "Enter SSH the Public Key",
+			Default: "none",
+			NoEmpty: false,
+			UseDefault: false,
+		}
 }

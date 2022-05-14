@@ -117,7 +117,7 @@ func (c *Config) InitializeArgs() {
 				utils.CreateColorMsg(consts.Green, "search"),
 				utils.CreateColorMsg(consts.Green, "group"),
 	)
-	searchAllCMD := fmt.Sprintf("\t\t     get all records users and groups commands:\n\t\t\t (user) %s, (group) %s\n",
+	searchAllCMD := fmt.Sprintf("\t\t     get all the users or groups records commands:\n\t\t\t (user) %s, (group) %s\n",
 				utils.CreateColorMsg(consts.Blue, "users"),
 				utils.CreateColorMsg(consts.Blue, "groups"),
 	)

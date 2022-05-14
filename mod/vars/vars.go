@@ -31,6 +31,14 @@ type UserRecord struct {
 	Groups	[]string
 }
 
+type RecordField struct {
+	FieldName	string
+	Default		string
+	Prompt		string
+	NoEmpty		bool
+	UseDefault	bool
+}
+
 type Log struct {
 	LogsDir			string
 	LogFile			string
@@ -59,6 +67,9 @@ var (
 
 	// the ldap fields
 	Fields	[]string
+
+	// for user record (create and modify)
+	RecordFields	map[int]RecordField
 
 	// we sets these under variable
 	LogsDir			= "/var/log/ldap-go"

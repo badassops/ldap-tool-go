@@ -113,14 +113,14 @@ func (c *Connection) GetUser(user string) int {
 
 func (c *Connection) GetGroup(group string) (int, string) {
 	attributes := []string{}
-	groupTypes := []string{"posix", "memberof"}
+	groupTypes := []string{"posix", "groupOfNames"}
 	var cnt int
 	var searchBase string
 	for cnt, groupType := range groupTypes {
 		switch groupType {
 			case "posix":
 				searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
-			case "memberof":
+			case "groupOfNames":
 				searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
 		}
 		_, cnt = c.search(searchBase, attributes)
@@ -180,7 +180,7 @@ func (c *Connection) SearchGroup(group string, baseInfo bool) int {
 		case "posix":
 			searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
 			memberField = "memberUid"
-		case "memberof":
+		case "groupOfNames":
 			searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
 			memberField = "member"
 	}
@@ -213,14 +213,14 @@ func (c *Connection) SearchGroups() {
 	var searchBase string
 	var memberField string
 	attributes := []string{}
-	groupTypes := []string{"posix", "memberof"}
+	groupTypes := []string{"posix", "groupOfNames"}
 	group := "*"
 	for _, groupType := range groupTypes {
 		switch groupType{
 			case "posix":
 				searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
 				memberField = "memberUid"
-			case "memberof":
+			case "groupOfNames":
 				searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", group)
 				memberField = "member"
 		}
@@ -237,10 +237,11 @@ func (c *Connection) SearchGroups() {
 			for _, member := range entry.GetAttributeValues(memberField) {
 				utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %s\n", memberField, member))
 			}
+			utils.PrintColor(utils.Yellow,
+					fmt.Sprintf("\tTotal members: %d \n", len(entry.GetAttributeValues(memberField))))
 			fmt.Printf("\n")
 		}
-		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal records: %d \n", cnt))
-		//fmt.Printf("\n")
+		utils.PrintColor(utils.Yellow, fmt.Sprintf("\n\tTotal %s groups: %d \n", groupType, cnt))
 	}
 }
 
@@ -254,6 +255,21 @@ func (c *Connection) userGroups() {
 			}
 		}
 	}
+}
+
+func (c *Connection) GetNextUID() int {
+	var highestUID = 0
+	var uidValue int
+	attributes := []string{"uidNumber"}
+	searchBase := fmt.Sprintf("(objectClass=person)")
+	records, _ := c.search(searchBase, attributes)
+	for _, entry := range records.Entries {
+			uidValue, _ = strconv.Atoi(entry.GetAttributeValue("uidNumber"))
+			if uidValue > highestUID {
+				highestUID = uidValue
+			}
+	}
+	return highestUID + 1
 }
 
 func (c *Connection) search(searchBase string, searchAttribute []string) (*ldapv3.SearchResult, int) {

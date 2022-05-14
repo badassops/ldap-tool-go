@@ -26,7 +26,7 @@ import (
 	searchGroup "badassops.ldap/cmds/search/group"
 
 	// the base functions ; create, modify and delete
-	//createUser "badassops.ldap/cmds/create/user"
+	createUser "badassops.ldap/cmds/create/user"
 	//modifyUser "badassops.ldap/cmds/modify/user"
 	//removeUser "badassops.ldap/cmds/remove/user"
 
@@ -41,12 +41,12 @@ func main() {
 	progName, _ := os.Executable()
 	info := filepath.Base(progName)
 
-	// initialize the user data dictionary
-	initializer.Init()
-
 	// get given parameters
 	config := configurator.Configurator()
 	config.InitializeArgs()
+
+	// initialize the user data dictionary
+	initializer.Init(config)
 
 	// these are hardcoded!
 	if ok := utils.IsUser("root"); !ok {
@@ -92,7 +92,7 @@ func main() {
 	conn := ldap.New(config)
 
 	switch config.Cmd {
-	//	case "create":	create.Create(conn)
+		case "create":	createUser.Create(conn)
 	//	case "modify":	// cmds.Modify(conn)
 	//	case "delete":	// cmds.Delete(conn)
 		case "search":	searchUser.User(conn)
