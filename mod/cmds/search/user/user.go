@@ -21,14 +21,14 @@ import (
 )
 
 func User(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "Search User")
+	utils.PrintHeader(consts.Purple, "Search User", false)
 	common.User(conn, true)
 	utils.PrintLine(utils.Purple)
 }
 
 func Users(conn *ldap.Connection) {
 	reader := bufio.NewReader(os.Stdin)
-	utils.PrintHeader(consts.Purple, "Search Users")
+	utils.PrintHeader(consts.Purple, "Search Users", false)
 	fmt.Printf("\tPrint full name and department (default to N)? [y/n]: ")
 	userInfo, _ := reader.ReadString('\n')
 	userInfo = strings.TrimSuffix(userInfo, "\n")

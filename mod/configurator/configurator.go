@@ -11,7 +11,6 @@ package configurator
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"badassops.ldap/consts"
 	"badassops.ldap/vars"
@@ -31,6 +30,7 @@ type (
 		ConfigFile		string
 		Env				string
 		Cmd				string
+		Debug			bool
 		// from the configuration file
 		DefaultValues	Defaults
 		LogValues		LogConfig
@@ -45,12 +45,14 @@ type (
 	Defaults struct {
 		LockFile		string
 		Shell			string
+		ValidShells		[]string
 		UserSearch		string
 		GroupSearch		string
-		ValidShells		[]string
 		GroupName		string
 		GroupId			int
+		ShadowMin		int
 		ShadowMax		int
+		ShadowAge		int
 		ShadowWarning	int
 		Wait			int
 		PassLenght		int
@@ -70,10 +72,9 @@ type (
 	}
 
 	Groups struct {
-		Admins		[]string
-		VPNs		[]string
-		Groups		[]string
-		GroupsMap	[]GroupMap
+		SpecialGroups	[]string
+		Groups			[]string
+		GroupsMap		[]GroupMap
 	}
 
 	Server struct {
@@ -113,19 +114,24 @@ func (c *Config) InitializeArgs() {
 				utils.CreateColorMsg(consts.Yellow, "modify"),
 				utils.CreateColorMsg(consts.Yellow, "delete"),
 	)
-	searchCmd := fmt.Sprintf("\t\t     search commands:\n\t\t\t (user) %s, (group) %s\n",
-				utils.CreateColorMsg(consts.Green, "search"),
-				utils.CreateColorMsg(consts.Green, "group"),
-	)
-	searchAllCMD := fmt.Sprintf("\t\t     get all the users or groups records commands:\n\t\t\t (user) %s, (group) %s\n",
-				utils.CreateColorMsg(consts.Blue, "users"),
-				utils.CreateColorMsg(consts.Blue, "groups"),
-	)
+	//searchCmd := fmt.Sprintf("\t\t     search commands:\n\t\t\t (user) %s, (group) %s\n",
+	//			utils.CreateColorMsg(consts.Green, "search"),
+	//			utils.CreateColorMsg(consts.Green, "group"),
+	//)
+	//searchAllCMD := fmt.Sprintf("\t\t     get all the users or groups records commands:\n\t\t\t (user) %s, (group) %s\n",
+	//			utils.CreateColorMsg(consts.Blue, "users"),
+	//			utils.CreateColorMsg(consts.Blue, "groups"),
+	//)
+	searchCmd := fmt.Sprintf("\t\t     search: (%s)ser, (%s)ll Users, (%s)roup and All Group(%s)",
+			utils.CreateColorMsg(consts.Green, "U"),
+			utils.CreateColorMsg(consts.Green, "A"),
+			utils.CreateColorMsg(consts.Green, "G"),
+			utils.CreateColorMsg(consts.Green, "S"))
 
-	HelpMessage := fmt.Sprintf("%s%s%s", baseCmd, searchCmd, searchAllCMD)
+	HelpMessage := fmt.Sprintf("%s%s", baseCmd, searchCmd)
 
 	errored := 0
-	allowedValues := []string{"create", "modify", "delete", "search", "group", "users", "groups"}
+	allowedValues := []string{"create", "modify", "delete", "search"}
 	parser := argparse.NewParser(vars.MyProgname, vars.MyDescription)
 	configFile := parser.String("c", "configFile",
 		&argparse.Options{
@@ -145,6 +151,13 @@ func (c *Config) InitializeArgs() {
 		Required:	false,
 		Help:		HelpMessage,
 	})
+
+	debug := parser.Flag("d", "debug",
+        &argparse.Options{
+        Required:   false,
+        Help:       "Enable debug",
+        Default:    false,
+    })
 
 	showInfo := parser.Flag("i", "info",
 		&argparse.Options{
@@ -202,6 +215,7 @@ func (c *Config) InitializeArgs() {
 	c.ConfigFile	= *configFile
 	c.Env			= *ldapEnv
 	c.Cmd			= *ldapCmd
+	c.Debug			= *debug
 }
 
 // function to add the values to the Config object from the configuration file
@@ -219,40 +233,4 @@ func (c *Config) InitializeConfigs() {
 	c.ValidEnvs			= configValues.Envs.ValidEnvs
 	c.GroupValues		= configValues.Groups
 	c.ServerValues		= configValues.Servers[c.Env]
-}
-
-// function to set the default values from the config file to the user record
-func (c *Config)InitializeUserRecord() {
-	// set to expire by default as today + ShadowMax
-	currExpired := strconv.FormatInt(utils.GetEpoch("days") + int64(c.DefaultValues.ShadowMax), 10)
-
-	vars.User.Strings["loginShell"] =
-		vars.StringRecord{
-			Value: c.DefaultValues.Shell,
-			Changed :false}
-
-	vars.User.Ints["gidNumber"] =
-		vars.IntRecord{
-			Value: c.DefaultValues.GroupId,
-			Changed :false}
-
-	vars.User.Strings["departmentNumber"] =
-		vars.StringRecord{
-			Value: c.DefaultValues.GroupName,
-			Changed: false}
-
-	vars.User.Ints["shadowMax"] =
-		vars.IntRecord{
-			Value: c.DefaultValues.ShadowMax,
-			Changed: false}
-
-	vars.User.Ints["shadowWarning"] =
-		vars.IntRecord{
-			Value: c.DefaultValues.ShadowWarning,
-			Changed: false}
-
-	vars.User.Strings["shadowExpire"] =
-		vars.StringRecord{
-			Value: currExpired,
-			Changed: false}
 }

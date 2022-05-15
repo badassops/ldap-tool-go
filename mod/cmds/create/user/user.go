@@ -19,23 +19,47 @@ import (
 	"badassops.ldap/vars"
 	"badassops.ldap/utils"
 	"badassops.ldap/ldap"
+	"badassops.ldap/logs"
 )
 
-func createRecord(conn *ldap.Connection) bool {
-	var fieldName string
+var (
+// not required for create a new user : cn, gidNumber, displayName, gecos
+// homeDirectory, shadowLastChange, shadowLastChange
+// groups is handled seperat;y
+
+	fields = []string{"uid", "givenName", "sn",
+		"uidNumber", "departmentNumber",
+		"mail", "loginShell", "userPassword",
+		"shadowWarning", "shadowMax",
+		"sshPublicKey"}
+
+	// construct base on FirstName + LastName
+	 userFullname = []string{"displayName", "gecos"}
+
+	// contruct base on Todat's epoch days with out adding shadownMax
+)
+
+func createUserRecord(conn *ldap.Connection) bool {
 	var email string
 	var nextUID int
 	var passWord string
 	var shells string
 	var departments string
+	var shadowMax int
+	var logRecord string
 
-	for idx :=0 ; idx < len(vars.RecordFields) ; idx++ {
-		fieldName = vars.RecordFields[idx].FieldName
-		switch vars.RecordFields[idx].FieldName {
+	for _, fieldName := range fields  {
+
+		// these will be valid once the field was filled since they depends
+		// on some of the fields value
+		switch fieldName {
+			case "uid":
+				utils.PrintColor(consts.Yellow,
+					fmt.Sprintf("\tThe userid / login name is case sensitive, it will be made all lowercase\n"))
 			case "mail":
 				email = fmt.Sprintf("%s.%s@%s",
-					strings.ToLower(conn.User.Strings["givenName"].Value),
-					strings.ToLower(conn.User.Strings["sn"].Value),
+					strings.ToLower(conn.User.Field["givenName"]),
+					strings.ToLower(conn.User.Field["sn"]),
 					conn.Config.ServerValues.EmailDomain)
 				utils.PrintColor(consts.Cyan, fmt.Sprintf("\tDefault email: %s\n", email))
 			case "uidNumber":
@@ -46,76 +70,139 @@ func createRecord(conn *ldap.Connection) bool {
 				for _ , value := range conn.Config.GroupValues.Groups {
 					departments = departments + " " + value
 				}
-				utils.PrintColor(consts.Yellow, fmt.Sprintf("\t\t** Default to: %s\n",
-					conn.Config.DefaultValues.GroupName))
-				utils.PrintColor(consts.Purple, fmt.Sprintf("\t\tValid departments: %s\n", departments))
+				utils.PrintColor(consts.Purple, fmt.Sprintf("\t\tValid departments:%s\n", departments))
 			case "loginShell":
 				for _ , value := range conn.Config.DefaultValues.ValidShells {
 					shells = shells + " " + value
 				}
-				utils.PrintColor(consts.Yellow, fmt.Sprintf("\t\t**Default to: %s\n",
-					conn.Config.DefaultValues.Shell))
-				utils.PrintColor(consts.Purple, fmt.Sprintf("\t\t**valid shells: %s\n", shells))
+				utils.PrintColor(consts.Purple, fmt.Sprintf("\t\tValid shells:%s\n", shells))
 			case "userPassword":
 				passWord = utils.GenerateRandom(
 					conn.Config.DefaultValues.PassComplex,
 					conn.Config.DefaultValues.PassLenght)
-				utils.PrintColor(consts.Yellow,
-					fmt.Sprintf("\t\tPress Enter to accept the given password\n\t\tSuggested password: %s\n", passWord))
-
+				utils.PrintColor(consts.Purple, "\t\tPress Enter to accept the suggested password\n")
+				utils.PrintColor(consts.Yellow, fmt.Sprintf("\tSuggested password: %s\n", passWord))
+			case "shadowMax":
+				utils.PrintColor(consts.Purple,
+					fmt.Sprintf("\t\tMin %d days and max %d days\n",
+						conn.Config.DefaultValues.ShadowMin,
+						conn.Config.DefaultValues.ShadowMax))
 		}
-		if vars.RecordFields[idx].Default != "" {
-			utils.PrintColor(consts.Cyan,
-				fmt.Sprintf("\tDefault to: %s\n", vars.RecordFields[idx].Default))
+		if vars.Template[fieldName].Value != "" {
+			utils.PrintColor(consts.Yellow,
+				fmt.Sprintf("\t ** Default to: %s **\n", vars.Template[fieldName].Value))
 		}
-		fmt.Printf("\t%s: ", vars.RecordFields[idx].Prompt)
+		if conn.Config.Debug {
+			fmt.Printf("\t(%s) - %s: ", fieldName, vars.Template[fieldName].Prompt)
+		} else {
+			fmt.Printf("\t(%s) - %s: ", fieldName, vars.Template[fieldName].Prompt)
+		}
 		reader := bufio.NewReader(os.Stdin)
-		enterData, _ := reader.ReadString('\n')
-		enterData = strings.ToLower(strings.TrimSuffix(enterData, "\n"))
+		valueEntered, _ := reader.ReadString('\n')
+		valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
 		switch fieldName {
 			case "uid":
-				cnt := conn.GetUser(enterData)
+				cnt := conn.CheckUser(valueEntered)
 				if cnt != 0 {
 					utils.PrintColor(consts.Red,
-						fmt.Sprintf("\tGiven user %s already exist, aborting...\n\n", enterData))
+						fmt.Sprintf("\tGiven user %s already exist, aborting...\n\n", valueEntered))
 					return false
 				}
-				utils.PrintColor(consts.Purple, fmt.Sprintf("\tUsing user: %s\n", enterData))
-			case "givenName", "sn": enterData = strings.Title(enterData)
+				utils.PrintColor(consts.Purple, fmt.Sprintf("\tUsing user: %s\n", valueEntered))
+			case "givenName", "sn": valueEntered = strings.Title(valueEntered)
 			case "mail":
-				if len(enterData) == 0 {
-					enterData = email
+				if len(valueEntered) == 0 {
+					valueEntered = email
 				}
 			case "uidNumber":
-				if len(enterData) == 0 {
-					enterData = strconv.Itoa(nextUID)
+				if len(valueEntered) == 0 {
+					valueEntered = strconv.Itoa(nextUID)
 				}
 			case "departmentNumber" :
-				if len(enterData) == 0 {
-					enterData = conn.Config.DefaultValues.GroupName
+				if len(valueEntered) == 0 {
+					valueEntered = conn.Config.DefaultValues.GroupName
+				}
+				for _, mapValues :=  range conn.Config.GroupValues.GroupsMap {
+					if mapValues.Name == valueEntered {
+						conn.User.Field["gidNumber"]  = strconv.Itoa(mapValues.Gid)
+					}
 				}
 			case "loginShell" :
-				if len(enterData) == 0 {
-					enterData = conn.Config.DefaultValues.Shell
+				if len(valueEntered) == 0 {
+					valueEntered = "/bin/" + conn.Config.DefaultValues.Shell
+				} else {
+					valueEntered = "/bin/" + valueEntered
 				}
 			case "userPassword" :
-				if len(enterData) == 0 {
-					enterData = passWord
+				if len(valueEntered) == 0 {
+					valueEntered = passWord
 				}
-		}
-		if len(enterData) == 0 && vars.RecordFields[idx].NoEmpty == true {
+			case "shadowMax":
+				if len(valueEntered) == 0 {
+					valueEntered = strconv.Itoa(conn.Config.DefaultValues.ShadowMax)
+				} else {
+					shadowMax, _ = strconv.Atoi(valueEntered)
+					if shadowMax < conn.Config.DefaultValues.ShadowMin ||
+						shadowMax > conn.Config.DefaultValues.ShadowMax {
+						utils.PrintColor(consts.Yellow,
+							fmt.Sprintf("\tGiven value %d, is out or range, is set to %d\n",
+								shadowMax, conn.Config.DefaultValues.ShadowAge))
+						valueEntered = strconv.Itoa(conn.Config.DefaultValues.ShadowAge)
+					}
+				}
+			case "shadowWarning":
+				if len(valueEntered) == 0 {
+					valueEntered = strconv.Itoa(conn.Config.DefaultValues.ShadowWarning)
+				}
+        }
+		if len(valueEntered) == 0 && vars.Template[fieldName].NoEmpty == true {
 				utils.PrintColor(consts.Red, "\tNo value was entered aborting...\n\n")
 				return false
 		}
 
-		conn.User.Strings[fieldName] = vars.StringRecord{Value: enterData}
-		// fmt.Printf("<uid %d fieldName %s>\n", nextUID, fieldName)
-		fmt.Printf("<%v>\n", conn.User.Strings[fieldName].Value)
+		// update the user record so it can be submitted
+		conn.User.Field[fieldName] = valueEntered
+	}
+	// setup the groups for the user
+	utils.PrintColor(consts.Purple, fmt.Sprintf("\t\tSpecial Groups: %v\n", conn.Config.GroupValues.SpecialGroups))
+	utils.PrintColor(consts.Purple, fmt.Sprintf("\t\tEnter 'add' or press enter to skip\n"))
+	for _, userGroup := range conn.Config.GroupValues.SpecialGroups {
+		utils.PrintColor(consts.Yellow, fmt.Sprintf("\tGroup %s (add)? : ", userGroup))
+		reader := bufio.NewReader(os.Stdin)
+		valueEntered, _ := reader.ReadString('\n')
+		valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
+		if valueEntered == "add" {
+			conn.User.Groups = append(conn.User.Groups , userGroup)
+		}
+	}
+	// this are always firstName lastName
+	for _, userFullnameFields := range userFullname {
+		conn.User.Field[userFullnameFields] = conn.User.Field["givenName"] + " " + conn.User.Field["sn"]
+	}
+	// this is always /home + userlogin
+	conn.User.Field["homeDirectory"] = "/home/" + conn.User.Field["uid"]
+	conn.User.Field["shadowLastChange"] = vars.Template["shadowLastChange"].Value
+	if conn.Config.Debug {
+		logs.Log(fmt.Sprintf("Server : %s", conn.Config.ServerValues.Server), "DEBUG")
+		logs.Log(fmt.Sprintf("___ BaseDN      : %s", conn.Config.ServerValues.BaseDN), "DEBUG")
+		logs.Log(fmt.Sprintf("___ Admin       : %s", conn.Config.ServerValues.Admin), "DEBUG")
+		logs.Log(fmt.Sprintf("___ AdminPass   : %s", conn.Config.ServerValues.AdminPass), "DEBUG")
+		logs.Log(fmt.Sprintf("___ UserDN      : %s", conn.Config.ServerValues.UserDN), "DEBUG")
+		logs.Log(fmt.Sprintf("___ GroupDN     : %s", conn.Config.ServerValues.GroupDN), "DEBUG")
+		logs.Log(fmt.Sprintf("___ EmailDomain : %s", conn.Config.ServerValues.EmailDomain), "DEBUG")
+		logs.Log(fmt.Sprintf("___ TLS         : %t", conn.Config.ServerValues.TLS), "DEBUG")
+		logs.Log(fmt.Sprintf("___ isEnabled   : %t", conn.Config.ServerValues.Enabled), "DEBUG")
+		for recordName, recordValue := range conn.User.Field {
+			logRecord = fmt.Sprintf(" Field Name: %s - Field Value: %s", recordName,  recordValue)
+			logs.Log(logRecord, "DEBUG")
+		}
+		logs.Log(fmt.Sprintf("User's Special Group: %v", conn.User.Groups), "DEBUG")
 	}
 	return true
 }
 
 func Create(conn *ldap.Connection)  {
-	utils.PrintHeader(consts.Purple, "create user")
-	createRecord(conn)
+	utils.PrintHeader(consts.Purple, "create user", true)
+	createUserRecord(conn)
+	//createRecord(conn)
 }

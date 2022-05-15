@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"time"
 
+	"crypto/tls"
+
 	"badassops.ldap/vars"
 	"badassops.ldap/utils"
 	"badassops.ldap/configurator"
@@ -52,13 +54,13 @@ func New(config *configurator.Config) *Connection {
 	}
 
 	// now we need to reconnect with TLS
-	// if config.TLS {
-	// 	err := ServerConn.StartTLS(&tls.Config{InsecureSkipVerify: true})
-	// 	if err != nil {
-	//		utils.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
-	// 		utils.ExitIfError(err)
-	// 	}
-	// }
+	if config.ServerValues.TLS {
+		err := ServerConn.StartTLS(&tls.Config{InsecureSkipVerify: true})
+		if err != nil {
+			utils.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
+			utils.ExitIfError(err)
+		}
+	}
 
 	// setup control
 	controls := []ldapv3.Control{}
@@ -95,19 +97,19 @@ func (c *Connection) GetUser(user string) int {
 	searchBase :=fmt.Sprintf("(&(objectClass=inetOrgPerson)(uid=%s))", user)
 	records, cnt := c.search(searchBase, attributes)
 	if cnt == 1 {
-		c.User.DN = records.Entries[0].DN
-		for _, field := range vars.Fields{
-			switch field {
-				case "shadowWarning", "shadowMax", "uidNumber", "gidNumber":
-					value, _ := strconv.Atoi(records.Entries[0].GetAttributeValue(field))
-					c.User.Ints[field] = vars.IntRecord{Value: value  , Changed: false}
-				default:
-					c.User.Strings[field] =
-						vars.StringRecord{Value: records.Entries[0].GetAttributeValue(field) , Changed: false}
-			}
+		c.User.Field["dn"] = records.Entries[0].DN
+		for _, field := range vars.Fields {
+			c.User.Field[field] = records.Entries[0].GetAttributeValue(field)
 		}
-		c.userGroups()
 	}
+	c.userGroups()
+	return cnt
+}
+
+func (c *Connection) CheckUser(user string) int {
+	attributes := []string{}
+	searchBase :=fmt.Sprintf("(&(objectClass=inetOrgPerson)(uid=%s))", user)
+	_, cnt := c.search(searchBase, attributes)
 	return cnt
 }
 
@@ -138,8 +140,10 @@ func (c *Connection) SearchUser(user string) int {
 	if cnt == 0 {
 		return 0
 	}
-	for _, entry := range records.Entries {
-		utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
+	for idx, _ := range records.Entries {
+		// utils.PrintColor(utils.Blue, fmt.Sprintf("\tdn: %s\n", entry.DN))
+		utils.PrintColor(utils.Blue, fmt.Sprintf("\tuid: %s\n",
+			records.Entries[idx].GetAttributeValue("uid")))
 	}
 	return cnt
 }
@@ -246,7 +250,7 @@ func (c *Connection) SearchGroups() {
 }
 
 func (c *Connection) userGroups() {
-	searchBase := fmt.Sprintf("(&(objectClass=groupOfNames)(member=%s))", c.User.DN)
+	searchBase := fmt.Sprintf("(&(objectClass=groupOfNames)(member=%s))", c.User.Field["dn"])
 	records, cnt := c.search(searchBase, []string{"dn"})
 	if cnt > 0 {
 		for _, entry := range records.Entries {

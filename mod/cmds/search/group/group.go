@@ -19,13 +19,13 @@ import (
 
 
 func Group(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "Search Group")
+	utils.PrintHeader(consts.Purple, "Search Group", false)
 	common.Group(conn, true)
     utils.PrintLine(utils.Purple)
 }
 
 func Groups(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "Search Groups")
+	utils.PrintHeader(consts.Purple, "Search Groups", false)
 	utils.PrintColor(consts.Purple, fmt.Sprintf("\n\t__________ all group and the members __________\n"))
 	conn.SearchGroups()
     utils.PrintLine(utils.Purple)

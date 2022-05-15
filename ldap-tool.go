@@ -9,9 +9,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"badassops.ldap/consts"
 	"badassops.ldap/utils"
@@ -28,12 +30,12 @@ import (
 	// the base functions ; create, modify and delete
 	createUser "badassops.ldap/cmds/create/user"
 	//modifyUser "badassops.ldap/cmds/modify/user"
-	//removeUser "badassops.ldap/cmds/remove/user"
+	//deleteUser "badassops.ldap/cmds/delete/user"
 
 	// for future version
 	//createGroup "badassops.ldap/cmds/create/group"
 	//modifyGroup "badassops.ldap/cmds/modify/group"
-	//removeGroup "badassops.ldap/cmds/remove/group"
+	//deleteGroup "badassops.ldap/cmds/delete/group"
 )
 
 func main() {
@@ -44,6 +46,9 @@ func main() {
 	// get given parameters
 	config := configurator.Configurator()
 	config.InitializeArgs()
+
+	// get the configuration
+	config.InitializeConfigs()
 
 	// initialize the user data dictionary
 	initializer.Init(config)
@@ -57,12 +62,6 @@ func main() {
 		utils.PrintColor(consts.Red, "Aborting..\n")
 		os.Exit(0)
 	}
-
-	// get the configuration
-	config.InitializeConfigs()
-
-	// initialize the user record
-	config.InitializeUserRecord()
 
 	// only if the given server was enabled
 	if config.ServerValues.Enabled == false {
@@ -91,16 +90,86 @@ func main() {
 	// add a new ldap record
 	conn := ldap.New(config)
 
+	reader := bufio.NewReader(os.Stdin)
 	switch config.Cmd {
-		case "create":	createUser.Create(conn)
-	//	case "modify":	// cmds.Modify(conn)
-	//	case "delete":	// cmds.Delete(conn)
-		case "search":	searchUser.User(conn)
-		case "users":	searchUser.Users(conn)
-		case "group":	searchGroup.Group(conn)
-		case "groups":	searchGroup.Groups(conn)
+		case "search":
+			utils.PrintHeader(consts.Purple, "Search", true)
+			fmt.Printf("\tSearch (%s)ser, (%s)ll Users, (%s)roup, all Group(%s) or (%s)uit?\n\t(default to User)? choice: ",
+				utils.CreateColorMsg(consts.Green, "U"),
+				utils.CreateColorMsg(consts.Green, "A"),
+				utils.CreateColorMsg(consts.Green, "G"),
+				utils.CreateColorMsg(consts.Green, "S"),
+				utils.CreateColorMsg(consts.Red, "Q"))
+
+			choice, _ := reader.ReadString('\n')
+			choice = strings.TrimSuffix(choice, "\n")
+			switch strings.ToLower(choice) {
+				case "user", "u":	searchUser.User(conn)
+				case "users", "a":	searchUser.Users(conn)
+				case "group", "g":	searchGroup.Group(conn)
+				case "groups", "s":	searchGroup.Groups(conn)
+				case "quit", "q":
+						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
+						break
+				default: searchUser.User(conn)
+			}
+
+		case "create":
+			utils.PrintHeader(consts.Purple, "Create", true)
+			fmt.Printf("\tCreate (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
+				utils.CreateColorMsg(consts.Green, "U"),
+				utils.CreateColorMsg(consts.Green, "G"),
+				utils.CreateColorMsg(consts.Red, "Q"))
+
+			choice, _ := reader.ReadString('\n')
+			choice = strings.TrimSuffix(choice, "\n")
+			switch strings.ToLower(choice) {
+				case "user", "u":	createUser.Create(conn)
+				case "group", "g":	utils.PrintColor(consts.Red, "\tComing Soon\n")
+				case "quit", "q":
+						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
+						break
+				default: createUser.Create(conn)
+		}
+
+		case "modify":
+			utils.PrintHeader(consts.Purple, "Modify", true)
+			fmt.Printf("\tModify (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
+				utils.CreateColorMsg(consts.Green, "U"),
+				utils.CreateColorMsg(consts.Green, "G"),
+				utils.CreateColorMsg(consts.Red, "Q"))
+
+			choice, _ := reader.ReadString('\n')
+			choice = strings.TrimSuffix(choice, "\n")
+			switch strings.ToLower(choice) {
+				case "user", "u":	utils.PrintColor(consts.Red, "\tComing Soon\n")
+				case "group", "g":	utils.PrintColor(consts.Red, "\tComing Soon\n")
+				case "quit", "q":
+						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
+						break
+				default: utils.PrintColor(consts.Red, "\tComing Soon\n")
+		}
+
+		case "delete":
+			utils.PrintHeader(consts.Purple, "Delete", true)
+			fmt.Printf("\tDelete (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
+				utils.CreateColorMsg(consts.Green, "U"),
+				utils.CreateColorMsg(consts.Green, "G"),
+				utils.CreateColorMsg(consts.Red, "Q"))
+
+			choice, _ := reader.ReadString('\n')
+			choice = strings.TrimSuffix(choice, "\n")
+			switch strings.ToLower(choice) {
+				case "user", "u":	utils.PrintColor(consts.Red, "\tComing Soon\n")
+				case "group", "g":	utils.PrintColor(consts.Red, "\tComing Soon\n")
+				case "quit", "q":
+						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
+						break
+				default: utils.PrintColor(consts.Red, "\tComing Soon\n")
+		}
 	}
 
 	utils.ReleaseIT(config.DefaultValues.LockFile, LockPid)
+	logs.Log("System Normal shutdown", "INFO")
 	os.Exit(0)
 }

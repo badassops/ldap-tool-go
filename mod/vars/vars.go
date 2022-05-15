@@ -14,29 +14,17 @@ import (
 	"time"
 )
 
-type StringRecord struct {
-	Value	string
-	Changed	bool
-}
-
-type IntRecord struct {
-	Value	int
-	Changed	bool
+type Record struct {
+	Value		string // default value from the configuration
+	Prompt		string
+	NoEmpty		bool
+	UseValue	bool
+	Changed		bool
 }
 
 type UserRecord struct {
-	DN		string
-	Strings	map[string]StringRecord
-	Ints	map[string]IntRecord
-	Groups	[]string
-}
-
-type RecordField struct {
-	FieldName	string
-	Default		string
-	Prompt		string
-	NoEmpty		bool
-	UseDefault	bool
+	Field		map[string]string
+	Groups		[]string
 }
 
 type Log struct {
@@ -59,17 +47,17 @@ var (
 		MyProgname, MyVersion, myCopyright, myLicense, myAuthor, myEmail)
 	MyDescription = "Simple script to manage LDAP users"
 
-	// users ldap record
-	User	UserRecord
-
 	// ldap logs
-	Logs	Log
+	Logs		Log
 
 	// the ldap fields
-	Fields	[]string
+	Fields		[]string
 
-	// for user record (create and modify)
-	RecordFields	map[int]RecordField
+	// user record in the ldap server
+	User		UserRecord
+
+	// ldap record to be use for create or modify a user
+	Template	map[string]Record
 
 	// we sets these under variable
 	LogsDir			= "/var/log/ldap-go"

@@ -30,20 +30,15 @@ var (
 
 func printUserRecord(conn *ldap.Connection, userName string) {
 	// the values are in days so we need to multiple by 86400
-	value, _ := strconv.ParseInt(conn.User.Strings["shadowLastChange"].Value, 10, 64)
+	value, _ := strconv.ParseInt(conn.User.Field["shadowLastChange"], 10, 64)
 	 _, passChanged := utils.GetReadableEpoch(value * 86400)
 
-	value, _ = strconv.ParseInt(conn.User.Strings["shadowExpire"].Value, 10, 64)
+	value, _ = strconv.ParseInt(conn.User.Field["shadowExpire"], 10, 64)
 	_, passExpired := utils.GetReadableEpoch(value * 86400)
 
 	utils.PrintLine(utils.Purple)
 	for _, field := range displayFields {
-		switch field {
-			case "uidNumber", "gidNumber", "shadowWarning", "shadowMax":
-				utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %v\n", field, conn.User.Ints[field].Value))
-			default:
-				utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %s\n", field, conn.User.Strings[field].Value))
-		}
+		utils.PrintColor(utils.Cyan, fmt.Sprintf("\t%s: %s\n", field, conn.User.Field[field]))
 	}
 
 	utils.PrintLine(utils.Purple)
