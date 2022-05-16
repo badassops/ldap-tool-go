@@ -465,12 +465,13 @@ func (c *Connection) GetGroupType(groupName string) (string, bool) {
 	return "errored", false
 }
 
-func (c *Connection) ModifyGroup(groupName string, addUsers []string, delUsers []string) bool {
+func (c *Connection) ModifyGroup(groupName string, addUsers []string, delUsers []string) (bool, int) {
 	var memberField string
+	var changes int = 0
 	groupType, state := c.GetGroupType(groupName)
 	if !state {
 		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tUnable to determinated the group type, aboring...\n"))
-		return false
+		return false, changes
 	}
 	groupCN := fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
 	modifyMember := ldapv3.NewModifyRequest(groupCN)
@@ -483,6 +484,7 @@ func (c *Connection) ModifyGroup(groupName string, addUsers []string, delUsers [
 			memberField = "memberUid"
 		}
 		modifyMember.Add(memberField, []string{addUser})
+		changes++
 	}
 	for _, delUser := range delUsers {
 		if groupType == "groupOfNames" {
@@ -493,6 +495,7 @@ func (c *Connection) ModifyGroup(groupName string, addUsers []string, delUsers [
 			memberField = "memberUid"
 		}
 		modifyMember.Delete(memberField, []string{delUser})
+		changes++
 	}
 
 	err := c.Conn.Modify(modifyMember)
@@ -500,7 +503,7 @@ func (c *Connection) ModifyGroup(groupName string, addUsers []string, delUsers [
 		msg := fmt.Sprintf("Error modifying the group group %s, Error: %s",
 				groupName, err.Error())
 		logs.Log(msg, "ERROR")
-		return false
+		return false, 0
 	}
-	return true
+	return true, changes
 }

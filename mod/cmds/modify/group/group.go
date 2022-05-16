@@ -61,12 +61,17 @@ func Modify(conn *ldap.Connection) {
 			break
 		}
 	}
-	if !conn.ModifyGroup(selectedGroup, addList, delList) {
+	if state, cnt := conn.ModifyGroup(selectedGroup, addList, delList); state == false {
 		utils.PrintColor(consts.Red,
 			fmt.Sprintf("\n\tFailed to modify the group %s\n", selectedGroup))
 	} else {
-		utils.PrintColor(consts.Green,
-			fmt.Sprintf("\n\tGiven group %s has been modified\n", selectedGroup))
+		if cnt > 1 {
+			utils.PrintColor(consts.Green,
+				fmt.Sprintf("\n\tGiven group %s has been modified\n", selectedGroup))
+		} else {
+			utils.PrintColor(consts.Blue,
+				fmt.Sprintf("\n\tGiven group %s was not modified\n", selectedGroup))
+		}
 	}
 	utils.PrintLine(utils.Purple)
 	return
