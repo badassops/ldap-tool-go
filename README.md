@@ -73,7 +73,19 @@ go run ldap-tools.go -c <your-config-file> -m <mode>
 ```
 
 ### TODO
- per request 👻
+ - redis for delete of user only
+	- start : add key in redis
+	- end   : delete key in redis
+	- safe guard : run a crontab that will key(s)
+		then is for evry key, delete the user in ldap
+		so in case one loses conneciom, we have a safe guard
+		that the user will be deleted
+	- if redis it not available write the key on disk
+
+#### IDEA:
+ - an user delete steps, change password and then delete?
+
+ and per request 👻
 
 ### The End
 Your friendly BOFH 🦄 😈          

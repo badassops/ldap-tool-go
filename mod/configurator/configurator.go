@@ -37,6 +37,7 @@ type (
 		ValidEnvs		[]string
 		GroupValues		Groups
 		ServerValues	Server
+		RedisValues		Redis
 		// passed by main
 		LockPID			int
 	}
@@ -89,12 +90,20 @@ type (
 		Enabled			bool
 	}
 
+	Redis struct {
+		Server		string
+		Port		int
+		Enabled		bool
+		TmpFile		string
+	}
+
 	tomlConfig struct {
 		Defaults	Defaults			`toml:"defaults"`
 		LogConfig	LogConfig			`toml:"logconfig"`
 		Envs		Envs				`toml:"envs"`
 		Groups		Groups				`toml:"groups"`
 		Servers		map[string]Server	`toml:"servers"`
+		Redis		Redis				`toml:"redis"`
 	}
 )
 
@@ -114,14 +123,6 @@ func (c *Config) InitializeArgs() {
 				utils.CreateColorMsg(consts.Yellow, "modify"),
 				utils.CreateColorMsg(consts.Yellow, "delete"),
 	)
-	//searchCmd := fmt.Sprintf("\t\t     search commands:\n\t\t\t (user) %s, (group) %s\n",
-	//			utils.CreateColorMsg(consts.Green, "search"),
-	//			utils.CreateColorMsg(consts.Green, "group"),
-	//)
-	//searchAllCMD := fmt.Sprintf("\t\t     get all the users or groups records commands:\n\t\t\t (user) %s, (group) %s\n",
-	//			utils.CreateColorMsg(consts.Blue, "users"),
-	//			utils.CreateColorMsg(consts.Blue, "groups"),
-	//)
 	searchCmd := fmt.Sprintf("\t\t     search: (%s)ser, (%s)ll Users, (%s)roup and All Group(%s)",
 			utils.CreateColorMsg(consts.Green, "U"),
 			utils.CreateColorMsg(consts.Green, "A"),
@@ -233,4 +234,5 @@ func (c *Config) InitializeConfigs() {
 	c.ValidEnvs			= configValues.Envs.ValidEnvs
 	c.GroupValues		= configValues.Groups
 	c.ServerValues		= configValues.Servers[c.Env]
+	c.RedisValues		= configValues.Redis
 }

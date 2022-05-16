@@ -29,12 +29,10 @@ import (
 
 	// the base functions ; create, modify and delete
 	createUser "badassops.ldap/cmds/create/user"
-	//modifyUser "badassops.ldap/cmds/modify/user"
-	deleteUser "badassops.ldap/cmds/delete/user"
-
-	// for future version
 	createGroup "badassops.ldap/cmds/create/group"
-	//modifyGroup "badassops.ldap/cmds/modify/group"
+	modifyUser "badassops.ldap/cmds/modify/user"
+	modifyGroup "badassops.ldap/cmds/modify/group"
+	deleteUser "badassops.ldap/cmds/delete/user"
 	deleteGroup "badassops.ldap/cmds/delete/group"
 )
 
@@ -142,12 +140,12 @@ func main() {
 			choice, _ := reader.ReadString('\n')
 			choice = strings.TrimSuffix(choice, "\n")
 			switch strings.ToLower(choice) {
-				case "user", "u":	utils.PrintColor(consts.Red, "\tComing Soon\n")
-				case "group", "g":	utils.PrintColor(consts.Red, "\tComing Soon\n")
+				case "user", "u":	modifyUser.Modify(conn)
+				case "group", "g":	modifyGroup.Modify(conn)
 				case "quit", "q":
 						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
 						break
-				default: utils.PrintColor(consts.Red, "\tComing Soon\n")
+				default: modifyUser.Modify(conn)
 		}
 
 		case "delete":
