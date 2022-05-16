@@ -6,6 +6,7 @@ require (
 	badassops.ldap/configurator v0.0.0-00010101000000-000000000000
 	badassops.ldap/consts v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/create/user v0.0.0-00010101000000-000000000000
+	badassops.ldap/cmds/delete/user v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/search/group v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/search/user v0.0.0-00010101000000-000000000000
 	badassops.ldap/initializer v0.0.0-00010101000000-000000000000
@@ -31,6 +32,8 @@ replace badassops.ldap/configurator => ./mod/configurator
 replace badassops.ldap/consts => ./mod/consts
 
 replace badassops.ldap/cmds/create/user => ./mod/cmds/create/user
+
+replace badassops.ldap/cmds/delete/user => ./mod/cmds/delete/user
 
 replace badassops.ldap/cmds/search/common => ./mod/cmds/search/common
 

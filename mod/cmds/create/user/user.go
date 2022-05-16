@@ -34,9 +34,7 @@ var (
 		"sshPublicKey"}
 
 	// construct base on FirstName + LastName
-	 userFullname = []string{"displayName", "gecos"}
-
-	// contruct base on Todat's epoch days with out adding shadownMax
+	 userFullname = []string{"cn", "displayName", "gecos"}
 )
 
 func createUserRecord(conn *ldap.Connection) bool {
@@ -95,7 +93,7 @@ func createUserRecord(conn *ldap.Connection) bool {
 		if conn.Config.Debug {
 			fmt.Printf("\t(%s) - %s: ", fieldName, vars.Template[fieldName].Prompt)
 		} else {
-			fmt.Printf("\t(%s) - %s: ", fieldName, vars.Template[fieldName].Prompt)
+			fmt.Printf("\t%s: ", vars.Template[fieldName].Prompt)
 		}
 		reader := bufio.NewReader(os.Stdin)
 		valueEntered, _ := reader.ReadString('\n')
@@ -105,7 +103,7 @@ func createUserRecord(conn *ldap.Connection) bool {
 				cnt := conn.CheckUser(valueEntered)
 				if cnt != 0 {
 					utils.PrintColor(consts.Red,
-						fmt.Sprintf("\tGiven user %s already exist, aborting...\n\n", valueEntered))
+						fmt.Sprintf("\n\tGiven user %s already exist, aborting...\n\n", valueEntered))
 					return false
 				}
 				utils.PrintColor(consts.Purple, fmt.Sprintf("\tUsing user: %s\n", valueEntered))
@@ -121,10 +119,12 @@ func createUserRecord(conn *ldap.Connection) bool {
 			case "departmentNumber" :
 				if len(valueEntered) == 0 {
 					valueEntered = conn.Config.DefaultValues.GroupName
-				}
-				for _, mapValues :=  range conn.Config.GroupValues.GroupsMap {
-					if mapValues.Name == valueEntered {
-						conn.User.Field["gidNumber"]  = strconv.Itoa(mapValues.Gid)
+					conn.User.Field["gidNumber"] = strconv.Itoa(conn.Config.DefaultValues.GroupId)
+				} else {
+					for _, mapValues :=  range conn.Config.GroupValues.GroupsMap {
+						if mapValues.Name == valueEntered {
+							conn.User.Field["gidNumber"]  = strconv.Itoa(mapValues.Gid)
+							}
 					}
 				}
 			case "loginShell" :
@@ -154,6 +154,10 @@ func createUserRecord(conn *ldap.Connection) bool {
 				if len(valueEntered) == 0 {
 					valueEntered = strconv.Itoa(conn.Config.DefaultValues.ShadowWarning)
 				}
+			default:
+				if len(valueEntered) == 0 {
+					valueEntered = vars.Template[fieldName].Value
+				}
         }
 		if len(valueEntered) == 0 && vars.Template[fieldName].NoEmpty == true {
 				utils.PrintColor(consts.Red, "\tNo value was entered aborting...\n\n")
@@ -179,9 +183,14 @@ func createUserRecord(conn *ldap.Connection) bool {
 	for _, userFullnameFields := range userFullname {
 		conn.User.Field[userFullnameFields] = conn.User.Field["givenName"] + " " + conn.User.Field["sn"]
 	}
+	// dn is create base on given uid and user DN
+	conn.User.Field["dn"] = fmt.Sprintf("uid=%s,%s", conn.User.Field["uid"], conn.Config.ServerValues.UserDN)
 	// this is always /home + userlogin
 	conn.User.Field["homeDirectory"] = "/home/" + conn.User.Field["uid"]
+	// initialized to be today's epoch days
+	conn.User.Field["shadowExpire"] = vars.Template["shadowExpire"].Value
 	conn.User.Field["shadowLastChange"] = vars.Template["shadowLastChange"].Value
+	// debug
 	if conn.Config.Debug {
 		logs.Log(fmt.Sprintf("Server : %s", conn.Config.ServerValues.Server), "DEBUG")
 		logs.Log(fmt.Sprintf("___ BaseDN      : %s", conn.Config.ServerValues.BaseDN), "DEBUG")
@@ -201,8 +210,17 @@ func createUserRecord(conn *ldap.Connection) bool {
 	return true
 }
 
-func Create(conn *ldap.Connection)  {
+func Create(conn *ldap.Connection) {
 	utils.PrintHeader(consts.Purple, "create user", true)
-	createUserRecord(conn)
-	//createRecord(conn)
+	if createUserRecord(conn) {
+		utils.PrintLine(utils.Purple)
+		if !conn.AddRecord() {
+			utils.PrintColor(consts.Red,
+				fmt.Sprintf("\n\tFailed adding the user %s, check the log file\n", conn.User.Field["uid"]))
+		} else{
+			utils.PrintColor(consts.Green, fmt.Sprintf("\n\tUser %s added successfully\n", conn.User.Field["uid"]))
+		}
+	}
+	utils.PrintLine(utils.Purple)
+	return
 }

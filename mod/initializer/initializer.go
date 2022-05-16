@@ -130,7 +130,7 @@ func Init(conf *configurator.Config) {
 	vars.Template["sshPublicKey"] =
 		vars.Record{
 			Prompt: "Enter SSH the Public Key",
-			Value: "none",
+			Value: "is missing",
 			NoEmpty: false,
 			UseValue: false,
 			Changed: false,

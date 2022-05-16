@@ -19,6 +19,7 @@ import (
 	"badassops.ldap/vars"
 	"badassops.ldap/utils"
 	"badassops.ldap/configurator"
+	"badassops.ldap/logs"
 
 	ldapv3 "gopkg.in/ldap.v2"
 )
@@ -31,6 +32,15 @@ type (
 		LockFile	string
 		LockPid		int
 	}
+)
+
+var (
+	// these are the objectClasses needed for a user record
+	userObjectClasses = []string{"top", "person",
+		"organizationalPerson", "inetOrgPerson",
+		"posixAccount", "shadowAccount", "ldapPublicKey"}
+
+	groupObjectClasses = []string{"groupOfNames"}
 )
 
 // function to initialize a user record
@@ -118,7 +128,7 @@ func (c *Connection) GetGroup(group string) (int, string) {
 	groupTypes := []string{"posix", "groupOfNames"}
 	var cnt int
 	var searchBase string
-	for cnt, groupType := range groupTypes {
+	for _, groupType := range groupTypes {
 		switch groupType {
 			case "posix":
 				searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", group)
@@ -295,4 +305,114 @@ func (c *Connection) search(searchBase string, searchAttribute []string) (*ldapv
 		return sr, len(sr.Entries)
 	}
 	return sr, 0
+}
+
+func (c *Connection) AddUser() bool {
+	// adding a user record
+	newUserRecord := ldapv3.NewAddRequest(c.User.Field["dn"])
+	newUserRecord.Attribute("objectClass" ,userObjectClasses)
+	for _, field := range vars.Fields {
+		if field != "groups" {
+			newUserRecord.Attribute(field, []string{c.User.Field[field]})
+		}
+	}
+	err := c.Conn.Add(newUserRecord)
+	if err != nil {
+		msg := fmt.Sprintf("Error adding user %s, Error: %s",
+				c.User.Field["uid"], err.Error())
+		logs.Log(msg, "ERROR")
+		return false
+	}
+	msg := fmt.Sprintf("User %s has been added", c.User.Field["uid"])
+	logs.Log(msg, "INFO")
+	// once the record is create we need to hash the password
+	passwordModifyRequest := ldapv3.NewPasswordModifyRequest(
+		c.User.Field["dn"],
+		c.User.Field["userPassword"],
+		c.User.Field["userPassword"])
+	_, err = c.Conn.PasswordModify(passwordModifyRequest)
+	if err != nil {
+		msg := fmt.Sprintf("Error set the password for the user %s, Error: %s",
+				c.User.Field["uid"], err.Error())
+		logs.Log(msg, "ERROR")
+		return false
+	}
+	return true
+}
+
+func (c *Connection) AddMember() bool {
+	// adding the user to the groups
+	var errorCnt int = 0
+	for _, group := range c.User.Groups {
+		groupCN := fmt.Sprintf("cn=%s,%s", group, c.Config.ServerValues.GroupDN)
+		addNewMember := ldapv3.NewModifyRequest(groupCN)
+		addNewMember.Add("member", []string{c.User.Field["dn"]})
+		err := c.Conn.Modify(addNewMember)
+		if err != nil {
+			msg := fmt.Sprintf("Error adding user %s to group %s, Error: %s",
+					c.User.Field["dn"], group, err.Error())
+			logs.Log(msg, "ERROR")
+			errorCnt++
+		}
+	}
+	if errorCnt != 0 {
+		return false
+	}
+	return true
+}
+
+func (c *Connection) AddRecord() bool {
+	state := c.AddUser()
+	if state == false {
+		return false
+	}
+	return c.AddMember()
+}
+
+func (c *Connection) SearchUsersGroups(user string) []string {
+	var groupsList []string
+	searchBase := fmt.Sprintf("(&(objectClass=posixGroup))")
+	attributes := []string{"cn", "memberUid"}
+	records, _ := c.search(searchBase, attributes)
+	for idx, entry := range records.Entries {
+		for _, member := range entry.GetAttributeValues("memberUid") {
+			if member == "user" {
+				groupsList = append(groupsList, records.Entries[idx].GetAttributeValue("cn"))
+			}
+        }
+	}
+	return groupsList
+}
+
+func (c *Connection) RemoveFromGroups(groups []string, user string) {
+	// errors are logged and the process continues
+	for _, group := range groups {
+		groupCN := fmt.Sprintf("cn=%s,%s", group, c.Config.ServerValues.GroupDN)
+		removeMember := ldapv3.NewModifyRequest(groupCN)
+		removeMember.Delete("memberUid", []string{user})
+		err := c.Conn.Modify(removeMember)
+		if err != nil {
+			msg := fmt.Sprintf("Error remove user %s from the group %s, Error: %s",
+				user, group, err.Error())
+			logs.Log(msg, "ERROR")
+		} else {
+			msg := fmt.Sprintf("User %s has been removed from the group %s", user, group)
+			logs.Log(msg, "INFO")
+		}
+	}
+}
+
+func (c *Connection) DeleteRecord() bool {
+	delReq := ldapv3.NewDelRequest(c.User.Field["dn"], []ldapv3.Control{})
+	if err := c.Conn.Del(delReq); err != nil {
+		msg := fmt.Sprintf("Error deleting the user %s, error %s",
+			c.User.Field["uid"], err.Error())
+		logs.Log(msg, "ERROR")
+		return false
+	}
+	inGroups := c.SearchUsersGroups(c.User.Field["uid"])
+	c.RemoveFromGroups(inGroups, c.User.Field["uid"])
+	msg := fmt.Sprintf("The user %s has been deleted", c.User.Field["uid"])
+	logs.Log(msg, "INFO")
+	return true
 }

@@ -2,11 +2,14 @@
 
 ## Progress
 - search completed (May 9, 2022)
+- create user completed (May 15, 2020)
+- delete user completed (May 15, 2020)
 
 TODO: (in order)
-- create
-- delete
-- modify
+- create (group)
+- delete (group)
+- modify (user)
+- modify (group)
 
 ### ldap-tool
 A simple Go script to manage OpenLDAP users
@@ -36,10 +39,10 @@ The script is meant to be able to manage OpenLDAP user such:
 
 ## Usage
 ```
-usage: ldap-tool [-h|--help] [-c|--configFile "<value>"] [-e|--environment
-                 "<value>"] [-m|--mode
-                 (create|modify|delete|search|group|users|groups)] [-i|--info]
-                 [-v|--version]
+usage: ldap-tool [-h|--help] [-c|--configFile "<value>"]
+                 [-e|--environment "<value>"] [-m|--mode
+                 (create|modify|delete|search)] [-d|--debug]
+                 [-i|--info] [-v|--version]
 
                  Simple script to manage LDAP users
 
@@ -49,12 +52,10 @@ Arguments:
   -c  --configFile   Path to the configuration file to be use
   -e  --environment  Server environment. Default: dev
   -m  --mode         base commands:
-			 create, modify, delete
-		     search commands:
-			 (user) search, (group) group
-		     get all records users and groups commands:
-			 (user) users, (group) groups
-
+                       create, modify, delete
+                     search: (U)ser, (A)ll Users, (G)roup
+                        and All Group(S)
+  -d  --debug        Enable debug. Default: false
   -i  --info         Show information
   -v  --version      Show version
 ```
@@ -72,9 +73,7 @@ go run ldap-tools.go -c <your-config-file> -m <mode>
 ```
 
 ### TODO
-- once the script has been completed, the capabilities to
- create, modify and delete a group
-- create binaries for OSX and Linux
+ per request 👻
 
 ### The End
 Your friendly BOFH 🦄 😈          
