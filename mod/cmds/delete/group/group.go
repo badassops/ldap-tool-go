@@ -21,6 +21,7 @@ import (
 )
 
 func Delete(conn *ldap.Connection) {
+	var errored int
 	utils.PrintHeader(consts.Purple, "delete group", true)
 	reader := bufio.NewReader(os.Stdin)
 	utils.PrintColor(consts.Yellow,
@@ -32,30 +33,35 @@ func Delete(conn *ldap.Connection) {
     } else {
 		if cnt, _ := conn.GetGroup(valueEntered) ; cnt == 0 {
 			utils.PrintColor(consts.Red, fmt.Sprintf("\n\tGiven group %s does not found, aborting...\n", valueEntered))
-			return
+			errored = 1
 		}
-		if common.CheckProtectedGroup(conn, valueEntered) {
-			utils.PrintColor(consts.Red,
-				fmt.Sprintf("\n\tGiven group %s is protected and can not be deleted, aborting...\n\n", valueEntered))
-			return
-		}
-		utils.PrintColor(consts.Red,
-			fmt.Sprintf("\n\tGiven group %s will be delete, this can not be undo!\n", valueEntered))
-		utils.PrintColor(consts.Yellow,
-			fmt.Sprintf("\tContinue (default to N)? [y/n]: "))
-		continueDelete, _ := reader.ReadString('\n')
-		continueDelete = strings.ToLower(strings.TrimSuffix(continueDelete, "\n"))
-		if utils.GetYN(continueDelete, false) == true {
-			if !conn.DeleteGroup(valueEntered) {
+		if errored == 0 {
+			if common.CheckProtectedGroup(conn, valueEntered) {
 				utils.PrintColor(consts.Red,
-					fmt.Sprintf("\n\tFailed to delete the group %s\n", valueEntered))
-			} else {
-				utils.PrintColor(consts.Green,
-					fmt.Sprintf("\n\tGiven group %s has been deleted\n", valueEntered))
+					fmt.Sprintf("\n\tGiven group %s is protected and can not be deleted, aborting...\n\n",
+						valueEntered))
+				errored = 1
 			}
-		} else {
-			utils.PrintColor(consts.Blue,
-				fmt.Sprintf("\n\tDeletion of the group %s cancelled\n", valueEntered))
+		}
+		if errored == 0 {
+			utils.PrintColor(consts.Red,
+				fmt.Sprintf("\n\tGiven group %s will be delete, this can not be undo!\n", valueEntered))
+			utils.PrintColor(consts.Yellow,
+				fmt.Sprintf("\tContinue (default to N)? [y/n]: "))
+			continueDelete, _ := reader.ReadString('\n')
+			continueDelete = strings.ToLower(strings.TrimSuffix(continueDelete, "\n"))
+			if utils.GetYN(continueDelete, false) == true {
+				if !conn.DeleteGroup(valueEntered) {
+					utils.PrintColor(consts.Red,
+						fmt.Sprintf("\n\tFailed to delete the group %s\n", valueEntered))
+				} else {
+					utils.PrintColor(consts.Green,
+						fmt.Sprintf("\n\tGiven group %s has been deleted\n", valueEntered))
+				}
+			} else {
+				utils.PrintColor(consts.Blue,
+					fmt.Sprintf("\n\tDeletion of the group %s cancelled\n", valueEntered))
+			}
 		}
 	}
 	utils.PrintLine(utils.Purple)
