@@ -37,6 +37,8 @@ replace badassops.ldap/consts => ./mod/consts
 
 replace badassops.ldap/cmds/common/group => ./mod/cmds/common/group
 
+replace badassops.ldap/cmds/common/user => ./mod/cmds/common/user
+
 replace badassops.ldap/cmds/create/group => ./mod/cmds/create/group
 
 replace badassops.ldap/cmds/create/user => ./mod/cmds/create/user
@@ -48,8 +50,6 @@ replace badassops.ldap/cmds/delete/group => ./mod/cmds/delete/group
 replace badassops.ldap/cmds/modify/user => ./mod/cmds/modify/user
 
 replace badassops.ldap/cmds/modify/group => ./mod/cmds/modify/group
-
-replace badassops.ldap/cmds/search/common => ./mod/cmds/search/common
 
 replace badassops.ldap/cmds/search/user => ./mod/cmds/search/user
 

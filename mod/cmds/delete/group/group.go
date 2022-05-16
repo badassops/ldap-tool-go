@@ -22,7 +22,7 @@ import (
 
 func Delete(conn *ldap.Connection) {
 	var errored int
-	utils.PrintHeader(consts.Purple, "delete group", true)
+	utils.PrintHeader(consts.Purple, "Delete Group", true)
 	reader := bufio.NewReader(os.Stdin)
 	utils.PrintColor(consts.Yellow,
 			fmt.Sprintf("\tEnter group name to be use: "))

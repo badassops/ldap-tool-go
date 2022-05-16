@@ -20,7 +20,7 @@ import (
 )
 
 func Delete(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "delete user", true)
+	utils.PrintHeader(consts.Purple, "Delete User", true)
 	reader := bufio.NewReader(os.Stdin)
 	utils.PrintColor(consts.Yellow,
 			fmt.Sprintf("\tEnter userid (login name) to be use: "))

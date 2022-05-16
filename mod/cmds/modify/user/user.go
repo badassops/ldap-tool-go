@@ -17,7 +17,7 @@ import (
 )
 
 func Modify(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "modify group", true)
+	utils.PrintHeader(consts.Purple, "Modify User", true)
 	utils.PrintColor(consts.Green, fmt.Sprintf("\n\t coming soon\n"))
 	utils.PrintLine(utils.Purple)
 	return

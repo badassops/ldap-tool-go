@@ -211,7 +211,7 @@ func createUserRecord(conn *ldap.Connection) bool {
 }
 
 func Create(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "create user", true)
+	utils.PrintHeader(consts.Purple, "Create User", true)
 	if createUserRecord(conn) {
 		utils.PrintLine(utils.Purple)
 		if !conn.AddRecord() {

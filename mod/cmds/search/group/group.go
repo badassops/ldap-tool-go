@@ -14,7 +14,7 @@ import (
 	"badassops.ldap/consts"
 	"badassops.ldap/utils"
 	"badassops.ldap/ldap"
-	"badassops.ldap/cmds/search/common"
+	"badassops.ldap/cmds/common/group"
 )
 
 

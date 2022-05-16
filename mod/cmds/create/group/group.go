@@ -45,7 +45,7 @@ func createGroup(conn *ldap.Connection, groupName string, groupType string) bool
 }
 
 func Create(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "create group", true)
+	utils.PrintHeader(consts.Purple, "Create Group", true)
 	found, groupName := common.CheckGroup(conn)
 	if found {
 		utils.PrintColor(consts.Red,
