@@ -32,10 +32,10 @@ in **Python**, but it was not always working on someone else's laptop do the spe
 
 ### Capabilities
 The script is meant to be able to manage OpenLDAP user such:
-- add (user)
-- modify (user)
-- delete (user)
-- search (user and group)
+- add user and group
+- modify user and group
+- delete user and group
+- search user and group
 
 ## Usage
 ```
