@@ -65,7 +65,7 @@ var (
 	enterData string
 )
 
-func Group(conn *ldap.Connection, firstTime bool) {
+func Group(conn *ldap.Connection, firstTime bool) string {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("\tEnters the group name to be use: ")
 	enterData, _ = reader.ReadString('\n')
@@ -74,7 +74,7 @@ func Group(conn *ldap.Connection, firstTime bool) {
 	if enterData == "" {
 		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tNo group was given aborting...\n"))
 		if firstTime {
-			return
+			return "not-found"
 		} else {
 			// need to break the recursive
 			utils.ReleaseIT(conn.LockFile, conn.LockPid)
@@ -96,12 +96,12 @@ func Group(conn *ldap.Connection, firstTime bool) {
 		}
 	} else {
 		// from recursive
-		return
+		return "recursive"
 	}
 
 	utils.PrintLine(utils.Purple)
 	if cnt := conn.SearchGroup(enterData, true) ; cnt == 0 {
 		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tGroup %s was not found, aborting...\n", enterData))
 	}
-	return
+	return enterData
 }

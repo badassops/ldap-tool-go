@@ -16,6 +16,7 @@ import (
 
 	"crypto/tls"
 
+	"badassops.ldap/consts"
 	"badassops.ldap/vars"
 	"badassops.ldap/utils"
 	"badassops.ldap/configurator"
@@ -453,5 +454,53 @@ func (c *Connection) DeleteGroup(groupName string) bool {
 	}
 	msg := fmt.Sprintf("The group %s has been deleted", groupName)
 	logs.Log(msg, "INFO")
+	return true
+}
+
+func (c *Connection) GetGroupType(groupName string) (string, bool) {
+	cnt, typeGroup := c.GetGroup(groupName)
+	if cnt != 0 {
+		return typeGroup, true
+	}
+	return "errored", false
+}
+
+func (c *Connection) ModifyGroup(groupName string, addUsers []string, delUsers []string) bool {
+	var memberField string
+	groupType, state := c.GetGroupType(groupName)
+	if !state {
+		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tUnable to determinated the group type, aboring...\n"))
+		return false
+	}
+	groupCN := fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
+	modifyMember := ldapv3.NewModifyRequest(groupCN)
+	for _, addUser:= range addUsers {
+		if groupType == "groupOfNames" {
+			addUser = fmt.Sprintf("uid=%s,%s", addUser, c.Config.ServerValues.UserDN)
+			memberField = "member"
+		}
+		if groupType == "posix" {
+			memberField = "memberUid"
+		}
+		modifyMember.Add(memberField, []string{addUser})
+	}
+	for _, delUser := range delUsers {
+		if groupType == "groupOfNames" {
+			delUser = fmt.Sprintf("uid=%s,%s", delUser, c.Config.ServerValues.UserDN)
+			memberField = "member"
+		}
+		if groupType == "posix" {
+			memberField = "memberUid"
+		}
+		modifyMember.Delete(memberField, []string{delUser})
+	}
+
+	err := c.Conn.Modify(modifyMember)
+	if err != nil {
+		msg := fmt.Sprintf("Error modifying the group group %s, Error: %s",
+				groupName, err.Error())
+		logs.Log(msg, "ERROR")
+		return false
+	}
 	return true
 }

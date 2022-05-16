@@ -6,10 +6,10 @@
 - create group completed (May 15, 2020)
 - delete user completed (May 15, 2020)
 - delete group completed (May 15, 2020)
+- modify group completed (May 16, 2020)
 
 TODO: (in order)
 - modify (user)
-- modify (group)
 
 ### ldap-tool
 A simple Go script to manage OpenLDAP users
