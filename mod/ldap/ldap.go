@@ -93,12 +93,12 @@ func New(config *configurator.Config) *Connection {
 	}
 
 	// the rest of the values will be filled during the process
-    return &Connection {
+	return &Connection {
 		Conn:		ServerConn,
 		Config:		config,
 		User:		vars.User,
 		LockFile:	config.DefaultValues.LockFile,
-        LockPid:	config.LockPID,
+		LockPid:	config.LockPID,
 	}
 }
 
@@ -379,7 +379,7 @@ func (c *Connection) SearchUsersGroups(user string) []string {
 			if member == "user" {
 				groupsList = append(groupsList, records.Entries[idx].GetAttributeValue("cn"))
 			}
-        }
+		}
 	}
 	return groupsList
 }
@@ -413,6 +413,45 @@ func (c *Connection) DeleteRecord() bool {
 	inGroups := c.SearchUsersGroups(c.User.Field["uid"])
 	c.RemoveFromGroups(inGroups, c.User.Field["uid"])
 	msg := fmt.Sprintf("The user %s has been deleted", c.User.Field["uid"])
+	logs.Log(msg, "INFO")
+	return true
+}
+
+func (c *Connection) AddGroup(groupName string, groupType string, groupID int) bool {
+	groupCN := fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
+	newGroupRecord := ldapv3.NewAddRequest(groupCN)
+	switch groupType {
+		case "posix", "p", "":
+			newGroupRecord.Attribute("objectClass", []string{"posixGroup"})
+			newGroupRecord.Attribute("cn", []string{groupName})
+			newGroupRecord.Attribute("gidNumber", []string{strconv.Itoa(groupID)})
+		case "groupOfNames", "g":
+			newGroupRecord.Attribute("objectClass", []string{"groupOfNames"})
+			newGroupRecord.Attribute("cn", []string{groupName})
+			newGroupRecord.Attribute("member", []string{"uid=initial-member,ou=users,dc=co,dc=badassops,dc=com"})
+	}
+	err := c.Conn.Add(newGroupRecord)
+	if err != nil {
+		msg := fmt.Sprintf("Error creating new group %s, Error: %s",
+			groupName, err.Error())
+		logs.Log(msg, "ERROR")
+		return false
+	}
+	msg := fmt.Sprintf("New group %s created", groupName)
+	logs.Log(msg, "INFO")
+	return true
+}
+
+func (c *Connection) DeleteGroup(groupName string) bool {
+	groupCN := fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
+	delReq := ldapv3.NewDelRequest(groupCN, []ldapv3.Control{})
+	if err := c.Conn.Del(delReq); err != nil {
+		msg := fmt.Sprintf("Error deleting the group %s, error %s",
+			groupName, err.Error())
+		logs.Log(msg, "ERROR")
+		return false
+	}
+	msg := fmt.Sprintf("The group %s has been deleted", groupName)
 	logs.Log(msg, "INFO")
 	return true
 }

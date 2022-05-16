@@ -3,11 +3,11 @@
 ## Progress
 - search completed (May 9, 2022)
 - create user completed (May 15, 2020)
+- create group completed (May 15, 2020)
 - delete user completed (May 15, 2020)
+- delete group completed (May 15, 2020)
 
 TODO: (in order)
-- create (group)
-- delete (group)
 - modify (user)
 - modify (group)
 

@@ -33,9 +33,9 @@ import (
 	deleteUser "badassops.ldap/cmds/delete/user"
 
 	// for future version
-	//createGroup "badassops.ldap/cmds/create/group"
+	createGroup "badassops.ldap/cmds/create/group"
 	//modifyGroup "badassops.ldap/cmds/modify/group"
-	//deleteGroup "badassops.ldap/cmds/delete/group"
+	deleteGroup "badassops.ldap/cmds/delete/group"
 )
 
 func main() {
@@ -125,7 +125,7 @@ func main() {
 			choice = strings.TrimSuffix(choice, "\n")
 			switch strings.ToLower(choice) {
 				case "user", "u":	createUser.Create(conn)
-				case "group", "g":	utils.PrintColor(consts.Red, "\tComing Soon\n")
+				case "group", "g":	createGroup.Create(conn)
 				case "quit", "q":
 						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
 						break
@@ -161,7 +161,7 @@ func main() {
 			choice = strings.TrimSuffix(choice, "\n")
 			switch strings.ToLower(choice) {
 				case "user", "u":	deleteUser.Delete(conn)
-				case "group", "g":	utils.PrintColor(consts.Red, "\tComing Soon\n")
+				case "group", "g":	deleteGroup.Delete(conn)
 				case "quit", "q":
 						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
 						break

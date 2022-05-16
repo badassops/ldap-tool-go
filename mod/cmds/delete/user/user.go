@@ -52,7 +52,7 @@ func Delete(conn *ldap.Connection) {
 				}
 			} else {
 				utils.PrintColor(consts.Blue,
-					fmt.Sprintf("\n\tDelete of the user %s cancelled\n", valueEntered))
+					fmt.Sprintf("\n\tDeletion of the user %s cancelled\n", valueEntered))
 			}
 		}
 	}
