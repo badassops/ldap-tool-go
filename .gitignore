@@ -13,6 +13,7 @@ release/
 **.DS_Store
 
 # test logs file
+logs
 logs/*
 
 # config with private into and test scripts

@@ -54,7 +54,7 @@ func New(config *configurator.Config) *Connection {
 	dialConn, err := net.DialTimeout("tcp", net.JoinHostPort(config.ServerValues.Server, "389"), timeout)
 	if err != nil {
 		utils.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
-		utils.ExitWithMesssage(err.Error())
+		utils.ExitWithMesssage(err.Error() + "\n")
 	}
 	dialConn.Close()
 

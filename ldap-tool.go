@@ -107,7 +107,8 @@ func main() {
 				case "group", "g":	searchGroup.Group(conn)
 				case "groups", "s":	searchGroup.Groups(conn)
 				case "quit", "q":
-						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
+						utils.PrintColor(consts.Red, "\n\tOperation cancelled\n")
+						utils.PrintLine(utils.Purple)
 						break
 				default: searchUser.User(conn)
 			}
@@ -125,7 +126,8 @@ func main() {
 				case "user", "u":	createUser.Create(conn)
 				case "group", "g":	createGroup.Create(conn)
 				case "quit", "q":
-						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
+						utils.PrintColor(consts.Red, "\n\tOperation cancelled\n")
+						utils.PrintLine(utils.Purple)
 						break
 				default: createUser.Create(conn)
 		}
@@ -143,7 +145,8 @@ func main() {
 				case "user", "u":	modifyUser.Modify(conn)
 				case "group", "g":	modifyGroup.Modify(conn)
 				case "quit", "q":
-						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
+						utils.PrintColor(consts.Red, "\n\tOperation cancelled\n")
+						utils.PrintLine(utils.Purple)
 						break
 				default: modifyUser.Modify(conn)
 		}
@@ -161,7 +164,8 @@ func main() {
 				case "user", "u":	deleteUser.Delete(conn)
 				case "group", "g":	deleteGroup.Delete(conn)
 				case "quit", "q":
-						utils.PrintColor(consts.Red, "\tOperation cancelled\n")
+						utils.PrintColor(consts.Red, "\n\tOperation cancelled\n")
+						utils.PrintLine(utils.Purple)
 						break
 				default: deleteUser.Delete(conn)
 		}
