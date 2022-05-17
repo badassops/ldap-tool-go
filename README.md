@@ -1,8 +1,5 @@
-# LDAP-TOOL
-Simple tool to manage OpenLDAP users and groups
-
-### ldap-tool
-A simple Go script to manage OpenLDAP users
+## LDAP-TOOL
+Simple tool wriiten in Go to manage OpenLDAP users and groups
 
 ### Background
 The script is based on a certain LDAP settings
