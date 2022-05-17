@@ -34,15 +34,17 @@ usage: ldap-tool [-h|--help] [-c|--configFile "<value>"]
 Arguments:
 
   -h  --help         Print help information
-  -c  --configFile   Path to the configuration file to be use
-  -e  --environment  Server environment. Default: dev
+  -c  --configFile   Path to the configuration file to be use. Default:
+                     /usr/local/etc/ldap-tool/ldap-tool.ini
+  -e  --environment  Server environment
   -m  --mode         base commands:
-                       create, modify, delete
-                     search: (U)ser, (A)ll Users, (G)roup
-                        and All Group(S)
+			 create, modify, delete
+		     search: (U)ser, (A)ll Users, (G)roup
+                     and All Group(S). Default: search
   -d  --debug        Enable debug. Default: false
   -i  --info         Show information
   -v  --version      Show version
+
 ```
 
 ### Build or run the code the code
