@@ -1,15 +1,5 @@
-# WORK IN PROGRESS!
-
-## Progress
-- search completed (May 9, 2022)
-- create user completed (May 15, 2020)
-- create group completed (May 15, 2020)
-- delete user completed (May 15, 2020)
-- delete group completed (May 15, 2020)
-- modify group completed (May 16, 2020)
-
-TODO: (in order)
-- modify (user)
+# LDAP-TOOL
+Simple tool to manage OpenLDAP users and groups
 
 ### ldap-tool
 A simple Go script to manage OpenLDAP users
@@ -31,11 +21,9 @@ in **Python**, but it was not always working on someone else's laptop do the spe
 (*bash*) or module (*Python*), so I decided to write it in Go
 
 ### Capabilities
-The script is meant to be able to manage OpenLDAP user such:
-- add user and group
-- modify user and group
-- delete user and group
-- search user and group
+The script to be able manage OpenLDAP users and groups:
+- add, modify, search and delete
+	an user or a group
 
 ## Usage
 ```
@@ -72,20 +60,19 @@ To run the code
 go run ldap-tools.go -c <your-config-file> -m <mode>
 ```
 
-### TODO
- - redis for delete of user only
+### TODO / *wishlist*
+ - redis for **delete of user only**
 	- start : add key in redis
 	- end   : delete key in redis
-	- safe guard : run a crontab that will key(s)
-		then is for evry key, delete the user in ldap
-		so in case one loses conneciom, we have a safe guard
+	- safe guard : run a crontab that will GET KEYS
+		then for every KEY, delete the user in ldap
+		and DEL KEY in redis once the user has been deleted
+		so in case one loses the network connection, we have a safe guard
 		that the user will be deleted
-	- if redis it not available write the key on disk
+	- if redis it not available write the key on disk ?
 
 #### IDEA:
- - an user delete steps, change password and then delete?
-
- and per request 👻
+ let me know your request 👻  and I *might* add it 😎
 
 ### The End
 Your friendly BOFH 🦄 😈          

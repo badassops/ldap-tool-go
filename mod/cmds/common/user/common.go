@@ -53,7 +53,7 @@ func printUserRecord(conn *ldap.Connection, userName string) {
 	utils.PrintColor(utils.Red, fmt.Sprintf("\tPassword will expired on %s\n", passExpired))
 }
 
-func User(conn *ldap.Connection, firstTime bool) {
+func User(conn *ldap.Connection, firstTime bool, showRecord bool) bool {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("\tEnter user login name to be use: ")
 	enterData, _ := reader.ReadString('\n')
@@ -61,7 +61,7 @@ func User(conn *ldap.Connection, firstTime bool) {
 
 	if enterData == "" {
 		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tNo users was given aborting...\n"))
-		return
+		return false
 	}
 
 	if firstTime {
@@ -72,15 +72,17 @@ func User(conn *ldap.Connection, firstTime bool) {
 			enterData = "*" + enterData + "*"
 			conn.SearchUser(enterData)
 			fmt.Printf("\n\tSelect the userid from the above list:\n")
-			User(conn, false)
-			return
+			User(conn, false, showRecord)
+			return true
 		}
 	}
 
 	if conn.GetUser(enterData) == 0 {
 		utils.PrintColor(consts.Red, fmt.Sprintf("\n\tUser %s was not found, aborting...\n", enterData))
-		return
+		return false
 	}
-	printUserRecord(conn, enterData)
-	return
+	if showRecord {
+		printUserRecord(conn, enterData)
+	}
+	return true
 }

@@ -19,7 +19,6 @@ type Record struct {
 	Prompt		string
 	NoEmpty		bool
 	UseValue	bool
-	Changed		bool
 }
 
 type UserRecord struct {

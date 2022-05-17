@@ -507,3 +507,70 @@ func (c *Connection) ModifyGroup(groupName string, addUsers []string, delUsers [
 	}
 	return true, changes
 }
+
+func (c *Connection) GetGroupsName(groupType string) []string {
+	var searchBase string
+	attributes := []string{"cn"}
+	groupNames := []string{}
+	switch groupType{
+		case "posix":
+			searchBase = fmt.Sprintf("(&(objectClass=posixGroup))")
+		case "groupOfNames":
+			searchBase = fmt.Sprintf("(&(objectClass=groupOfNames))")
+	}
+	records, _ := c.search(searchBase, attributes)
+	for _, entry := range records.Entries {
+		for _, groupCN := range entry.GetAttributeValues("cn") {
+			groupNames = append(groupNames, groupCN)
+		}
+	}
+	return groupNames
+}
+
+func (c *Connection) ModifyUserGroup(userID string, addList []string, delList []string) {
+	for _, group := range addList {
+		result, _ := c.ModifyGroup(group, []string{userID}, []string{})
+		if result == false {
+			utils.PrintColor(consts.Red,
+				fmt.Sprintf("Failed adding user %s to the group %s\n", userID, group))
+		}
+	}
+	for _, group := range delList {
+		result, _ := c.ModifyGroup(group, []string{}, []string{userID})
+		if result == false {
+			utils.PrintColor(consts.Red,
+				fmt.Sprintf("Failed removing user %s to the group %s\n", userID, group))
+		}
+	}
+}
+
+func (c *Connection) ModifyUser(modifiedList map[string]string) {
+	var passChanged bool = false
+	modifyUser := ldapv3.NewModifyRequest(c.User.Field["dn"])
+	for field, _ := range modifiedList {
+		if field != "userPassword" {
+			modifyUser.Replace(field, []string{modifiedList[field]})
+		}
+		if field == "userPassword" {
+			passChanged = true
+		}
+	}
+	err := c.Conn.Modify(modifyUser)
+	if err != nil {
+		msg := fmt.Sprintf("Error modifying the user %s, Error: %s",
+			c.User.Field["uid"], err.Error())
+		logs.Log(msg, "ERROR")
+	}
+
+	// once the record had modified we need to hash the password
+	if passChanged == true {
+		passwordModifyRequest := ldapv3.NewPasswordModifyRequest(
+			c.User.Field["dn"], "", modifiedList["userPassword"])
+		_, err = c.Conn.PasswordModify(passwordModifyRequest)
+		if err != nil {
+			msg := fmt.Sprintf("Error set the password for the user %s, Error: %s",
+			c.User.Field["uid"], err.Error())
+			logs.Log(msg, "ERROR")
+		}
+	}
+}

@@ -223,7 +223,7 @@ func PrintHeader(messageColor string, messsage string, clear bool) {
 	fmt.Printf("\n\t%s %s %s %s %s\n\n", messageColor, HEADER, messsage, HEADER, Off)
 }
 
-// functiona spepartion line
+// function spepartion line
 func PrintLine(lineColor string) {
 	fmt.Printf("\n\t%s %s %s\n\n", lineColor, LINE, Off)
 }

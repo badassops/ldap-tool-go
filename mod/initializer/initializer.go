@@ -9,6 +9,7 @@
 package initializer
 
 import (
+	"fmt"
 	"strconv"
 
 	// "badassops.ldap/consts"
@@ -43,7 +44,6 @@ func Init(conf *configurator.Config) {
 			Value: "",
 			NoEmpty: true,
 			UseValue: false,
-			Changed: false,
 		}
 
 	vars.Template["givenName"] =
@@ -52,7 +52,6 @@ func Init(conf *configurator.Config) {
 			Value: "",
 			NoEmpty: true,
 			UseValue: false,
-			Changed: false,
 		}
 
 	vars.Template["sn"] =
@@ -61,7 +60,6 @@ func Init(conf *configurator.Config) {
 			Value: "",
 			NoEmpty: true,
 			UseValue: false,
-			Changed: false,
 		}
 
 	vars.Template["mail"] =
@@ -70,7 +68,6 @@ func Init(conf *configurator.Config) {
 			Value: "",
 			NoEmpty: false,
 			UseValue: true,
-			Changed: false,
 		}
 
 	vars.Template["uidNumber"] =
@@ -79,7 +76,6 @@ func Init(conf *configurator.Config) {
 			Value: "",
 			NoEmpty: false,
 			UseValue: true,
-			Changed: false,
 		}
 
 	vars.Template["departmentNumber"] =
@@ -88,7 +84,6 @@ func Init(conf *configurator.Config) {
 			Value: conf.DefaultValues.GroupName,
 			NoEmpty: false,
 			UseValue: true,
-			Changed: false,
 		}
 
 	vars.Template["loginShell"] =
@@ -97,7 +92,6 @@ func Init(conf *configurator.Config) {
 			Value: conf.DefaultValues.Shell,
 			NoEmpty: false,
 			UseValue: true,
-			Changed: false,
 		}
 
 	vars.Template["userPassword"] =
@@ -106,7 +100,6 @@ func Init(conf *configurator.Config) {
 			Value: "",
 			NoEmpty: false,
 			UseValue: true,
-			Changed: false,
 		}
 
 	vars.Template["shadowMax"] =
@@ -115,7 +108,6 @@ func Init(conf *configurator.Config) {
 			Value: strconv.Itoa(conf.DefaultValues.ShadowAge),
 			NoEmpty: false,
 			UseValue: true,
-			Changed: false,
 		}
 
 	vars.Template["shadowWarning"] =
@@ -124,7 +116,6 @@ func Init(conf *configurator.Config) {
 			Value: strconv.Itoa(conf.DefaultValues.ShadowWarning),
 			NoEmpty: false,
 			UseValue: true,
-			Changed: false,
 		}
 
 	vars.Template["sshPublicKey"] =
@@ -133,17 +124,15 @@ func Init(conf *configurator.Config) {
 			Value: "is missing",
 			NoEmpty: false,
 			UseValue: false,
-			Changed: false,
 		}
 
 	// these are use during modification
 	vars.Template["shadowExpire"] =
 		vars.Record{
-			Prompt: "Date the password will expired",
+			Prompt: fmt.Sprintf("Reset password expired to (%d days from now) Y/N", conf.DefaultValues.ShadowMax),
 			Value: currExpired,
 			NoEmpty: false,
 			UseValue: false,
-			Changed: false,
 	}
 
 	vars.Template["shadowLastChange"] =
@@ -152,6 +141,5 @@ func Init(conf *configurator.Config) {
 			Value: strconv.FormatInt(utils.GetEpoch("days"), 10),
 			NoEmpty: false,
 			UseValue: false,
-			Changed: false,
 	}
 }

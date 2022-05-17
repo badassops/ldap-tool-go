@@ -22,7 +22,7 @@ import (
 
 func User(conn *ldap.Connection) {
 	utils.PrintHeader(consts.Purple, "Search User", false)
-	common.User(conn, true)
+	common.User(conn, true, true)
 	utils.PrintLine(utils.Purple)
 }
 
