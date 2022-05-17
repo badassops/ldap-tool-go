@@ -315,22 +315,25 @@ func CheckFileSettings(file string, owner string, permissions []string) bool {
 		return false
 	}
 
-	for _, filePermission := range permissions {
-        if filePermission == filePerm {
-            break
-        }
-		PrintColor(
-			Red,
-			fmt.Sprintf("Error: The file %s permission are to wide open %s.\n", file, filePerm))
-		ok = false
-    }
-
 	if fileOwner != owner {
 		PrintColor(
 			Red,
 			fmt.Sprintf("Error: The file %s is not own by %s, is own by %s.\n", file,owner, fileOwner))
 		ok = false
 	}
+
+	count := len(permissions) - 1
+	for cnt, filePermission := range permissions {
+        if filePermission == filePerm {
+            break
+        }
+		if count == cnt {
+			PrintColor(
+				Red,
+				fmt.Sprintf("Error: The file %s permission are to wide open %s.\n", file, filePerm))
+			ok = false
+		}
+    }
 
 	return ok
 }
