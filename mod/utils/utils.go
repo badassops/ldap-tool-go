@@ -274,10 +274,10 @@ func LockIT(lockFile string, pid int, progName string) {
 			// fmt.Printf("There is already a process %s running, aborting\n", progName)
 			PrintColor(
 				Red,
-				fmt.Sprintf("Error: There is already a process %s running, aborting\n", progName))
+				fmt.Sprintf("Error: There is already a process %s running, aborting...\n", progName))
 			os.Exit(1)
 		}
-		fmt.Printf("Lock file %s exist, but not process with the pid %d is running\n", lockFile, pidValue)
+		fmt.Printf("Lock file %s exist, but not process with the pid %d is running...\n", lockFile, pidValue)
 		fmt.Printf("Removing the lock file %s\n", lockFile)
 		LockFile(lockFile, pid, 2)
 	}
