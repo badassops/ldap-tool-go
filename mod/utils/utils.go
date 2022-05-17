@@ -436,3 +436,8 @@ func InList(slice []string, val string) (bool) {
 	}
 	return false
 }
+
+func TheEnd () {
+	PrintColor(Green, "\tEnjoy a cuppa of hot coffee ☕️   / 🥃\n")
+	PrintColor(Green, "\tThe End\n")
+}

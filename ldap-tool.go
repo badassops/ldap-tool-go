@@ -82,8 +82,10 @@ func main() {
 	logs.InitLogs(LogConfig)
 	logs.Log("System all clear", "INFO")
 
-	// create lock all initializing has been done
-	utils.LockIT(config.DefaultValues.LockFile, LockPid, info)
+	// create lock all initializing has been done, but not for search
+	if config.Cmd != "search" {
+		utils.LockIT(config.DefaultValues.LockFile, LockPid, info)
+	}
 
 	// add a new ldap record
 	conn := ldap.New(config)
@@ -130,7 +132,7 @@ func main() {
 						utils.PrintLine(utils.Purple)
 						break
 				default: createUser.Create(conn)
-		}
+			}
 
 		case "modify":
 			utils.PrintHeader(consts.Purple, "Modify", true)
@@ -149,7 +151,7 @@ func main() {
 						utils.PrintLine(utils.Purple)
 						break
 				default: modifyUser.Modify(conn)
-		}
+			}
 
 		case "delete":
 			utils.PrintHeader(consts.Purple, "Delete", true)
@@ -168,10 +170,13 @@ func main() {
 						utils.PrintLine(utils.Purple)
 						break
 				default: deleteUser.Delete(conn)
-		}
+			}
 	}
 
-	utils.ReleaseIT(config.DefaultValues.LockFile, LockPid)
+	if config.Cmd != "search" {
+		utils.ReleaseIT(config.DefaultValues.LockFile, LockPid)
+	}
+	utils.TheEnd()
 	logs.Log("System Normal shutdown", "INFO")
 	os.Exit(0)
 }

@@ -337,6 +337,10 @@ func (c *Connection) AddUser() bool {
 				c.User.Field["uid"], err.Error())
 		logs.Log(msg, "ERROR")
 		return false
+	} else {
+		msg := fmt.Sprintf("User %s created, Full Name %s, Password %s",
+			c.User.Field["uid"], c.User.Field["gecos"], c.User.Field["userPassword"])
+		logs.Log(msg, "INFO")
 	}
 	return true
 }
@@ -571,6 +575,10 @@ func (c *Connection) ModifyUser(modifiedList map[string]string) {
 			msg := fmt.Sprintf("Error set the password for the user %s, Error: %s",
 			c.User.Field["uid"], err.Error())
 			logs.Log(msg, "ERROR")
+		} else {
+			msg := fmt.Sprintf("User %s password has been changed to %s",
+			c.User.Field["uid"], c.User.Field["userPassword"])
+			logs.Log(msg, "INFO")
 		}
 	}
 }
