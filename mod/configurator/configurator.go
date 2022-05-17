@@ -138,19 +138,20 @@ func (c *Config) InitializeArgs() {
 		&argparse.Options{
 		Required:	false,
 		Help:		"Path to the configuration file to be use",
+		Default:	"/usr/local/etc/ldap-tool/ldap-tool.ini",
 	})
 
 	ldapEnv := parser.String("e", "environment",
 		&argparse.Options{
 		Required:	false,
 		Help:		"Server environment",
-		Default:	"dev",
 	})
 
 	ldapCmd := parser.Selector("m", "mode", allowedValues,
 		&argparse.Options{
 		Required:	false,
 		Help:		HelpMessage,
+		Default:	"search",
 	})
 
 	debug := parser.Flag("d", "debug",
