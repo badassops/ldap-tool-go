@@ -450,8 +450,9 @@ func RecordPassword(passFile string, data map[string]string) (bool, string) {
 		return false, err.Error()
 	}
 	current_time := time.Now().Format("Date: Feb 02 2006, Time: 15:04:05")
-	fmt.Fprintf(fp, "\n\n\t%s\n", current_time)
-	fmt.Fprintf(fp, "\n\tThe user %s password %s\n", data["user"], data["password"])
+	fmt.Fprintf(fp, "\t%s\n", LINE)
+	fmt.Fprintf(fp, "\t%s\n", current_time)
+	fmt.Fprintf(fp, "\tThe user %s password is set to %s\n", data["user"], data["password"])
 	fmt.Fprintf(fp, "\tEnjoy a cuppa of hot coffee ☕️   / 🥃\n")
 	fmt.Fprintf(fp, "\tThe End\n")
 	fp.Close()

@@ -35,7 +35,7 @@ type Log struct {
 }
 
 var (
-	MyVersion	= "0.1"
+	MyVersion	= "0.1a"
 	now			= time.Now()
 	MyProgname	= path.Base(os.Args[0])
 	myAuthor	= "Luc Suryo"

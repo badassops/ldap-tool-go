@@ -11,6 +11,7 @@ package ldap
 import (
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -326,6 +327,10 @@ func (c *Connection) AddUser() bool {
 	}
 	msg := fmt.Sprintf("User %s has been added", c.User.Field["uid"])
 	logs.Log(msg, "INFO")
+	// save before it get encrypted
+	userPassData := make(map[string]string)
+	userPassData["user"] = c.User.Field["uid"]
+	userPassData["password"] = c.User.Field["userPassword"]
 	// once the record is create we need to hash the password
 	passwordModifyRequest := ldapv3.NewPasswordModifyRequest(
 		c.User.Field["dn"],
@@ -341,6 +346,15 @@ func (c *Connection) AddUser() bool {
 		msg := fmt.Sprintf("User %s created, Full Name %s, Password %s",
 			c.User.Field["uid"], c.User.Field["gecos"], c.User.Field["userPassword"])
 		logs.Log(msg, "INFO")
+		passDir := c.Config.LogValues.LogsDir + "/users/"
+		passFile := passDir + c.User.Field["uid"] + ".info"
+		os.MkdirAll(passDir, 0750)
+		ok, errorMsg := utils.RecordPassword(passFile, userPassData)
+		if !ok {
+			msg = fmt.Sprintf("Unable to save the user %s's password file %s, error %s",
+				c.User.Field["uid"], passFile, errorMsg)
+			logs.Log(msg, "ERROR")
+		}
 	}
 	return true
 }
@@ -568,6 +582,10 @@ func (c *Connection) ModifyUser(modifiedList map[string]string) {
 
 	// once the record had modified we need to hash the password
 	if passChanged == true {
+		// save before it get encrypted
+		userPassData := make(map[string]string)
+		userPassData["user"] = c.User.Field["uid"]
+		userPassData["password"] = modifiedList["userPassword"]
 		passwordModifyRequest := ldapv3.NewPasswordModifyRequest(
 			c.User.Field["dn"], "", modifiedList["userPassword"])
 		_, err = c.Conn.PasswordModify(passwordModifyRequest)
@@ -577,8 +595,17 @@ func (c *Connection) ModifyUser(modifiedList map[string]string) {
 			logs.Log(msg, "ERROR")
 		} else {
 			msg := fmt.Sprintf("User %s password has been changed to %s",
-			c.User.Field["uid"], c.User.Field["userPassword"])
+				c.User.Field["uid"], c.User.Field["userPassword"])
 			logs.Log(msg, "INFO")
+			passDir := c.Config.LogValues.LogsDir + "/users/"
+			passFile := passDir + c.User.Field["uid"] + ".info"
+			os.MkdirAll(passDir, 0750)
+			ok, errorMsg := utils.RecordPassword(passFile, userPassData)
+			if !ok {
+				msg := fmt.Sprintf("Unable to save the user %s's password file %s, error %s",
+					c.User.Field["uid"], passFile, errorMsg)
+				logs.Log(msg, "ERROR")
+			}
 		}
 	}
 }
