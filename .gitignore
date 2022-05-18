@@ -20,6 +20,7 @@ logs/*
 # config with private into and test scripts
 test/config.ini
 test/ldap
+test/test*
 
 # saved files
 .saved/*
