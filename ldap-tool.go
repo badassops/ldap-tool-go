@@ -177,6 +177,7 @@ func main() {
 		utils.ReleaseIT(config.DefaultValues.LockFile, LockPid)
 	}
 	utils.TheEnd()
+	utils.PrintLine(utils.Purple)
 	logs.Log("System Normal shutdown", "INFO")
 	os.Exit(0)
 }
