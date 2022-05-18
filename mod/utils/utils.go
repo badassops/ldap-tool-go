@@ -407,8 +407,9 @@ func GenerateRandom(useSpecialChar bool, length int) string {
 	}
 
 	random := make([]byte, length)
-	for cnt := range random {
-		random[cnt] = charSet[rand.Intn(len(charSet))]
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for cnt, _ := range random {
+		random[cnt] = charSet[r.Intn(len(charSet))]
 	}
 	return string(random)
 }
@@ -440,4 +441,19 @@ func InList(slice []string, val string) (bool) {
 func TheEnd () {
 	PrintColor(Green, "\tEnjoy a cuppa of hot coffee ☕️   / 🥃\n")
 	PrintColor(Green, "\tThe End\n")
+}
+
+// function to log user's ldap record or password 
+func RecordPassword(passFile string, data map[string]string) (bool, string) {
+	fp, err := os.OpenFile(passFile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
+	if err != nil {
+		return false, err.Error()
+	}
+	current_time := time.Now().Format("Date: Feb 02 2006, Time: 15:04:05")
+	fmt.Fprintf(fp, "\n\n\t%s\n", current_time)
+	fmt.Fprintf(fp, "\n\tThe user %s password %s\n", data["user"], data["password"])
+	fmt.Fprintf(fp, "\tEnjoy a cuppa of hot coffee ☕️   / 🥃\n")
+	fmt.Fprintf(fp, "\tThe End\n")
+	fp.Close()
+	return true, ""
 }
