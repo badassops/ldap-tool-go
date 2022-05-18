@@ -94,6 +94,19 @@ func New(config *configurator.Config) *Connection {
 		utils.ExitWithMesssage(errStr)
 	}
 
+	 // debug
+	if config.Debug {
+		logs.Log(fmt.Sprintf("Server : %s", config.ServerValues.Server), "DEBUG")
+		logs.Log(fmt.Sprintf("___ BaseDN      : %s", config.ServerValues.BaseDN), "DEBUG")
+		logs.Log(fmt.Sprintf("___ Admin       : %s", config.ServerValues.Admin), "DEBUG")
+		logs.Log(fmt.Sprintf("___ AdminPass   : %s", config.ServerValues.AdminPass), "DEBUG")
+		logs.Log(fmt.Sprintf("___ UserDN      : %s", config.ServerValues.UserDN), "DEBUG")
+		logs.Log(fmt.Sprintf("___ GroupDN     : %s", config.ServerValues.GroupDN), "DEBUG")
+		logs.Log(fmt.Sprintf("___ EmailDomain : %s", config.ServerValues.EmailDomain), "DEBUG")
+		logs.Log(fmt.Sprintf("___ TLS         : %t", config.ServerValues.TLS), "DEBUG")
+		logs.Log(fmt.Sprintf("___ isEnabled   : %t", config.ServerValues.Enabled), "DEBUG")
+	}
+
 	// the rest of the values will be filled during the process
 	return &Connection {
 		Conn:		ServerConn,

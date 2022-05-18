@@ -46,7 +46,7 @@ func createUserRecord(conn *ldap.Connection) bool {
 	var shadowMax int
 	var logRecord string
 
-	for _, fieldName := range fields  {
+	for _, fieldName := range fields {
 
 		// these will be valid once the field was filled since they depends
 		// on some of the fields value
@@ -121,9 +121,9 @@ func createUserRecord(conn *ldap.Connection) bool {
 					valueEntered = conn.Config.DefaultValues.GroupName
 					conn.User.Field["gidNumber"] = strconv.Itoa(conn.Config.DefaultValues.GroupId)
 				} else {
-					for _, mapValues :=  range conn.Config.GroupValues.GroupsMap {
+					for _, mapValues := range conn.Config.GroupValues.GroupsMap {
 						if mapValues.Name == valueEntered {
-							conn.User.Field["gidNumber"]  = strconv.Itoa(mapValues.Gid)
+							conn.User.Field["gidNumber"] = strconv.Itoa(mapValues.Gid)
 							}
 					}
 				}
@@ -158,7 +158,7 @@ func createUserRecord(conn *ldap.Connection) bool {
 				if len(valueEntered) == 0 {
 					valueEntered = vars.Template[fieldName].Value
 				}
-        }
+		}
 		if len(valueEntered) == 0 && vars.Template[fieldName].NoEmpty == true {
 				utils.PrintColor(consts.Red, "\tNo value was entered aborting...\n\n")
 				return false
@@ -192,20 +192,11 @@ func createUserRecord(conn *ldap.Connection) bool {
 	conn.User.Field["shadowLastChange"] = vars.Template["shadowLastChange"].Value
 	// debug
 	if conn.Config.Debug {
-		logs.Log(fmt.Sprintf("Server : %s", conn.Config.ServerValues.Server), "DEBUG")
-		logs.Log(fmt.Sprintf("___ BaseDN      : %s", conn.Config.ServerValues.BaseDN), "DEBUG")
-		logs.Log(fmt.Sprintf("___ Admin       : %s", conn.Config.ServerValues.Admin), "DEBUG")
-		logs.Log(fmt.Sprintf("___ AdminPass   : %s", conn.Config.ServerValues.AdminPass), "DEBUG")
-		logs.Log(fmt.Sprintf("___ UserDN      : %s", conn.Config.ServerValues.UserDN), "DEBUG")
-		logs.Log(fmt.Sprintf("___ GroupDN     : %s", conn.Config.ServerValues.GroupDN), "DEBUG")
-		logs.Log(fmt.Sprintf("___ EmailDomain : %s", conn.Config.ServerValues.EmailDomain), "DEBUG")
-		logs.Log(fmt.Sprintf("___ TLS         : %t", conn.Config.ServerValues.TLS), "DEBUG")
-		logs.Log(fmt.Sprintf("___ isEnabled   : %t", conn.Config.ServerValues.Enabled), "DEBUG")
 		for recordName, recordValue := range conn.User.Field {
-			logRecord = fmt.Sprintf(" Field Name: %s - Field Value: %s", recordName,  recordValue)
+			logRecord = fmt.Sprintf(" Field Name: %s - Field Value: %s", recordName, recordValue)
 			logs.Log(logRecord, "DEBUG")
 		}
-		logs.Log(fmt.Sprintf("User's Special Group: %v", conn.User.Groups), "DEBUG")
+		logs.Log(fmt.Sprintf("User's Groups: %v", conn.User.Groups), "DEBUG")
 	}
 	return true
 }

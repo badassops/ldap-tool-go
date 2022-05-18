@@ -19,10 +19,13 @@ import (
 	"badassops.ldap/vars"
 	"badassops.ldap/utils"
 	"badassops.ldap/ldap"
+	"badassops.ldap/logs"
 	"badassops.ldap/cmds/common/user"
 )
 
 var (
+	logRecord string
+
 	fields = []string{"givenName", "sn", "departmentNumber",
 		"mail", "loginShell", "userPassword",
 		"shadowMax", "shadowExpire", "sshPublicKey"}
@@ -174,6 +177,13 @@ func createNewUserRecord(conn *ldap.Connection) {
 				changeFields[fieldName] = valueEntered
 		}
 	}
+	// debug
+	if conn.Config.Debug {
+		for recordName, recordValue := range changeFields{
+			logRecord = fmt.Sprintf(" Modified Field Name: %s - Field Value: %s", recordName, recordValue)
+			logs.Log(logRecord, "DEBUG")
+		}
+	}
 	conn.ModifyUser(changeFields)
 	// we only handle groupOfNames type of group
 	fmt.Printf("\n")
@@ -209,6 +219,15 @@ func createNewUserRecord(conn *ldap.Connection) {
 		}
 	}
 	conn.ModifyUserGroup(conn.User.Field["uid"], addList, delList)
+	// debug
+	if conn.Config.Debug {
+		for recordName, recordValue := range addList {
+			logRecord = fmt.Sprintf(" Group added Field Name: %s - Field Value: %s", recordName, recordValue)
+		}
+		for recordName, recordValue := range delList {
+			logRecord = fmt.Sprintf(" Group removed Field Name: %s - Field Value: %s", recordName, recordValue)
+		}
+	}
 }
 
 func Modify(conn *ldap.Connection) {
