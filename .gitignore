@@ -13,14 +13,13 @@ release/
 # OSX
 **.DS_Store
 
-# test logs file
-logs
-logs/*
-
 # config with private into and test scripts
 test/config.ini
 test/ldap
 test/test*
+
+# temp files
+**.g
 
 # saved files
 .saved/*

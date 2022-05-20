@@ -3,30 +3,28 @@
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
 //
-// Version		:	0.1
+// Version    :  0.1
 //
 
 package group
 
 import (
-	"fmt"
 
-	"badassops.ldap/consts"
-	"badassops.ldap/utils"
-	"badassops.ldap/ldap"
-	"badassops.ldap/cmds/common/group"
+  u "badassops.ldap/utils"
+  "badassops.ldap/ldap"
+  "badassops.ldap/cmds/common/group"
 )
 
 
-func Group(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "Search Group", true)
-	common.Group(conn, true)
-    utils.PrintLine(utils.Purple)
+func Group(c *ldap.Connection) {
+  u.PrintHeader(u.Purple, "Search Group", true)
+  common.Group(c, true)
+  u.PrintLine(u.Purple)
 }
 
-func Groups(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "Search Groups", true)
-	utils.PrintColor(consts.Purple, fmt.Sprintf("\n\t__________ all group and the members __________\n"))
-	conn.SearchGroups()
-    utils.PrintLine(utils.Purple)
+func Groups(c *ldap.Connection) {
+  u.PrintHeader(u.Purple, "Search Groups", true)
+  u.PrintColor(u.Purple, "\n\t  _________ all group and the members __________\n")
+  c.SearchGroups()
+  u.PrintLine(u.Purple)
 }
