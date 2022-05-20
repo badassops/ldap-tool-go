@@ -25,7 +25,13 @@ type (
     Gid  int
   }
 
+  Auth struct {
+    AllowUsers []string
+    AllowMods  []string
+  }
+
   Config struct {
+    AuthValues Auth
     ConfigFile string
     Env        string
     Cmd        string
@@ -97,8 +103,9 @@ type (
   }
 
   tomlConfig struct {
-    Defaults   Defaults         `toml:"defaults"`
-    LogConfig  LogConfig        `toml:"logconfig"`
+    Auth       Auth              `toml:"auth"`
+    Defaults   Defaults          `toml:"defaults"`
+    LogConfig  LogConfig         `toml:"logconfig"`
     Envs       Envs              `toml:"envs"`
     Groups     Groups            `toml:"groups"`
     Servers    map[string]Server `toml:"servers"`
@@ -214,9 +221,9 @@ func (c *Config) InitializeArgs() {
   }
 
   c.ConfigFile  = *configFile
-  c.Env      = *ldapEnv
-  c.Cmd      = *ldapCmd
-  c.Debug      = *debug
+  c.Env         = *ldapEnv
+  c.Cmd         = *ldapCmd
+  c.Debug       = *debug
 }
 
 // function to add the values to the Config object from the configuration file
@@ -229,6 +236,7 @@ func (c *Config) InitializeConfigs() {
   }
 
   // from the configuration file
+  c.AuthValues    = configValues.Auth
   c.DefaultValues = configValues.Defaults
   c.LogValues     = configValues.LogConfig
   c.ValidEnvs     = configValues.Envs.ValidEnvs

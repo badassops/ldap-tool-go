@@ -352,34 +352,38 @@ func FileInfo(file string) (string, string, error) {
 }
 
 // function to make sure the given file has the proper owner and persmission
-func CheckFileSettings(file string, owner string, permissions []string) bool {
-  var ok bool = true
+func CheckFileSettings(file string, owners, permissions []string) bool {
+  var ok int = 0
   fileOwner, filePerm, err := FileInfo(file)
   if err != nil {
     return false
   }
 
-  if fileOwner != owner {
-    PrintColor(
-      Red,
-      fmt.Sprintf("Error: The file %s is not own by %s, is own by %s.\n", file,owner, fileOwner))
-    ok = false
+  usersCount := len(owners) -1
+  for ownerCount, owner := range owners {
+    if fileOwner == owner {
+      break
+    }
+    if ownerCount == usersCount {
+      PrintRed(fmt.Sprintf("Error: The file %s is not own by %s, is own by %s.\n", file, owner, fileOwner))
+      ok++
+    }
   }
 
-  count := len(permissions) - 1
-  for cnt, filePermission := range permissions {
+  modCount := len(permissions) - 1
+  for perCount, filePermission := range permissions {
         if filePermission == filePerm {
             break
         }
-    if count == cnt {
-      PrintColor(
-        Red,
-        fmt.Sprintf("Error: The file %s permission are to wide open %s.\n", file, filePerm))
-      ok = false
+    if perCount == modCount {
+      PrintRed(fmt.Sprintf("Error: The file %s permission are to wide open %s.\n", file, filePerm))
+      ok++
     }
-    }
-
-  return ok
+  }
+  if ok != 0 {
+    return false
+  }
+  return true
 }
 
 // the spinner class

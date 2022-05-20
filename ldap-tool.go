@@ -50,12 +50,13 @@ func main() {
   // initialize the user data dictionary
   initializer.Init(config)
 
-  // these are hardcoded!
-  if ok := u.IsUser("root"); !ok {
-    u.PrintRed("The program has to be run as root or use sudo, aborting..\n")
+  // make sure the configuration file has the proper settings
+  if !u.InList(config.AuthValues.AllowUsers, u.RunningUser()) {
+    u.PrintRed(fmt.Sprintf("The program has to be run as these user(s): %s or use sudo, aborting..\n",
+			strings.Join(config.AuthValues.AllowUsers[:], ", ")))
     os.Exit(0)
   }
-  if ok := u.CheckFileSettings(config.ConfigFile, "root", []string{"0400", "0600"}); !ok {
+  if !u.CheckFileSettings(config.ConfigFile, config.AuthValues.AllowUsers, config.AuthValues.AllowMods) {
     u.PrintRed("Aborting..\n")
     os.Exit(0)
   }
@@ -98,7 +99,7 @@ func main() {
         u.CreateColorMsg(u.Green, "A"),
         u.CreateColorMsg(u.Green, "G"),
         u.CreateColorMsg(u.Green, "S"),
-        u.CreateColorMsg(u.Red,   "Q")
+        u.CreateColorMsg(u.Red,   "Q"),
       )
 
       choice, _ := reader.ReadString('\n')
@@ -120,7 +121,7 @@ func main() {
       fmt.Printf("\tCreate (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
         u.CreateColorMsg(u.Green, "U"),
         u.CreateColorMsg(u.Green, "G"),
-        u.CreateColorMsg(u.Red,   "Q")
+        u.CreateColorMsg(u.Red,   "Q"),
       )
 
       choice, _ := reader.ReadString('\n')
@@ -140,7 +141,7 @@ func main() {
       fmt.Printf("\tModify (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
         u.CreateColorMsg(u.Green, "U"),
         u.CreateColorMsg(u.Green, "G"),
-        u.CreateColorMsg(u.Red,   "Q")
+        u.CreateColorMsg(u.Red,   "Q"),
       )
 
       choice, _ := reader.ReadString('\n')
@@ -160,7 +161,7 @@ func main() {
       fmt.Printf("\tDelete (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
         u.CreateColorMsg(u.Green, "U"),
         u.CreateColorMsg(u.Green, "G"),
-        u.CreateColorMsg(u.Red,   "Q")
+        u.CreateColorMsg(u.Red,   "Q"),
       )
 
       choice, _ := reader.ReadString('\n')
