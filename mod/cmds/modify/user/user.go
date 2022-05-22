@@ -3,238 +3,245 @@
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
 //
-// Version		:	0.1
+// Version    :  0.1
 //
 
 package modify
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"strings"
-	"strconv"
+  "bufio"
+  "fmt"
+  "os"
+  "regexp"
+  "strings"
+  "strconv"
 
-	"badassops.ldap/consts"
-	"badassops.ldap/vars"
-	"badassops.ldap/utils"
-	"badassops.ldap/ldap"
-	"badassops.ldap/logs"
-	"badassops.ldap/cmds/common/user"
+  v "badassops.ldap/vars"
+  u "badassops.ldap/utils"
+  l "badassops.ldap/ldap"
+  cu "badassops.ldap/cmds/common/user"
 )
 
 var (
-	logRecord string
+  logRecord string
 
-	fields = []string{"givenName", "sn", "departmentNumber",
-		"mail", "loginShell", "userPassword",
-		"shadowMax", "shadowExpire", "sshPublicKey"}
+  fields = []string{"givenName", "sn", "departmentNumber",
+    "mail", "loginShell", "userPassword",
+    "shadowMax", "shadowExpire", "sshPublicKey"}
+
+  // given fiels value
+  shells        string
+  departments   string
+  currShadowMax string
+  userGroupList []string
+
+  // list of the groups to be added or deleted
+  addList []string
+  delList []string
+
+  // to show field name
+  prefix string  = ""
+
+  // input
+  valueEntered string
+
+  // keep track if password was changed
+  shadowMaxChanged bool = false
 )
 
-func cleanUpData (conn *ldap.Connection, data string) string {
-	// remove the userDN part
-	newData := strings.Split(data, ",")[0]
-	// remove the cn= part
-	newData = strings.TrimPrefix(newData, "cn=")
-	// remove the groupDN part
-	groupDN := fmt.Sprintf(",%s", conn.Config.ServerValues.GroupDN)
-	return strings.TrimPrefix(newData, groupDN )
+func createModifyUserRecord(c *l.Connection) {
+  u.PrintColor(u.Purple,
+    fmt.Sprintf("\tUsing user: %s\n", c.User.Field["uid"]))
+  u.PrintYellow(fmt.Sprintf("\tPress enter to leave the value unchanged\n"))
+  u.PrintLine(u.Purple)
+
+  for _, fieldName := range fields  {
+    // these will be valid once the field was filled since they depends
+    // on some of the fields value
+    switch fieldName {
+      case "givenName":
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent value: %s\n", c.User.Field[fieldName]))
+
+      case "sn":
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent value: %s\n", c.User.Field[fieldName]))
+
+      case "mail":
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent value: %s\n", c.User.Field[fieldName]))
+
+      case "departmentNumber":
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent value: %s\n", c.User.Field[fieldName]))
+        for _ , value := range c.Config.GroupValues.Groups {
+          departments = departments + " " + value
+        }
+        u.PrintColor(u.Purple, fmt.Sprintf("\t\tValid departments:%s\n", departments))
+
+      case "loginShell":
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent value: %s\n", c.User.Field[fieldName]))
+        for _ , value := range c.Config.DefaultValues.ValidShells {
+          shells = shells + " " + value
+        }
+        u.PrintColor(u.Purple, fmt.Sprintf("\t\tValid shells:%s\n", shells))
+
+      case "userPassword":
+        passWord := u.GenerateRandom(
+          c.Config.DefaultValues.PassComplex,
+          c.Config.DefaultValues.PassLenght)
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent value (encrypted!): %s\n", c.User.Field[fieldName]))
+        u.PrintColor(u.Yellow,
+          fmt.Sprintf("\t\tsuggested password: %s\n", passWord))
+
+      case "shadowMax":
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent max password age: %s\n", c.User.Field[fieldName]))
+        u.PrintColor(u.Purple,
+          fmt.Sprintf("\t\tMin %d days and max %d days\n",
+          c.Config.DefaultValues.ShadowMin,
+          c.Config.DefaultValues.ShadowMax))
+
+      case "shadowExpire":
+        value, _ := strconv.ParseInt(c.User.Field["shadowExpire"], 10, 64)
+        _, passExpired := u.GetReadableEpoch(value * 86400)
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent password will expire on: %s\n", passExpired))
+
+      case "sshPublicKey":
+        u.PrintColor(u.Cyan,
+          fmt.Sprintf("\tCurrent value: %s\n", c.User.Field[fieldName]))
+
+    }
+
+    if c.Config.Debug {
+      prefix = fmt.Sprintf("(%s) - ", fieldName)
+    }
+
+    if fieldName == "shadowExpire" {
+      fmt.Printf("\t%sReset password expired to (%s days from now) Y/N: ",
+        prefix, v.ModRecord.Field["shadowMax"])
+    } else {
+      fmt.Printf("\t%s%s: ", prefix, v.Template[fieldName].Prompt)
+    }
+
+    reader := bufio.NewReader(os.Stdin)
+    valueEntered, _ = reader.ReadString('\n')
+    valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
+    switch fieldName {
+      case "givenName", "sn":
+        valueEntered = strings.Title(valueEntered)
+
+      case "mail":
+        valueEntered = strings.ToLower(valueEntered)
+
+      case "shadowMax":
+        if len(valueEntered) != 0 {
+          shadowMax, _ := strconv.Atoi(valueEntered)
+          if shadowMax < c.Config.DefaultValues.ShadowMin ||
+            shadowMax > c.Config.DefaultValues.ShadowMax {
+            u.PrintColor(u.Red,
+            fmt.Sprintf("\t\tGiven value %d, is out or range, is set to %d\n",
+              shadowMax, c.Config.DefaultValues.ShadowAge))
+            valueEntered = strconv.Itoa(c.Config.DefaultValues.ShadowAge)
+          }
+          shadowMaxChanged = true
+        }
+
+      case "shadowExpire":
+        if len(valueEntered) == 0 {
+          u.PrintColor(u.Cyan,
+            fmt.Sprintf("\tPassword expiration date will not be changed\n"))
+        } else {
+          // calculate when it will be expired based on default value if shadowMax
+          // otherwise it will be today + new shadowMax value
+          currShadowMax = c.User.Field["shadowMax"]
+          if shadowMaxChanged == true {
+            currShadowMax = v.ModRecord.Field["shadowMax"]
+          }
+
+          // set last changed to now
+          v.ModRecord.Field["shadowLastChange"] = v.Template["shadowLastChange"].Value
+          // calculate the new shadowExpire
+          shadowLastChange, _ := strconv.ParseInt(v.ModRecord.Field["shadowLastChange"], 10, 64)
+          shadowMax, _ := strconv.ParseInt(currShadowMax, 10, 64)
+          _, passExpired := u.GetReadableEpoch((shadowLastChange + shadowMax) * 86400)
+          u.PrintColor(u.Cyan,
+            fmt.Sprintf("\tCurrent password will now expire on: %s\n", passExpired))
+          // replace the 'Y' with the correct value
+          valueEntered = strconv.FormatInt((shadowLastChange + shadowMax), 10)
+        }
+    }
+
+    if len(valueEntered) != 0 {
+        v.ModRecord.Field[fieldName] = valueEntered
+    }
+  }
+
+
+  // we only handle groupOfNames type of group
+  fmt.Printf("\n")
+  // set the user's groups
+  c.User.Groups = c.GetUserGroups("groupOfNames")
+
+  // need only the group name
+  reg, _ := regexp.Compile("^cn=|,ou=groups,.*")
+  for _, userGroup := range c.User.Groups {
+     userGroupList = append(userGroupList, fmt.Sprintf("%s", reg.ReplaceAllString(userGroup, "")))
+  }
+
+  availableGroups := c.GetGroupsNameByType("groupOfNames")
+  u.PrintPurple(fmt.Sprintf("\t\tAvailable groups: %s\n", strings.Join(availableGroups[:], " ")))
+
+  u.PrintPurple(fmt.Sprintf("\t\tUser %s groups: %s\n",
+    c.User.Field["uid"], strings.Join(userGroupList, " ")))
+
+  for _, leaveGroup := range userGroupList {
+     u.PrintRed(fmt.Sprintf("\tRemove the group %s? default to not remove group, [Y/N]:  ", leaveGroup))
+     reader := bufio.NewReader(os.Stdin)
+     valueEntered, _ = reader.ReadString('\n')
+     valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
+     switch valueEntered {
+       case "y", "Y", "yes", "YES", "d", "del", "D", "DEL":
+         delList = append(delList, leaveGroup)
+    }
+  }
+
+  for _, joinGroup := range availableGroups {
+    if u.InList(userGroupList, joinGroup) == false {
+      u.PrintColor(u.Green,
+       fmt.Sprintf("\tJoin the group %s? default to not join group, [Y/N]:  ", joinGroup))
+      reader := bufio.NewReader(os.Stdin)
+      valueEntered, _ := reader.ReadString('\n')
+      valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
+      switch valueEntered {
+        case "y", "Y", "yes", "YES", "a", "add", "A", "ADD":
+          addList = append(addList, joinGroup)
+      }
+    }
+  }
+   v.ModRecord.AddList = addList
+   v.ModRecord.DelList = delList
 }
 
-func createNewUserRecord(conn *ldap.Connection) {
-	var shadowMaxChanged bool = false
-	var shells string
-	var departments string
-	var currShadowMax string
-	var changeFields map[string]string
-	var userGroupList []string
-	var delList []string
-    var addList []string
-	changeFields = make(map[string]string)
-	utils.PrintColor(consts.Purple,
-		fmt.Sprintf("\tUsing user: %s\n", conn.User.Field["uid"]))
-	utils.PrintColor(consts.Yellow,
-		fmt.Sprintf("\tPress enter to leave the value unchanged\n"))
-	utils.PrintLine(utils.Purple)
-	for _, fieldName := range fields  {
-		// these will be valid once the field was filled since they depends
-		// on some of the fields value
-		switch fieldName {
-			case "givenName":
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent value: %s\n", conn.User.Field[fieldName]))
-
-			case "sn":
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent value: %s\n", conn.User.Field[fieldName]))
-
-			case "mail":
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent value: %s\n", conn.User.Field[fieldName]))
-
-			case "departmentNumber":
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent value: %s\n", conn.User.Field[fieldName]))
-				for _ , value := range conn.Config.GroupValues.Groups {
-					departments = departments + " " + value
-				}
-				utils.PrintColor(consts.Purple, fmt.Sprintf("\t\tValid departments:%s\n", departments))
-
-			case "loginShell":
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent value: %s\n", conn.User.Field[fieldName]))
-				for _ , value := range conn.Config.DefaultValues.ValidShells {
-					shells = shells + " " + value
-				}
-				utils.PrintColor(consts.Purple, fmt.Sprintf("\t\tValid shells:%s\n", shells))
-
-			case "userPassword":
-				passWord := utils.GenerateRandom(
-					conn.Config.DefaultValues.PassComplex,
-					conn.Config.DefaultValues.PassLenght)
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent value (encrypted!): %s\n", conn.User.Field[fieldName]))
-				utils.PrintColor(consts.Yellow,
-					fmt.Sprintf("\t\tsuggested password: %s\n", passWord))
-
-			case "shadowMax":
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent max password age: %s\n", conn.User.Field[fieldName]))
-				utils.PrintColor(consts.Purple,
-					fmt.Sprintf("\t\tMin %d days and max %d days\n",
-					conn.Config.DefaultValues.ShadowMin,
-					conn.Config.DefaultValues.ShadowMax))
-
-			case "shadowExpire":
-				value, _ := strconv.ParseInt(conn.User.Field["shadowExpire"], 10, 64)
-				_, passExpired := utils.GetReadableEpoch(value * 86400)
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent password will expire on: %s\n", passExpired))
-
-			case "sshPublicKey":
-				utils.PrintColor(consts.Cyan,
-					fmt.Sprintf("\tCurrent value: %s\n", conn.User.Field[fieldName]))
-
-		}
-		prefix := ""
-		if conn.Config.Debug {
-			prefix = fmt.Sprintf("(%s) - ", fieldName)
-		}
-		if fieldName == "shadowExpire" {
-			fmt.Printf("\t%sReset password expired to (%s days from now) Y/N: ",
-				prefix, changeFields["shadowMax"])
-		} else {
-			fmt.Printf("\t%s%s: ", prefix, vars.Template[fieldName].Prompt)
-		}
-		reader := bufio.NewReader(os.Stdin)
-		valueEntered, _ := reader.ReadString('\n')
-		valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
-		switch fieldName {
-			case "givenName", "sn":
-				valueEntered = strings.Title(valueEntered)
-
-			case "mail":
-				valueEntered = strings.ToLower(valueEntered)
-
-			case "shadowMax":
-				if len(valueEntered) != 0 {
-					shadowMax, _ := strconv.Atoi(valueEntered)
-					if shadowMax < conn.Config.DefaultValues.ShadowMin ||
-						shadowMax > conn.Config.DefaultValues.ShadowMax {
-						utils.PrintColor(consts.Red,
-						fmt.Sprintf("\t\tGiven value %d, is out or range, is set to %d\n",
-							shadowMax, conn.Config.DefaultValues.ShadowAge))
-						valueEntered = strconv.Itoa(conn.Config.DefaultValues.ShadowAge)
-					}
-					shadowMaxChanged = true
-				}
-
-			case "shadowExpire":
-				if len(valueEntered) == 0 {
-					utils.PrintColor(consts.Cyan,
-						fmt.Sprintf("\tPassword expiration date will not be changed\n"))
-				} else {
-					// calculate when it will be expired based on default value if shadowMax
-					// otherwise it will be today + new shadowMax value
-					currShadowMax = conn.User.Field["shadowMax"]
-					if shadowMaxChanged == true {
-						currShadowMax = changeFields["shadowMax"]
-					}
-
-					// set last changed to now
-					changeFields["shadowLastChange"] = vars.Template["shadowLastChange"].Value
-					// calculate the new shadowExpire
-					shadowLastChange, _ := strconv.ParseInt(changeFields["shadowLastChange"], 10, 64)
-					shadowMax, _ := strconv.ParseInt(currShadowMax, 10, 64)
-					_, passExpired := utils.GetReadableEpoch((shadowLastChange + shadowMax) * 86400)
-					utils.PrintColor(consts.Cyan,
-						fmt.Sprintf("\tCurrent password will now expire on: %s\n", passExpired))
-					// replace the 'Y' with the correct value
-					valueEntered = strconv.FormatInt((shadowLastChange + shadowMax), 10)
-				}
-		}
-		if len(valueEntered) != 0 {
-				changeFields[fieldName] = valueEntered
-		}
-	}
-	// debug
-	if conn.Config.Debug {
-		for recordName, recordValue := range changeFields{
-			logRecord = fmt.Sprintf(" Modified Field Name: %s - Field Value: %s", recordName, recordValue)
-			logs.Log(logRecord, "DEBUG")
-		}
-	}
-	conn.ModifyUser(changeFields)
-	// we only handle groupOfNames type of group
-	fmt.Printf("\n")
-	for _, group := range conn.User.Groups {
-		userGroupList = append(userGroupList, cleanUpData(conn, group))
-	}
-	availableGroups := conn.GetGroupsName("groupOfNames")
-	utils.PrintColor(utils.Purple, fmt.Sprintf("\t\tAvailable groups: %s\n",
-		strings.Join(availableGroups[:], " ")))
-
-	utils.PrintColor(utils.Purple, fmt.Sprintf("\t\tUser %s groups: %s\n",
-		conn.User.Field["uid"], strings.Join(userGroupList, " ")))
-	for _, leaveGroup := range userGroupList {
-		utils.PrintColor(consts.Red,
-			fmt.Sprintf("\tRemove the group %s? default to not remove group, [Y/N]:  ", leaveGroup))
-		reader := bufio.NewReader(os.Stdin)
-		valueEntered, _ := reader.ReadString('\n')
-		valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
-		switch valueEntered {
-			case "y", "Y": delList = append(delList, leaveGroup)
-		}
-	}
-	for _, joinGroup := range availableGroups {
-		if utils.InList(userGroupList, joinGroup) == false {
-			utils.PrintColor(consts.Green,
-				fmt.Sprintf("\tJoin the group %s? default to not join group, [Y/N]:  ", joinGroup))
-			reader := bufio.NewReader(os.Stdin)
-			valueEntered, _ := reader.ReadString('\n')
-			valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
-			switch valueEntered {
-				case "y", "Y": addList = append(addList, joinGroup)
-			}
-		}
-	}
-	conn.ModifyUserGroup(conn.User.Field["uid"], addList, delList)
-	// debug
-	if conn.Config.Debug {
-		for recordName, recordValue := range addList {
-			logRecord = fmt.Sprintf(" Group added Field Name: %s - Field Value: %s", recordName, recordValue)
-		}
-		for recordName, recordValue := range delList {
-			logRecord = fmt.Sprintf(" Group removed Field Name: %s - Field Value: %s", recordName, recordValue)
-		}
-	}
-}
-
-func Modify(conn *ldap.Connection) {
-	utils.PrintHeader(consts.Purple, "Modify User", true)
-	if common.User(conn, true, false) {
-		createNewUserRecord(conn)
-	}
-	utils.PrintLine(utils.Purple)
-	return
+func Modify(c *l.Connection) {
+  u.PrintHeader(u.Purple, "Modify User", true)
+  if cu.User(c, true, false) {
+    createModifyUserRecord(c)
+    if len(v.ModRecord.Field) == 0 &&
+       len(v.ModRecord.AddList) == 0 &&
+       len(v.ModRecord.DelList) == 0 {
+        u.PrintBlue(fmt.Sprintf("\n\tNo field were changed, no modification was made for the user %s\n",
+          c.User.Field["uid"]))
+    } else {
+      if !c.ModifyUser() {
+        u.PrintRed(fmt.Sprintf("\n\tFailed modify the user %s, check the log file\n", c.User.Field["uid"]))
+      } else{
+        u.PrintGreen(fmt.Sprintf("\n\tUser %s modified successfully\n", c.User.Field["uid"]))
+      }
+    }
+  }
+  u.PrintLine(u.Purple)
 }
