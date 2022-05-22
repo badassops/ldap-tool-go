@@ -124,3 +124,12 @@ func (c *Connection) GetNextGID() int {
   }
   return startGID + 1
 }
+
+func (c *Connection) GetGroupType(groupName string) (bool, string) {
+    var typeGroup string
+    var cnt int
+    if cnt, typeGroup = c.GetGroup(groupName); cnt == 0 {
+        return false, "errored"
+    }
+    return true, typeGroup
+}

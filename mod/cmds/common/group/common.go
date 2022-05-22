@@ -16,6 +16,7 @@ import (
 
   u "badassops.ldap/utils"
   l "badassops.ldap/ldap"
+  v "badassops.ldap/vars"
 )
 
 
@@ -25,7 +26,7 @@ var (
   enterData string
 )
 
-func Group(c *l.Connection, firstTime bool) string {
+func Group(c *l.Connection, firstTime bool) bool {
   reader := bufio.NewReader(os.Stdin)
   fmt.Printf("\tEnters the group name to be use: ")
   enterData, _ = reader.ReadString('\n')
@@ -34,7 +35,7 @@ func Group(c *l.Connection, firstTime bool) string {
   if enterData == "" {
     u.PrintColor(u.Red, fmt.Sprintf("\n\tNo group was given aborting...\n"))
     if firstTime {
-      return "not-found"
+      return false
     } else {
       // need to break the recursive
       u.ReleaseIT(c.LockFile, c.LockPid)
@@ -49,19 +50,20 @@ func Group(c *l.Connection, firstTime bool) string {
     wildCard = strings.TrimSuffix(wildCard, "\n")
     if u.GetYN(wildCard, false) == true {
       enterData = "*" + enterData + "*"
-      // c.SearchGroup(enterData, groupType, false)
       c.SearchGroup(enterData, false)
       fmt.Printf("\n\tSelect the group name from the above list:\n")
       Group(c, false)
     }
   } else {
     // from recursive
-    return "recursive"
+    return true
   }
 
   u.PrintLine(u.Purple)
   if cnt := c.SearchGroup(enterData, true) ; cnt == 0 {
     u.PrintColor(u.Red, fmt.Sprintf("\n\tGroup %s was not found, aborting...\n", enterData))
+    return false
   }
-  return enterData
+  v.ModRecord.Field["groupName"] = enterData
+  return true
 }
