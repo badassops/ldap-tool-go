@@ -16,7 +16,7 @@ import (
   "strings"
 
   u "badassops.ldap/utils"
-  "badassops.ldap/ldap"
+  l "badassops.ldap/ldap"
 )
 
 var (
@@ -27,7 +27,7 @@ var (
 
 )
 
-func printUserRecord(c *ldap.Connection, userName string) {
+func printUserRecord(c *l.Connection, userName string) {
   // the values are in days so we need to multiple by 86400
   value, _ := strconv.ParseInt(c.User.Field["shadowLastChange"], 10, 64)
    _, passChanged := u.GetReadableEpoch(value * 86400)
@@ -41,6 +41,7 @@ func printUserRecord(c *ldap.Connection, userName string) {
   }
 
   u.PrintLine(u.Purple)
+  c.User.Groups = c.GetUserGroups("groupOfNames")
   u.PrintColor(u.Purple, fmt.Sprintf("\tUser %s groups:\n", userName))
   for _, group := range c.User.Groups {
     u.PrintColor(u.Cyan, fmt.Sprintf("\tdn: %s\n", group))
@@ -52,7 +53,7 @@ func printUserRecord(c *ldap.Connection, userName string) {
   u.PrintColor(u.Red, fmt.Sprintf("\tPassword will expired on %s\n", passExpired))
 }
 
-func User(c *ldap.Connection, firstTime bool, showRecord bool) bool {
+func User(c *l.Connection, firstTime bool, showRecord bool) bool {
   reader := bufio.NewReader(os.Stdin)
   fmt.Printf("\tEnter user login name to be use: ")
   enterData, _ := reader.ReadString('\n')

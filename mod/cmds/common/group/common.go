@@ -15,7 +15,7 @@ import (
   "strings"
 
   u "badassops.ldap/utils"
-  "badassops.ldap/ldap"
+  l "badassops.ldap/ldap"
 )
 
 
@@ -25,7 +25,7 @@ var (
   enterData string
 )
 
-func Group(c *ldap.Connection, firstTime bool) string {
+func Group(c *l.Connection, firstTime bool) string {
   reader := bufio.NewReader(os.Stdin)
   fmt.Printf("\tEnters the group name to be use: ")
   enterData, _ = reader.ReadString('\n')

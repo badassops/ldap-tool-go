@@ -12,9 +12,8 @@ import (
   "fmt"
   "os"
 
-  "badassops.ldap/vars"
+  v "badassops.ldap/vars"
   u "badassops.ldap/utils"
-
   "github.com/akamensky/argparse"
   "github.com/BurntSushi/toml"
 )
@@ -63,6 +62,8 @@ type (
     Wait          int
     PassLenght    int
     PassComplex   bool
+	UidStart      int
+    GidStart      int
   }
 
   LogConfig struct {
@@ -139,7 +140,7 @@ func (c *Config) InitializeArgs() {
 
   errored := 0
   allowedValues := []string{"create", "modify", "delete", "search"}
-  parser := argparse.NewParser(vars.MyProgname, vars.MyDescription)
+  parser := argparse.NewParser(v.MyProgname, v.MyDescription)
   configFile := parser.String("c", "configFile",
     &argparse.Options{
     Required:  false,
@@ -189,14 +190,14 @@ func (c *Config) InitializeArgs() {
 
   if *showVersion {
     u.ClearScreen()
-    u.PrintYellow(vars.MyProgname + " version: " + vars.MyVersion + "\n")
+    u.PrintYellow(v.MyProgname + " version: " + v.MyVersion + "\n")
     os.Exit(0)
   }
 
   if *showInfo {
     u.ClearScreen()
-    u.PrintYellow(vars.MyDescription + "\n")
-    u.PrintCyan(vars.MyInfo)
+    u.PrintYellow(v.MyDescription + "\n")
+    u.PrintCyan(v.MyInfo)
     os.Exit(0)
   }
 

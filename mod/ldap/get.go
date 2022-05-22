@@ -92,16 +92,35 @@ func (c *Connection) GetUserGroups(groupType string) []string {
 }
 
 func (c *Connection) GetNextUID() int {
-  var highestUID = 0
+  var startUID = c.Config.DefaultValues.UidStart
   var uidValue int
   attributes := []string{"uidNumber"}
   searchBase := fmt.Sprintf("(objectClass=person)")
   records, _ := c.search(searchBase, attributes)
   for _, entry := range records.Entries {
       uidValue, _ = strconv.Atoi(entry.GetAttributeValue("uidNumber"))
-      if uidValue > highestUID {
-        highestUID = uidValue
+      if uidValue > startUID {
+        startUID = uidValue
       }
   }
-  return highestUID + 1
+  return startUID + 1
+}
+
+func (c *Connection) GetNextGID() int {
+  var startGID = c.Config.DefaultValues.GidStart
+  var uidValue int
+  attributes := []string{"gidNumber"}
+  searchBase := fmt.Sprintf("(objectClass=posixGroup)")
+  records, _ := c.search(searchBase, attributes)
+  for _, entry := range records.Entries {
+      uidValue, _ = strconv.Atoi(entry.GetAttributeValue("gidNumber"))
+      if uidValue == c.Config.DefaultValues.GroupId {
+        // we skip this special gid
+        continue
+      }
+      if uidValue > startGID {
+        startGID = uidValue
+      }
+  }
+  return startGID + 1
 }

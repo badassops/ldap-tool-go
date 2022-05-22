@@ -15,10 +15,9 @@ import (
   "strings"
   "strconv"
 
-  "badassops.ldap/vars"
+  v "badassops.ldap/vars"
   u "badassops.ldap/utils"
-  "badassops.ldap/ldap"
-  //"badassops.ldap/logs"
+  l "badassops.ldap/ldap"
 )
 
 var (
@@ -44,7 +43,7 @@ var (
   shadowMax   int
 )
 
-func createUserRecord(c *ldap.Connection) bool {
+func createUserRecord(c *l.Connection) bool {
   //var logRecord string
 
   for _, fieldName := range fields {
@@ -64,7 +63,7 @@ func createUserRecord(c *ldap.Connection) bool {
 
       case "uidNumber":
         nextUID = c.GetNextUID()
-        u.PrintPurple(fmt.Sprintf("\t\tOptional set user UID, press enter to use the next UID: %d\n", nextUID))
+        u.PrintPurple(fmt.Sprintf("\t\tOptional set user's UID, press enter to use the next UID: %d\n", nextUID))
 
       case "departmentNumber":
         for _ , value := range c.Config.GroupValues.Groups {
@@ -91,14 +90,14 @@ func createUserRecord(c *ldap.Connection) bool {
           c.Config.DefaultValues.ShadowMax))
     }
 
-    if vars.Template[fieldName].Value != "" {
-      u.PrintYellow(fmt.Sprintf("\t ** Default to: %s **\n", vars.Template[fieldName].Value))
+    if v.Template[fieldName].Value != "" {
+      u.PrintYellow(fmt.Sprintf("\t ** Default to: %s **\n", v.Template[fieldName].Value))
     }
 
     if c.Config.Debug {
-      fmt.Printf("\t(%s) - %s: ", fieldName, vars.Template[fieldName].Prompt)
+      fmt.Printf("\t(%s) - %s: ", fieldName, v.Template[fieldName].Prompt)
     } else {
-      fmt.Printf("\t%s: ", vars.Template[fieldName].Prompt)
+      fmt.Printf("\t%s: ", v.Template[fieldName].Prompt)
     }
 
     reader := bufio.NewReader(os.Stdin)
@@ -147,7 +146,7 @@ func createUserRecord(c *ldap.Connection) bool {
         if len(valueEntered) == 0 {
           valueEntered = "/bin/" + c.Config.DefaultValues.Shell
         } else {
-          if u.InList(c.Config.DefaultValues.ValidShells, valueEntered) {
+          if !u.InList(c.Config.DefaultValues.ValidShells, valueEntered) {
             u.PrintRed(fmt.Sprintf("\n\tGiven shell %s is not valid, aborting...\n\n", valueEntered))
             return false
           }
@@ -179,11 +178,11 @@ func createUserRecord(c *ldap.Connection) bool {
 
       default:
         if len(valueEntered) == 0 {
-          valueEntered = vars.Template[fieldName].Value
+          valueEntered = v.Template[fieldName].Value
         }
     }
 
-    if len(valueEntered) == 0 && vars.Template[fieldName].NoEmpty == true {
+    if len(valueEntered) == 0 && v.Template[fieldName].NoEmpty == true {
         u.PrintRed("\tNo value was entered aborting...\n\n")
         return false
     }
@@ -217,12 +216,12 @@ func createUserRecord(c *ldap.Connection) bool {
   c.User.Field["homeDirectory"] = "/home/" + c.User.Field["uid"]
 
   // initialized to be today's epoch days
-  c.User.Field["shadowExpire"] = vars.Template["shadowExpire"].Value
-  c.User.Field["shadowLastChange"] = vars.Template["shadowLastChange"].Value
+  c.User.Field["shadowExpire"] = v.Template["shadowExpire"].Value
+  c.User.Field["shadowLastChange"] = v.Template["shadowLastChange"].Value
   return true
 }
 
-func Create(c *ldap.Connection) {
+func Create(c *l.Connection) {
   u.PrintHeader(u.Purple, "Create User", true)
   if createUserRecord(c) {
     u.PrintLine(u.Purple)

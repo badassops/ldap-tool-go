@@ -16,8 +16,8 @@ import (
   "strconv"
 
   u "badassops.ldap/utils"
-  "badassops.ldap/ldap"
-  "badassops.ldap/vars"
+  l "badassops.ldap/ldap"
+  v "badassops.ldap/vars"
 )
 
 var (
@@ -28,21 +28,22 @@ var (
   // autofilled if not posix: member 
 
   valueEntered string
+  nextGID      int
   fields      = []string{"groupName", "groupType"}
   validTypes  = []string{"posix", "groupOfNames"}
 
 )
 
-func createGroupRecord(c *ldap.Connection) bool {
+func createGroupRecord(c *l.Connection) bool {
   for _, fieldName := range fields {
-    if vars.GroupTemplate[fieldName].Value != "" {
-      u.PrintYellow(fmt.Sprintf("\t ** Default to: %s **\n", vars.GroupTemplate[fieldName].Value))
+    if v.GroupTemplate[fieldName].Value != "" {
+      u.PrintYellow(fmt.Sprintf("\t ** Default to: %s **\n", v.GroupTemplate[fieldName].Value))
     }
 
     if c.Config.Debug {
-      fmt.Printf("\t(%s) - %s: ", fieldName, vars.GroupTemplate[fieldName].Prompt)
+      fmt.Printf("\t(%s) - %s: ", fieldName, v.GroupTemplate[fieldName].Prompt)
     } else {
-      fmt.Printf("\t%s: ", vars.GroupTemplate[fieldName].Prompt)
+      fmt.Printf("\t%s: ", v.GroupTemplate[fieldName].Prompt)
     }
 
     reader := bufio.NewReader(os.Stdin)
@@ -72,7 +73,7 @@ func createGroupRecord(c *ldap.Connection) bool {
         c.Group["groupType"] = valueEntered
     }
 
-    if len(valueEntered) == 0 && vars.GroupTemplate[fieldName].NoEmpty == true {
+    if len(valueEntered) == 0 && v.GroupTemplate[fieldName].NoEmpty == true {
       u.PrintRed("\tNo value was entered aborting...\n\n")
       return false
     }
@@ -81,32 +82,36 @@ func createGroupRecord(c *ldap.Connection) bool {
   if c.Group["groupType"] == "posix" {
     c.Group["objectClass"] = "posixGroup"
 
-    fmt.Printf("\t%s: ", vars.GroupTemplate["gidNumber"].Prompt)
+    nextGID = c.GetNextGID()
+    u.PrintPurple(fmt.Sprintf("\t\tOptional set groups's GID, press enter to use the next GID: %d\n", nextGID))
+    fmt.Printf("\t%s: ", v.GroupTemplate["gidNumber"].Prompt)
     reader := bufio.NewReader(os.Stdin)
-    valueEntered, _ = reader.ReadString('\n')
+    valueEntered, _ := reader.ReadString('\n')
     valueEntered = strings.TrimSuffix(valueEntered, "\n")
 
-    if len(valueEntered) == 0 && vars.GroupTemplate["gidNumber"].NoEmpty == true {
-      u.PrintRed("\tNo value was entered aborting...\n\n")
-      return false
-    }
-    gidEntered, _ := strconv.Atoi(valueEntered)
-    if found, groupName := c.CheckGroupID(gidEntered); found == true {
-      u.PrintRed(fmt.Sprintf("\n\tGiven group id %v already use by the group %s, aborting...\n",
-        valueEntered, groupName))
-      return false
+    if len(valueEntered) == 0 && v.GroupTemplate["gidNumber"].NoEmpty == false {
+      //u.PrintRed("\tNo value was entered aborting...\n\n")
+      //return false
+      valueEntered = strconv.Itoa(nextGID)
+    } else {
+      gidEntered, _ := strconv.Atoi(valueEntered)
+      if found, groupName := c.CheckGroupID(gidEntered); found == true {
+        u.PrintRed(fmt.Sprintf("\n\tGiven group id %v already use by the group %s, aborting...\n",
+          valueEntered, groupName))
+        return false
+      }
     }
     c.Group["gidNumber"] = valueEntered
   }
 
   if c.Group["groupType"] == "groupOfNames" {
     c.Group["objectClass"] = "groupOfNames"
-    c.Group["member"] = vars.GroupTemplate["member"].Value
+    c.Group["member"] = v.GroupTemplate["member"].Value
   }
   return true
 }
 
-func Create(c *ldap.Connection) {
+func Create(c *l.Connection) {
   u.PrintHeader(u.Purple, "Create Group", true)
   if createGroupRecord(c) {
     u.PrintLine(u.Purple)

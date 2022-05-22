@@ -22,7 +22,7 @@ import (
   "strconv"
   "syscall"
 
-  "badassops.ldap/logs"
+  l "badassops.ldap/logs"
   ps "github.com/mitchellh/go-ps"
 )
 
@@ -74,7 +74,7 @@ type Wheel struct {
 func ExitIfError(err error) {
   if err != nil {
     fmt.Fprintln(os.Stderr, "Error: " + err.Error())
-    logs.Log(fmt.Sprint(err.Error()), "ERROR")
+    l.Log(fmt.Sprint(err.Error()), "ERROR")
     os.Exit(1)
   }
 }
@@ -83,7 +83,7 @@ func ExitIfError(err error) {
 func ExitIfNill(ptr interface{}) {
   if ptr == nil {
     fmt.Fprintln(os.Stderr, "Error: got a nil pointer.")
-    logs.Log("got a nil pointer", "ERROR")
+    l.Log("got a nil pointer", "ERROR")
     os.Exit(1)
   }
 }

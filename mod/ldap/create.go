@@ -14,7 +14,6 @@ import (
 
   l "badassops.ldap/logs"
   v "badassops.ldap/vars"
-
   ldapv3 "gopkg.in/ldap.v2"
 )
 
@@ -64,7 +63,6 @@ func (c *Connection) AddGroup() bool {
   if c.Group["groupType"] == "groupOfNames" {
     addReq.Attribute("member", []string{c.Group["member"]})
   }
-
   return c.add(c.Group["groupName"], "group", addReq)
 }
 

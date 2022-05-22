@@ -180,6 +180,7 @@ func main() {
   if config.Cmd != "search" {
     u.ReleaseIT(config.DefaultValues.LockFile, LockPid)
   }
+
   u.TheEnd()
   u.PrintLine(u.Purple)
   logs.Log("System Normal shutdown", "INFO")

@@ -15,20 +15,19 @@ import (
 
   "crypto/tls"
 
-  "badassops.ldap/vars"
+  v "badassops.ldap/vars"
   u "badassops.ldap/utils"
-  "badassops.ldap/configurator"
-  "badassops.ldap/logs"
-
+  c "badassops.ldap/configurator"
+  l "badassops.ldap/logs"
   ldapv3 "gopkg.in/ldap.v2"
 )
 
 type (
   Connection struct {
     Conn     *ldapv3.Conn
-    User     vars.UserRecord
+    User     v.UserRecord
     Group    map[string]string
-    Config   *configurator.Config
+    Config   *c.Config
     LockFile string
     LockPid  int
   }
@@ -60,7 +59,7 @@ var (
 )
 
 // function to initialize a user record
-func New(config *configurator.Config) *Connection {
+func New(config *c.Config) *Connection {
   // set variable for the ldap connection
   var ppolicy *ldapv3.ControlBeheraPasswordPolicy
 
@@ -110,23 +109,23 @@ func New(config *configurator.Config) *Connection {
 
    // debug
   if config.Debug {
-    logs.Log(fmt.Sprintf("Server : %s", config.ServerValues.Server), "DEBUG")
-    logs.Log(fmt.Sprintf("__ BaseDN      : %s", config.ServerValues.BaseDN), "DEBUG")
-    logs.Log(fmt.Sprintf("__ Admin       : %s", config.ServerValues.Admin), "DEBUG")
-    logs.Log(fmt.Sprintf("__ AdminPass   : %s", config.ServerValues.AdminPass), "DEBUG")
-    logs.Log(fmt.Sprintf("__ UserDN      : %s", config.ServerValues.UserDN), "DEBUG")
-    logs.Log(fmt.Sprintf("__ GroupDN     : %s", config.ServerValues.GroupDN), "DEBUG")
-    logs.Log(fmt.Sprintf("__ EmailDomain : %s", config.ServerValues.EmailDomain), "DEBUG")
-    logs.Log(fmt.Sprintf("__ TLS         : %t", config.ServerValues.TLS), "DEBUG")
-    logs.Log(fmt.Sprintf("__ isEnabled   : %t", config.ServerValues.Enabled), "DEBUG")
+    l.Log(fmt.Sprintf("Server : %s", config.ServerValues.Server), "DEBUG")
+    l.Log(fmt.Sprintf("__ BaseDN      : %s", config.ServerValues.BaseDN), "DEBUG")
+    l.Log(fmt.Sprintf("__ Admin       : %s", config.ServerValues.Admin), "DEBUG")
+    l.Log(fmt.Sprintf("__ AdminPass   : %s", config.ServerValues.AdminPass), "DEBUG")
+    l.Log(fmt.Sprintf("__ UserDN      : %s", config.ServerValues.UserDN), "DEBUG")
+    l.Log(fmt.Sprintf("__ GroupDN     : %s", config.ServerValues.GroupDN), "DEBUG")
+    l.Log(fmt.Sprintf("__ EmailDomain : %s", config.ServerValues.EmailDomain), "DEBUG")
+    l.Log(fmt.Sprintf("__ TLS         : %t", config.ServerValues.TLS), "DEBUG")
+    l.Log(fmt.Sprintf("__ isEnabled   : %t", config.ServerValues.Enabled), "DEBUG")
   }
 
   // the rest of the values will be filled during the process
   return &Connection {
     Conn:     ServerConn,
     Config:   config,
-    User:     vars.User,
-    Group:    vars.Group,
+    User:     v.User,
+    Group:    v.Group,
     LockFile: config.DefaultValues.LockFile,
     LockPid:  config.LockPID,
   }

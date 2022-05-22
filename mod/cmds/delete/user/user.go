@@ -15,7 +15,7 @@ import (
   "strings"
 
   u "badassops.ldap/utils"
-  "badassops.ldap/ldap"
+  l "badassops.ldap/ldap"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
   continueDelete string
 )
 
-func deleteUser(c *ldap.Connection) {
+func deleteUser(c *l.Connection) {
   reader := bufio.NewReader(os.Stdin)
   u.PrintYellow(fmt.Sprintf("\tEnter userid (login name) to be use: "))
   valueEntered, _ = reader.ReadString('\n')
@@ -59,7 +59,7 @@ func deleteUser(c *ldap.Connection) {
   return
 }
 
-func Delete(c *ldap.Connection) {
+func Delete(c *l.Connection) {
   u.PrintHeader(u.Purple, "Delete User", true)
   deleteUser(c)
   u.PrintLine(u.Purple)

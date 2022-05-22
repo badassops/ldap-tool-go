@@ -15,21 +15,21 @@ import (
   "strings"
 
   u "badassops.ldap/utils"
-  "badassops.ldap/ldap"
-  "badassops.ldap/cmds/common/user"
+  l "badassops.ldap/ldap"
+  cu "badassops.ldap/cmds/common/user"
 )
 
 var (
   valueEntered string
 )
 
-func User(c *ldap.Connection) {
+func User(c *l.Connection) {
   u.PrintHeader(u.Purple, "Search User", false)
-  common.User(c, true, true)
+  cu.User(c, true, true)
   u.PrintLine(u.Purple)
 }
 
-func Users(c *ldap.Connection) {
+func Users(c *l.Connection) {
   u.PrintHeader(u.Purple, "Search Users", false)
   fmt.Printf("\tPrint full name and department (default to N)? [y/n]: ")
   reader := bufio.NewReader(os.Stdin)

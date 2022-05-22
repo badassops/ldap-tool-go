@@ -14,7 +14,6 @@ import (
 
   l "badassops.ldap/logs"
   u "badassops.ldap/utils"
-
   ldapv3 "gopkg.in/ldap.v2"
 )
 
@@ -37,9 +36,7 @@ func (c *Connection) setPassword() bool {
 
   // once the record is create we need to hash the password
   passwordReq := ldapv3.NewPasswordModifyRequest(
-    c.User.Field["dn"],
-    c.User.Field["userPassword"],
-    c.User.Field["userPassword"])
+    c.User.Field["dn"], "", c.User.Field["userPassword"])
 
   if !c.modifyPassword(c.User.Field["uid"], "password", passwordReq) {
     return false

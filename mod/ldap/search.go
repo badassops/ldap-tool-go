@@ -12,7 +12,6 @@ import (
   "fmt"
 
   u "badassops.ldap/utils"
-
   ldapv3 "gopkg.in/ldap.v2"
 )
 

@@ -12,115 +12,116 @@ import (
   "fmt"
   "strconv"
 
-  "badassops.ldap/vars"
-  "badassops.ldap/configurator"
+  v "badassops.ldap/vars"
+  c "badassops.ldap/configurator"
   u "badassops.ldap/utils"
 )
 
-func Init(c *configurator.Config) {
+func Init(c *c.Config) {
   // ldap fields that will be used
-  vars.Fields  = []string{"uid", "givenName", "sn", "cn", "displayName",
+  v.Fields  = []string{"uid", "givenName", "sn", "cn", "displayName",
     "gecos", "uidNumber", "gidNumber", "departmentNumber",
     "mail", "homeDirectory", "loginShell", "userPassword",
     "shadowLastChange", "shadowExpire", "shadowWarning", "shadowMax",
     "sshPublicKey", "groups"}
 
-  vars.Logs.LogsDir       = vars.LogsDir
-  vars.Logs.LogFile       = vars.LogFile
-  vars.Logs.LogMaxSize    = vars.LogMaxSize
-  vars.Logs.LogMaxBackups = vars.LogMaxBackups
-  vars.Logs.LogMaxAge     = vars.LogMaxAge
-  vars.User.Field         = make(map[string]string)
-  vars.Group              = make(map[string]string)
-  vars.Template           = make(map[string]vars.Record)
-  vars.GroupTemplate      = make(map[string]vars.Record)
+  v.Logs.LogsDir       = v.LogsDir
+  v.Logs.LogFile       = v.LogFile
+  v.Logs.LogMaxSize    = v.LogMaxSize
+  v.Logs.LogMaxBackups = v.LogMaxBackups
+  v.Logs.LogMaxAge     = v.LogMaxAge
+  v.User.Field         = make(map[string]string)
+  v.Group              = make(map[string]string)
+  v.Template           = make(map[string]v.Record)
+  v.GroupTemplate      = make(map[string]v.Record)
+  v.ModRecord.Field    = make(map[string]string)
 
   // set to expire by default as today + ShadowMax
   currExpired := strconv.FormatInt(u.GetEpoch("days") + int64(c.DefaultValues.ShadowMax), 10)
 
   // the fields are always needed
-  vars.Template["uid"] =
-    vars.Record{
+  v.Template["uid"] =
+    v.Record{
       Prompt: "Enter userid (login name) to be use",
       Value: "",
       NoEmpty: true,
       UseValue: false,
     }
 
-  vars.Template["givenName"] =
-    vars.Record{
+  v.Template["givenName"] =
+    v.Record{
       Prompt: "Enter First name",
       Value: "",
       NoEmpty: true,
       UseValue: false,
     }
 
-  vars.Template["sn"] =
-    vars.Record{
+  v.Template["sn"] =
+    v.Record{
       Prompt: "Enter Last name",
       Value: "",
       NoEmpty: true,
       UseValue: false,
     }
 
-  vars.Template["mail"] =
-    vars.Record{
+  v.Template["mail"] =
+    v.Record{
       Prompt: "Enter email",
       Value: "",
       NoEmpty: false,
       UseValue: true,
     }
 
-  vars.Template["uidNumber"] =
-    vars.Record{
+  v.Template["uidNumber"] =
+    v.Record{
       Prompt: "Enter user's UID",
       Value: "",
       NoEmpty: false,
       UseValue: true,
     }
 
-  vars.Template["departmentNumber"] =
-    vars.Record{
+  v.Template["departmentNumber"] =
+    v.Record{
       Prompt: "Enter department",
       Value: c.DefaultValues.GroupName,
       NoEmpty: false,
       UseValue: true,
     }
 
-  vars.Template["loginShell"] =
-    vars.Record{
+  v.Template["loginShell"] =
+    v.Record{
       Prompt: "Enter shell",
       Value: c.DefaultValues.Shell,
       NoEmpty: false,
       UseValue: true,
     }
 
-  vars.Template["userPassword"] =
-    vars.Record{
+  v.Template["userPassword"] =
+    v.Record{
       Prompt: "Enter password",
       Value: "",
       NoEmpty: false,
       UseValue: true,
     }
 
-  vars.Template["shadowMax"] =
-    vars.Record{
+  v.Template["shadowMax"] =
+    v.Record{
       Prompt: "Enter the max password age",
       Value: strconv.Itoa(c.DefaultValues.ShadowAge),
       NoEmpty: false,
       UseValue: true,
     }
 
-  vars.Template["shadowWarning"] =
-    vars.Record{
+  v.Template["shadowWarning"] =
+    v.Record{
       Prompt: "Enter the days notification before the password expires",
       Value: strconv.Itoa(c.DefaultValues.ShadowWarning),
       NoEmpty: false,
       UseValue: true,
     }
 
-  vars.Template["sshPublicKey"] =
-    vars.Record{
+  v.Template["sshPublicKey"] =
+    v.Record{
       Prompt: "Enter SSH the Public Key",
       Value: "is missing",
       NoEmpty: false,
@@ -128,16 +129,16 @@ func Init(c *configurator.Config) {
     }
 
   // these are use during modification
-  vars.Template["shadowExpire"] =
-    vars.Record{
+  v.Template["shadowExpire"] =
+    v.Record{
       Prompt: fmt.Sprintf("Reset password expired to (%d days from now) Y/N", c.DefaultValues.ShadowMax),
       Value: currExpired,
       NoEmpty: false,
       UseValue: false,
   }
 
-  vars.Template["shadowLastChange"] =
-    vars.Record{
+  v.Template["shadowLastChange"] =
+    v.Record{
       Prompt: "Date the password was last changed",
       Value: strconv.FormatInt(u.GetEpoch("days"), 10),
       NoEmpty: false,
@@ -145,16 +146,16 @@ func Init(c *configurator.Config) {
   }
 
   // these are for the ldap group
-  vars.GroupTemplate["groupName"] =
-    vars.Record{
+  v.GroupTemplate["groupName"] =
+    v.Record{
       Prompt: "Enter the group name",
       Value: "",
       NoEmpty: true,
       UseValue: false,
   }
 
-  vars.GroupTemplate["groupType"] =
-    vars.Record{
+  v.GroupTemplate["groupType"] =
+    v.Record{
       Prompt: "Group type (p)osix or (g)roupOfNames (default to posix)",
       Value: "posix",
       NoEmpty: false,
@@ -162,25 +163,25 @@ func Init(c *configurator.Config) {
   }
 
   // onlty use for posix group
-  vars.GroupTemplate["gidNumber"] =
-    vars.Record{
+  v.GroupTemplate["gidNumber"] =
+    v.Record{
       Prompt: "Group ID/number of the posix group",
       Value: "",
       NoEmpty: false,
-      UseValue: false,
+      UseValue: true,
   }
 
   // these are automatically filled
-  vars.GroupTemplate["objectClass"] =
-    vars.Record{
+  v.GroupTemplate["objectClass"] =
+    v.Record{
       Prompt: "Auto filled based on group type, posix or groupOfNames (default to posix)",
       Value: "",
       NoEmpty: true,
       UseValue: true,
   }
 
-  vars.GroupTemplate["cn"] =
-    vars.Record{
+  v.GroupTemplate["cn"] =
+    v.Record{
       Prompt: "Auto filled based on the groupDN value",
       Value: "",
       NoEmpty: true,
@@ -188,8 +189,8 @@ func Init(c *configurator.Config) {
   }
 
   // the defaul is always used
-  vars.GroupTemplate["member"] =
-    vars.Record{
+  v.GroupTemplate["member"] =
+    v.Record{
       Prompt: "Auto filled based on the groupDN value",
       Value: fmt.Sprintf("uid=initial-member,%s", c.ServerValues.UserDN),
       NoEmpty: true,

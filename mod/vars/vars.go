@@ -34,6 +34,12 @@ type Log struct {
   LogMaxAge     int
 }
 
+type ModifyRecord struct {
+  Field   map[string]string
+  AddList []string
+  DelList []string
+}
+
 var (
   MyVersion  = "0.0.2a"
   now      = time.Now()
@@ -63,6 +69,9 @@ var (
 
   // ldap record to be use for create or modify a group
   GroupTemplate map[string]Record
+
+  // formodify user
+  ModRecord ModifyRecord
 
   // we sets these under variable
   LogsDir       = "/var/log/ldap-go"

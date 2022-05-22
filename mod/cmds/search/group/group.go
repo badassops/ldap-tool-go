@@ -11,18 +11,18 @@ package group
 import (
 
   u "badassops.ldap/utils"
-  "badassops.ldap/ldap"
-  "badassops.ldap/cmds/common/group"
+  l "badassops.ldap/ldap"
+  cg "badassops.ldap/cmds/common/group"
 )
 
 
-func Group(c *ldap.Connection) {
+func Group(c *l.Connection) {
   u.PrintHeader(u.Purple, "Search Group", true)
-  common.Group(c, true)
+  cg.Group(c, true)
   u.PrintLine(u.Purple)
 }
 
-func Groups(c *ldap.Connection) {
+func Groups(c *l.Connection) {
   u.PrintHeader(u.Purple, "Search Groups", true)
   u.PrintColor(u.Purple, "\n\t  _________ all group and the members __________\n")
   c.SearchGroups()

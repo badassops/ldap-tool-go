@@ -15,7 +15,7 @@ import (
   "strings"
 
   u "badassops.ldap/utils"
-  "badassops.ldap/ldap"
+  l "badassops.ldap/ldap"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
   continueDelete string
 )
 
-func deleteGroup(c *ldap.Connection) {
+func deleteGroup(c *l.Connection) {
   reader := bufio.NewReader(os.Stdin)
   u.PrintYellow(fmt.Sprintf("\tEnter group name to be use: "))
   valueEntered, _ = reader.ReadString('\n')
@@ -63,7 +63,7 @@ func deleteGroup(c *ldap.Connection) {
   return
 }
 
-func Delete(c *ldap.Connection) {
+func Delete(c *l.Connection) {
   u.PrintHeader(u.Purple, "Delete Group", true)
   deleteGroup(c)
   u.PrintLine(u.Purple)
