@@ -129,13 +129,29 @@ func createModifyUserRecord(c *l.Connection) {
 
     reader := bufio.NewReader(os.Stdin)
     valueEntered, _ = reader.ReadString('\n')
-    valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
+    valueEntered = strings.TrimSuffix(valueEntered, "\n")
     switch fieldName {
       case "givenName", "sn":
         valueEntered = strings.Title(valueEntered)
 
       case "mail":
         valueEntered = strings.ToLower(valueEntered)
+        valueEntered = strings.ToLower(valueEntered)
+
+      case "departmentNumber":
+        if len(valueEntered) != 0 {
+          if cnt := c.CheckGroup(valueEntered); cnt == 0 {
+            u.PrintRed(fmt.Sprintf("\t\tGiven departmentNumber %s is not valid, given value ignored...\n",
+              valueEntered))
+            valueEntered = ""
+          }
+          for _, mapValues := range c.Config.GroupValues.GroupsMap {
+            if mapValues.Name == valueEntered {
+              v.ModRecord.Field["gidNumber"] = strconv.Itoa(mapValues.Gid)
+            }
+          }
+          valueEntered = strings.ToUpper(valueEntered)
+        }
 
       case "shadowMax":
         if len(valueEntered) != 0 {
