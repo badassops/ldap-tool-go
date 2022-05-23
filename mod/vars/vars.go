@@ -41,7 +41,7 @@ type ModifyRecord struct {
 }
 
 var (
-  MyVersion  = "0.1.0"
+  MyVersion  = "0.1.0a"
   now      = time.Now()
   MyProgname  = path.Base(os.Args[0])
   myAuthor  = "Luc Suryo"

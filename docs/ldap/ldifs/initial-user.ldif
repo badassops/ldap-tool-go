@@ -1,5 +1,5 @@
 
-dn: uid=momo,ou=users,dc=op,dc=badassops,dc=com
+dn: uid=initial-user,ou=users,dc=co,dc=badassops,dc=com
 objectClass: top
 objectClass: person
 objectClass: organizationalPerson
@@ -7,22 +7,22 @@ objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 objectClass: ldapPublicKey
-uid: momo
-sn: WasHere
-givenName: Momo
-cn: Momo WasHere
-mail: momo@badassops.com
-displayName: Momo WasHere
+uid: initial-user
+sn: LDAP
+givenName: Initial-user
+cn: Initial-user LDAP
+mail: initial-user@badassops.com
+displayName: Initial-user LDAP
 uidNumber: 666
 gidNumber: 66
 userPassword: verySecretReally
-gecos: Momo WasHere
-departmentNumber: Badassops Momo
+gecos: Initial-user LDAP
+departmentNumber: LDAP
 loginShell: /bin/zsh
-homeDirectory: /home/momo
+homeDirectory: /home/initial-user
 shadowLastChange: 18322
 shadowExpire: -1
 shadowMax: 180
 shadowWarning: 14
-sshPublicKey:
+sshPublicKey: none
 

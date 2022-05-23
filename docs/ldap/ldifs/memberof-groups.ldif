@@ -2,15 +2,10 @@
 dn: cn=vpn,ou=groups,dc=op,dc=badassops,dc=com
 objectClass: groupOfNames
 cn: vpn
-member: uid=momo,ou=users,dc=op,dc=badassops,dc=com
+member: uid=initial-user,ou=users,dc=co,dc=badassops,dc=com
 
 dn: cn=admins,ou=groups,dc=op,dc=badassops,dc=com
 objectClass: groupOfNames
 cn: admins
-member: uid=momo,ou=users,dc=op,dc=badassops,dc=com
-
-dn: cn=jenkins,ou=groups,dc=op,dc=badassops,dc=com
-objectClass: groupOfNames
-cn: jenkins
-member: uid=momo,ou=users,dc=op,dc=badassops,dc=com
+member: uid=initial-user,ou=users,dc=co,dc=badassops,dc=com
 

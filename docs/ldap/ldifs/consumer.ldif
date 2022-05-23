@@ -11,7 +11,7 @@ olcDbIndex: entryUUID eq
 -
 add: olcSyncrepl
 olcSyncrepl: rid=111 <----- EACH REPLICA MUST HAVE AN UNIQUE RID VALUE
-  provider=ldap://ldap-primary.co.badassops.com <---- EXAMPLE
+  provider=ldap://ldap-main.co.badassops.com <---- EXAMPLE
   bindmethod=simple
   binddn="cn=replicator,dc=op,dc=badassops,dc=com"
   credentials=123isnotverysecret 
@@ -22,4 +22,4 @@ olcSyncrepl: rid=111 <----- EACH REPLICA MUST HAVE AN UNIQUE RID VALUE
   retry="60 +"
 -
 add: olcUpdateRef
-olcUpdateRef: ldap://ldap://ldap-primary.co.badassops.com <---- EXAMPLE
+olcUpdateRef: ldap://ldap-main.co.badassops.com <---- EXAMPLE

@@ -76,6 +76,12 @@ To **permanently** delete
 ```
 rm -rf /var/lib/slapd
 ```
+
+edit these file and remove any mention of the ldap settings
+```
+vi /etc/libnss-ldap.conf /etc/pam_ldap.conf
+```
+
 To **save** the ldap files (db files) in case you need it back
 ```
 mv /var/lib/slapd /var/lib/slapd-$(date "+%Y-%m-%d-%H-%M")

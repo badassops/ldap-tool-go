@@ -9,8 +9,14 @@ The following technologies are used
 - OpenLDAP as the LDAP software
 
 # Setup
-NOTE: becuase we doing TLS, we must use name, not IP and the name must match the certificate use by the primary.
-Example ldap-primary.co.badassops.com
+NOTE:
+- becuase we doing TLS, we must use name, not IP and the name must match the certificate used by the primary.
+- is you are using subdomain such in the example, you **must** set the hostname to the subdomain!
+  en edit the host file
+```
+hostnamectl set-hostname  ldap-main.co.badassops.com
+```
+
 
 ### Create a password for the replicator user
 ```

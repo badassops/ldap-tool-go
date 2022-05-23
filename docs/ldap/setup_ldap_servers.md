@@ -31,6 +31,14 @@ The following technologies are used
 
 The domain  co.badassops.com is chosen to make getting cert from Let’s Encrypt easier
 
+# Note
+- becuase we doing TLS, we must use name, not IP and the name must match the certificate used by the primary.
+- is you are using subdomain such in the example, you **must** set the hostname to the subdomain!
+  en edit the host file
+```
+hostnamectl set-hostname ldap-main.co.badassops.com
+```
+
 
 ## Setup the Primary and Secondaries servers
 To make things easier create the ldap configuration (ldap.conf)
@@ -235,15 +243,10 @@ ln -s /etc/ldap/ldap.conf /etc/sudo-ldap.conf
 
 create the group and sudoers LDAP configuration records
 content of the group.ldif file 
-These is are example where we use the user *momo* and the group &vpn
+These is are example where we use the user ** and the group &vpn
 however we do need the group *nogroup*
 
 ```
-dn: cn=nogroup,ou=groups,dc=co,dc=badassops,dc=com
-objectClass: posixGroup
-cn: nogroup
-gidNumber: 10666
-
 dn: ou=users,dc=co,dc=badassops,dc=com
 objectClass: organizationalUnit
 ou: Users
@@ -265,7 +268,7 @@ gidNumber: 777
 dn: cn=sre,ou=groups,dc=co,dc=badassops,dc=com
 objectClass: posixGroup
 cn: sre
-gidNumber: 1000
+gidNumber: 778
 
 dn: cn=engineering,ou=groups,dc=co,dc=badassops,dc=com
 objectClass: posixGroup
@@ -275,12 +278,18 @@ gidNumber: 2000
 dn: cn=datascientist,ou=groups,dc=co,dc=badassops,dc=com
 objectClass: posixGroup
 cn: datascientist
-gidNumber: 3000
+gidNumber: 2010
 
 dn: cn=qa,ou=groups,dc=co,dc=badassops,dc=com
 objectClass: posixGroup
 cn: qa
-gidNumber: 4000
+gidNumber: 2020
+
+dn: cn=nogroup,ou=groups,dc=co,dc=badassops,dc=com
+objectClass: posixGroup
+cn: nogroup
+gidNumber: 10666
+
 ```
 
 content of sudoers.ldif file
@@ -330,8 +339,8 @@ sudoOrder: 2
 dn: cn=%devops,ou=SUDOers,dc=co,dc=badassops,dc=com
 objectClass: top
 objectClass: sudoRole
-cn: %admin
-sudoUser: %admin
+cn: %devops
+sudoUser: %devops
 sudoHost: ALL
 sudoRunAsUser: ALL
 sudoCommand: ALL
@@ -401,9 +410,9 @@ ldapadd -Q -Y EXTERNAL -H ldapi:/// -f memberof-configuration.ldif
 
 We need to create an temporary user and then add to the special group VPN (as memberOf), we need these 2 files
 
-momo.ldif
+initial-user.ldif
 ```
-dn: uid=momo,ou=users,dc=co,dc=badassops,dc=com
+dn: uid=initial-user,ou=users,dc=co,dc=badassops,dc=com
 objectClass: top
 objectClass: person
 objectClass: organizationalPerson
@@ -411,24 +420,24 @@ objectClass: inetOrgPerson
 objectClass: posixAccount
 objectClass: shadowAccount
 objectClass: ldapPublicKey
-uid: momo
-sn: WasHere
-givenName: Momo
-cn: Momo WasHere
-mail: momo@badassops.com
-displayName: Momo WasHere
+uid: initial-user
+sn: LDAP
+givenName: Initial-user
+cn: Initial-user LDAP
+mail: initial-user@badassops.com
+displayName: Initial-user LDAP
 uidNumber: 666
 gidNumber: 66
 userPassword: verySecretReally
-gecos: Momo WasHere
-departmentNumber: Colorado
+gecos: Initial-user LDAP
+departmentNumber: LDAP
 loginShell: /bin/zsh
-homeDirectory: /home/momo
+homeDirectory: /home/initial-user
 shadowLastChange: 18322
 shadowExpire: -1
 shadowMax: 180
 shadowWarning: 14
-sshPublicKey:
+sshPublicKey: none
 ```
 
 memberof-groups.ldif
@@ -436,22 +445,18 @@ memberof-groups.ldif
 dn: cn=vpn,ou=groups,dc=co,dc=badassops,dc=com
 objectClass: groupOfNames
 cn: vpn
-member: uid=momo,ou=users,dc=co,dc=badassops,dc=com
+member: uid=initial-user,ou=users,dc=co,dc=badassops,dc=com
 
 dn: cn=admins,ou=groups,dc=co,dc=badassops,dc=com
 objectClass: groupOfNames
 cn: admins
-member: uid=momo,ou=users,dc=co,dc=badassops,dc=com
+member: uid=initial-user,ou=users,dc=co,dc=badassops,dc=com
 
-dn: cn=jenkins,ou=groups,dc=co,dc=badassops,dc=com
-objectClass: groupOfNames
-cn: admins
-member: uid=momo,ou=users,dc=co,dc=badassops,dc=com
 ```
 
 load the file into the ldap server
 ```
-ldapadd  -c -x -W -D cn=admin,dc=co,dc=badassops,dc=com -f momo.ldif
+ldapadd  -c -x -W -D cn=admin,dc=co,dc=badassops,dc=com -f initial-user.ldif
 ldapadd  -c -x -W -D cn=admin,dc=co,dc=badassops,dc=com -f memberof-groups.ldif
 systemctl restart slapd
 ```
