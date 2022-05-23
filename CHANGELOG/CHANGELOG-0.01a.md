@@ -9,5 +9,5 @@
 
 filename | md5sum hash
 -------- | -----------
-[ldap-tool_Darwin_x86_64.tar.gz](https://github.com/badassops/ldap-tool-go/releases/download/v0.0.1a/ldap-tool_Darwin_x86_64.tar.gz)`486bfdc0ea9892f177e6eba14307be98`
-[ldap-tool_Linux_x86_64.tar.gz](https://github.com/badassops/ldap-tool-go/releases/download/v0.0.1a/ldap-tool_Linux_x86_64.tar.gz)`e8c56938f8575fa80d71a3a65c301b70`
+[ldap-tool_Darwin_x86_64.tar.gz](https://github.com/badassops/ldap-tool-go/releases/download/v0.0.1a/ldap-tool_Darwin_x86_64.tar.gz) | `486bfdc0ea9892f177e6eba14307be98`
+[ldap-tool_Linux_x86_64.tar.gz](https://github.com/badassops/ldap-tool-go/releases/download/v0.0.1a/ldap-tool_Linux_x86_64.tar.gz) | `e8c56938f8575fa80d71a3a65c301b70`
