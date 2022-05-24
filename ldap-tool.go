@@ -90,6 +90,14 @@ func main() {
   // add a new ldap record
   conn := ldap.New(config)
 
+  if config.ServerValues.ReadOnly  == true {
+    u.PrintRed(fmt.Sprintf("\tThe server %s is set to be ready only.\n\tOnly the Search options is available...\n",
+        config.ServerValues.Server))
+    u.PrintGreen(fmt.Sprintf("\tPress enter to continue to search: "))
+    fmt.Scanln()
+    config.Cmd = "search"
+  }
+
   reader := bufio.NewReader(os.Stdin)
   switch config.Cmd {
     case "search":

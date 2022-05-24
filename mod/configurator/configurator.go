@@ -94,6 +94,7 @@ type (
     EmailDomain string
     TLS         bool
     Enabled     bool
+    ReadOnly    bool
   }
 
   Redis struct {
