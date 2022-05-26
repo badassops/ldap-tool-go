@@ -66,6 +66,15 @@ func (c *Connection) AddGroup() bool {
   return c.add(c.Group["groupName"], "group", addReq)
 }
 
+func (c *Connection) AddSudoRule() bool {
+  addReq := ldapv3.NewAddRequest(v.ModRecord.Field["dn"])
+  addReq.Attribute("objectClass", []string{"sudoRole"})
+  for _, fieldName := range v.Sudoers {
+    addReq.Attribute(fieldName, []string{v.ModRecord.Field[fieldName]})
+  }
+  return c.add(v.ModRecord.Field["cn"], "sudo rule", addReq)
+}
+
 func (c *Connection) addUserTogroupOfNamesGroup() bool {
   // adding the user to the groups
   var errorCnt int = 0

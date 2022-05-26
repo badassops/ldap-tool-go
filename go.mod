@@ -17,6 +17,7 @@ require (
 
 	badassops.ldap/cmds/modify/menu v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/modify/group v0.0.0-00010101000000-000000000000
+	badassops.ldap/cmds/modify/sudo v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/modify/user v0.0.0-00010101000000-000000000000
 
 	badassops.ldap/cmds/search/menu v0.0.0-00010101000000-000000000000
@@ -60,6 +61,7 @@ replace badassops.ldap/cmds/delete/user => ./mod/cmds/delete/user
 
 replace badassops.ldap/cmds/modify/menu => ./mod/cmds/modify/menu
 replace badassops.ldap/cmds/modify/group => ./mod/cmds/modify/group
+replace badassops.ldap/cmds/modify/sudo => ./mod/cmds/modify/sudo
 replace badassops.ldap/cmds/modify/user => ./mod/cmds/modify/user
 
 replace badassops.ldap/cmds/search/menu => ./mod/cmds/search/menu

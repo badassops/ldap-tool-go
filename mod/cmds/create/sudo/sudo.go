@@ -64,12 +64,19 @@ func createSudoRecord(c *l.Connection) bool {
       v.ModRecord.Field[fieldName] = valueEntered
     }
   }
-  fmt.Printf(" %v \n", v.ModRecord)
+  v.ModRecord.Field["dn"] = fmt.Sprintf("cn=%s,ou=%s",
+    v.ModRecord.Field["cn"], c.Config.SudoValues.SudoersBase)
   return true
 }
 
 func Create(c *l.Connection) {
   u.PrintHeader(u.Purple, "Create Sudo Rule", true)
-  createSudoRecord(c)
+  if createSudoRecord(c) {
+    if !c.AddSudoRule() {
+      u.PrintRed(fmt.Sprintf("\n\tFailed adding the sudo ruleu %s, check the log file\n", v.ModRecord.Field["cn"]))
+    } else {
+      u.PrintGreen(fmt.Sprintf("\n\tSudo rule %s added successfully\n", v.ModRecord.Field["cn"]))
+    }
+  }
   u.PrintLine(u.Purple)
 }

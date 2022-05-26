@@ -12,6 +12,7 @@ import (
   "fmt"
 
   l "badassops.ldap/logs"
+  v "badassops.ldap/vars"
   ldapv3 "gopkg.in/ldap.v2"
 )
 
@@ -36,6 +37,11 @@ func (c *Connection) DeleteUser() bool {
 func (c *Connection) DeleteGroup() bool {
   delReq := ldapv3.NewDelRequest(c.Group["cn"], []ldapv3.Control{})
   return c.deleteRecord(c.Group["groupName"], "group", delReq)
+}
+
+func (c *Connection) DeleteSudoRule() bool {
+  delReq := ldapv3.NewDelRequest(v.ModRecord.Field["dn"], []ldapv3.Control{})
+  return c.deleteRecord(v.ModRecord.Field["cn"], "sudo rule", delReq)
 }
 
 func (c *Connection) RemoveFromGroups() {
