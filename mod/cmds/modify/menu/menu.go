@@ -19,7 +19,7 @@ import (
 
   modifyUser "badassops.ldap/cmds/modify/user"
   modifyGroup "badassops.ldap/cmds/modify/group"
-  // modifySudo "badassops.ldap/cmds/modify/sudo"
+  modifySudo "badassops.ldap/cmds/modify/sudo"
 )
 
 func ModifyMenu(c *l.Connection) {
@@ -38,7 +38,7 @@ func ModifyMenu(c *l.Connection) {
   switch strings.ToLower(choice) {
     case "user",  "u": modifyUser.Modify(c)
     case "group", "g": modifyGroup.Modify(c)
-    //case "group", "s": modifySudo.Modify(c)
+    case "sudo",  "s": modifySudo.Modify(c)
     case "quit",  "q":
         u.PrintRed("\n\tOperation cancelled\n")
         u.PrintLine(u.Purple)

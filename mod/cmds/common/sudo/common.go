@@ -17,6 +17,7 @@ import (
 
   u "badassops.ldap/utils"
   l "badassops.ldap/ldap"
+  v "badassops.ldap/vars"
   ldapv3 "gopkg.in/ldap.v2"
 )
 
@@ -73,5 +74,6 @@ func Sudo(c *l.Connection, firstTime bool, showRecord bool) bool {
   if showRecord {
     printSudoRecord(sudoRecord)
   }
+  v.ModRecord.Field["cn"] = enterData
   return true
 }
