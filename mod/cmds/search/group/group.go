@@ -24,7 +24,7 @@ func Group(c *l.Connection) {
 
 func Groups(c *l.Connection) {
   u.PrintHeader(u.Purple, "Search Groups", true)
-  u.PrintColor(u.Purple, "\n\t  _________ all group and the members __________\n")
+  u.PrintPurple("\n\t  _________ all group and the members __________\n")
   c.SearchGroups()
   u.PrintLine(u.Purple)
 }

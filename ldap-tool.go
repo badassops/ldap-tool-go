@@ -25,6 +25,7 @@ import (
   // the search function
   searchUser "badassops.ldap/cmds/search/user"
   searchGroup "badassops.ldap/cmds/search/group"
+  searchSudo "badassops.ldap/cmds/search/sudo"
 
   // the base functions ; create, modify and delete
   createUser "badassops.ldap/cmds/create/user"
@@ -102,11 +103,13 @@ func main() {
   switch config.Cmd {
     case "search":
       u.PrintHeader(u.Purple, "Search", true)
-      fmt.Printf("\tSearch (%s)ser, (%s)ll Users, (%s)roup, all Group(%s) or (%s)uit?\n\t(default to User)? choice: ",
+      fmt.Printf("\tSearch (%s)ser, (%s)ll Users, (%s)roup, all Group(%s), (%s)sudo role, (%s)all sudos role or (%s)uit?\n\t(default to User)? choice: ",
         u.CreateColorMsg(u.Green, "U"),
         u.CreateColorMsg(u.Green, "A"),
         u.CreateColorMsg(u.Green, "G"),
         u.CreateColorMsg(u.Green, "S"),
+        u.CreateColorMsg(u.Blue,  "X"),
+        u.CreateColorMsg(u.Blue,  "Z"),
         u.CreateColorMsg(u.Red,   "Q"),
       )
 
@@ -117,6 +120,8 @@ func main() {
         case "users",  "a": searchUser.Users(conn)
         case "group",  "g": searchGroup.Group(conn)
         case "groups", "s": searchGroup.Groups(conn)
+        case "sudo",   "x": searchSudo.Sudo(conn)
+        case "sudos",  "z": searchSudo.Sudos(conn)
         case "quit",   "q":
             u.PrintRed("\n\tOperation cancelled\n")
             u.PrintLine(u.Purple)

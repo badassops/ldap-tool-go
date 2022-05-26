@@ -14,6 +14,7 @@ import (
 
   u "badassops.ldap/utils"
   v "badassops.ldap/vars"
+  ldapv3 "gopkg.in/ldap.v2"
 )
 
 // ** get info functions: user and group **
@@ -132,4 +133,13 @@ func (c *Connection) GetGroupType(groupName string) (bool, string) {
         return false, "errored"
     }
     return true, typeGroup
+}
+
+func (c* Connection) GetSudoCN(sudoCN string) ([]*ldapv3.Entry, int) {
+  searchBase = fmt.Sprintf("(&(objectClass=top)(objectClass=sudoRole)(cn=%s))", sudoCN)
+  records, recordsCount = c.search(searchBase, attributes)
+  if recordsCount > 0 {
+    return records.Entries, recordsCount
+  }
+  return nil, 0
 }

@@ -37,6 +37,7 @@ type (
     Debug      bool
     // from the configuration file
     DefaultValues Defaults
+    SudoValues    Sudo
     LogValues     LogConfig
     ValidEnvs     []string
     GroupValues   Groups
@@ -64,6 +65,10 @@ type (
     PassComplex   bool
 	UidStart      int
     GidStart      int
+  }
+
+  Sudo struct {
+    ExcludeSudo   []string
   }
 
   LogConfig struct {
@@ -107,6 +112,7 @@ type (
   tomlConfig struct {
     Auth       Auth              `toml:"auth"`
     Defaults   Defaults          `toml:"defaults"`
+    Sudo       Sudo              `toml:"sudo"`
     LogConfig  LogConfig         `toml:"logconfig"`
     Envs       Envs              `toml:"envs"`
     Groups     Groups            `toml:"groups"`
@@ -240,6 +246,7 @@ func (c *Config) InitializeConfigs() {
   // from the configuration file
   c.AuthValues    = configValues.Auth
   c.DefaultValues = configValues.Defaults
+  c.SudoValues    = configValues.Sudo
   c.LogValues     = configValues.LogConfig
   c.ValidEnvs     = configValues.Envs.ValidEnvs
   c.GroupValues   = configValues.Groups
