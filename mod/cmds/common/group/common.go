@@ -33,7 +33,7 @@ func Group(c *l.Connection, firstTime bool) bool {
   enterData = strings.TrimSuffix(enterData, "\n")
 
   if enterData == "" {
-    u.PrintColor(u.Red, fmt.Sprintf("\n\tNo group was given aborting...\n"))
+    u.PrintRed(fmt.Sprintf("\n\tNo group was given aborting...\n"))
     if firstTime {
       return false
     } else {
@@ -61,7 +61,7 @@ func Group(c *l.Connection, firstTime bool) bool {
 
   u.PrintLine(u.Purple)
   if cnt := c.SearchGroup(enterData, true) ; cnt == 0 {
-    u.PrintColor(u.Red, fmt.Sprintf("\n\tGroup %s was not found, aborting...\n", enterData))
+    u.PrintRed(fmt.Sprintf("\n\tGroup %s was not found, aborting...\n", enterData))
     return false
   }
   v.ModRecord.Field["groupName"] = enterData

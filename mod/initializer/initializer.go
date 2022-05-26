@@ -25,6 +25,11 @@ func Init(c *c.Config) {
     "shadowLastChange", "shadowExpire", "shadowWarning", "shadowMax",
     "sshPublicKey", "groups"}
 
+  v.Sudoers = []string{"cn", "sudoCommand", "sudoHost", "sudoOption",
+    "sudoOrder", "sudoRunAsUser" }
+
+  v.SudoObjectClass = []string{"top", "sudoRole"}
+
   v.Logs.LogsDir       = v.LogsDir
   v.Logs.LogFile       = v.LogFile
   v.Logs.LogMaxSize    = v.LogMaxSize
@@ -35,6 +40,7 @@ func Init(c *c.Config) {
   v.Template           = make(map[string]v.Record)
   v.GroupTemplate      = make(map[string]v.Record)
   v.ModRecord.Field    = make(map[string]string)
+  v.SudoTemplate       = make(map[string]v.Record)
 
   // set to expire by default as today + ShadowMax
   currExpired := strconv.FormatInt(u.GetEpoch("days") + int64(c.DefaultValues.ShadowMax), 10)
@@ -197,4 +203,57 @@ func Init(c *c.Config) {
       UseValue: false,
   }
 
+  // the sudoer template
+  v.SudoTemplate["cn"] =
+    v.Record{
+      Prompt: fmt.Sprintf("%sUse %s%%%s%s to indicate a group%s\n\tEnter the sudoers CN",
+       u.Yellow, u.Cyan, u.Off, u.Yellow, u.Off),
+      Value: "",
+      NoEmpty: true,
+      UseValue: false,
+  }
+
+  v.SudoTemplate["sudoCommand"] =
+    v.Record{
+      Prompt: fmt.Sprintf("%sfully qualified path or ALL%s\n\tEnter the command allow with this rule",
+        u.Yellow, u.Off),
+      Value: "",
+      NoEmpty: true,
+      UseValue: false,
+  }
+
+  v.SudoTemplate["sudoHost"] =
+    v.Record{
+      Prompt: fmt.Sprintf("%sdefault to ALL%s\n\tThe host the command is allowed",
+        u.Yellow, u.Off),
+      Value: "ALL",
+      NoEmpty: false,
+      UseValue: true,
+  }
+
+  v.SudoTemplate["sudoOption"] =
+    v.Record{
+      Prompt: fmt.Sprintf("%sexmple %s!authenticate%s%s for no password required%s\n\tSudo option with the command",
+        u.Yellow, u.Cyan, u.Off, u.Yellow, u.Off),
+      Value: "",
+      NoEmpty: false,
+      UseValue: false,
+  }
+
+  v.SudoTemplate["sudoOrder"] =
+    v.Record{
+      Prompt: fmt.Sprintf("%sdefault to 4, use 3 and not higher than 10%s\n\tThe order of the rule",
+        u.Yellow, u.Off),
+      Value: "4",
+      NoEmpty: false,
+      UseValue: true,
+  }
+
+  v.SudoTemplate["sudoRunAsUser"] =
+    v.Record{
+      Prompt: fmt.Sprintf("%sdefault to %sroot%s\n\tRun the command as the user", u.Yellow, u.Red, u.Off),
+      Value: "root",
+      NoEmpty: false,
+      UseValue: true,
+  }
 }

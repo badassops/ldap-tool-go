@@ -37,20 +37,20 @@ func printUserRecord(c *l.Connection, userName string) {
 
   u.PrintLine(u.Purple)
   for _, field := range displayFields {
-    u.PrintColor(u.Cyan, fmt.Sprintf("\t%s: %s\n", field, c.User.Field[field]))
+    u.PrintCyan(fmt.Sprintf("\t%s: %s\n", field, c.User.Field[field]))
   }
 
   u.PrintLine(u.Purple)
   c.User.Groups = c.GetUserGroups("groupOfNames")
-  u.PrintColor(u.Purple, fmt.Sprintf("\tUser %s groups:\n", userName))
+  u.PrintPurple(fmt.Sprintf("\tUser %s groups:\n", userName))
   for _, group := range c.User.Groups {
-    u.PrintColor(u.Cyan, fmt.Sprintf("\tdn: %s\n", group))
+    u.PrintCyan(fmt.Sprintf("\tdn: %s\n", group))
   }
 
   u.PrintLine(u.Purple)
-  u.PrintColor(u.Purple, fmt.Sprintf("\tUser %s password information\n", userName))
-  u.PrintColor(u.Cyan, fmt.Sprintf("\tPassword last changed on %s\n", passChanged))
-  u.PrintColor(u.Red, fmt.Sprintf("\tPassword will expired on %s\n", passExpired))
+  u.PrintPurple(fmt.Sprintf("\tUser %s password information\n", userName))
+  u.PrintCyan(fmt.Sprintf("\tPassword last changed on %s\n", passChanged))
+  u.PrintRed(fmt.Sprintf("\tPassword will expired on %s\n", passExpired))
 }
 
 func User(c *l.Connection, firstTime bool, showRecord bool) bool {
@@ -60,7 +60,7 @@ func User(c *l.Connection, firstTime bool, showRecord bool) bool {
   enterData = strings.TrimSuffix(enterData, "\n")
 
   if enterData == "" {
-    u.PrintColor(u.Red, fmt.Sprintf("\n\tNo users was given aborting...\n"))
+    u.PrintRed(fmt.Sprintf("\n\tNo users was given aborting...\n"))
     return false
   }
 

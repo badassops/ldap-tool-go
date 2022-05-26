@@ -58,6 +58,11 @@ var (
   // the ldap fields
   Fields []string
 
+  // the sudoer fields
+  Sudoers         []string
+  SudoObjectClass []string
+  SudoTemplate    map[string]Record
+
   // user record in the ldap server
   User UserRecord
 

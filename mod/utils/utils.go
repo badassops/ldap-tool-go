@@ -46,6 +46,9 @@ const (
   CyanBase   = "\x1b[0;36m"    // Cyan no highlighted
   WhiteBase  = "\x1b[0;37m"    // White no highlighted
 
+  RedUnderline = "\x1b[4;31m"    // Red underline 
+  OneLineUP    = "\x1b[A"
+
   clearLine    = "\x1b[0G\x1b[2K\x1b[0m\r"
   clearScreen  = "\x1b[H\x1b[2J"
   HEADER       = "---------------"
@@ -54,6 +57,7 @@ const (
   specialChars = "@#$%^*(){}[]<>/\\"
 
   USformat  = "Jan 2, 2006 15:04:05"
+
 )
 
 var (
@@ -63,6 +67,9 @@ var (
     "\r\n", "\\r\\n",
     "\r", "\\r",
     "\n", "\\n")
+
+  DangerZone = fmt.Sprintf("%sDanger Zone%s, be sure you understand the implication!",
+    RedUnderline, Off)
 )
 
 type Wheel struct {

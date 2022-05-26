@@ -24,13 +24,13 @@ var (
 )
 
 func User(c *l.Connection) {
-  u.PrintHeader(u.Purple, "Search User", false)
+  u.PrintHeader(u.Purple, "Search User", true)
   cu.User(c, true, true)
   u.PrintLine(u.Purple)
 }
 
 func Users(c *l.Connection) {
-  u.PrintHeader(u.Purple, "Search Users", false)
+  u.PrintHeader(u.Purple, "Search Users", true)
   fmt.Printf("\tPrint full name and department (default to N)? [y/n]: ")
   reader := bufio.NewReader(os.Stdin)
   valueEntered, _ = reader.ReadString('\n')

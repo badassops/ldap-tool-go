@@ -83,7 +83,7 @@ func (c *Connection) printSearchGroup(searchBase, groupName, groupType string, b
           for _, member := range entry.GetAttributeValues(memberField) {
             u.PrintCyan(fmt.Sprintf("\t%s: %s\n", memberField, member))
           }
-          u.PrintColor(u.Yellow,
+          u.PrintYellow(
             fmt.Sprintf("\tTotal members: %d \n", len(entry.GetAttributeValues(memberField))))
           fmt.Printf("\n")
       }
@@ -117,6 +117,32 @@ func (c *Connection) SearchGroups() {
     groupName := "*"
     c.printSearchGroup(searchBase, groupName, groupType, baseInfo)
   }
+}
+
+func (c* Connection) SearchSudoRoles() []*ldapv3.Entry {
+  searchBase = fmt.Sprintf("(objectClass=sudoRole)")
+  records, recordsCount = c.search(searchBase, attributes)
+  if recordsCount > 1 {
+    return records.Entries
+  }
+  return nil
+}
+
+func (c* Connection) SearchSudoCN(sudoCN string, showRecord bool) int {
+  searchBase = fmt.Sprintf("(&(objectClass=top)(objectClass=sudoRole)(cn=%s))", sudoCN)
+  records, recordsCount = c.search(searchBase, attributes)
+  if recordsCount > 0 && showRecord {
+    for _, entry := range records.Entries {
+      for _, attributes := range entry.Attributes {
+        for _, value := range attributes.Values {
+          if attributes.Name == "cn" {
+            u.PrintBlue(fmt.Sprintf("\tcn: %s\n", value))
+          }
+        }
+      }
+    }
+  }
+  return recordsCount
 }
 
 func (c *Connection) SearchUsersGroups(user string) []string {

@@ -51,7 +51,7 @@ func createUserRecord(c *l.Connection) bool {
     // on some of the fields value
     switch fieldName {
       case "uid":
-        u.PrintColor(u.Yellow,
+        u.PrintYellow(
           fmt.Sprintf("\tThe userid / login name is case sensitive, it will be made all lowercase\n"))
 
       case "mail":
@@ -102,7 +102,7 @@ func createUserRecord(c *l.Connection) bool {
 
     reader := bufio.NewReader(os.Stdin)
     valueEntered, _ := reader.ReadString('\n')
-    valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
+    valueEntered = strings.TrimSuffix(valueEntered, "\n")
 
     switch fieldName {
       case "uid":
