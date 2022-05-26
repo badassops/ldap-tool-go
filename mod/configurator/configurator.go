@@ -69,6 +69,7 @@ type (
 
   Sudo struct {
     ExcludeSudo   []string
+    SudoersBase   string
   }
 
   LogConfig struct {

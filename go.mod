@@ -4,15 +4,26 @@ go 1.18
 
 require (
 	badassops.ldap/configurator v0.0.0-00010101000000-000000000000
+
+	badassops.ldap/cmds/create/menu v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/create/group v0.0.0-00010101000000-000000000000
+	badassops.ldap/cmds/create/sudo v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/create/user v0.0.0-00010101000000-000000000000
-	badassops.ldap/cmds/delete/user v0.0.0-00010101000000-000000000000
+
+	badassops.ldap/cmds/delete/menu v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/delete/group v0.0.0-00010101000000-000000000000
+	badassops.ldap/cmds/delete/sudo v0.0.0-00010101000000-000000000000
+	badassops.ldap/cmds/delete/user v0.0.0-00010101000000-000000000000
+
+	badassops.ldap/cmds/modify/menu v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/modify/group v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/modify/user v0.0.0-00010101000000-000000000000
+
+	badassops.ldap/cmds/search/menu v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/search/group v0.0.0-00010101000000-000000000000
-	badassops.ldap/cmds/search/user v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/search/sudo v0.0.0-00010101000000-000000000000
+	badassops.ldap/cmds/search/user v0.0.0-00010101000000-000000000000
+
 	badassops.ldap/initializer v0.0.0-00010101000000-000000000000
 	badassops.ldap/ldap v0.0.0-00010101000000-000000000000
 	badassops.ldap/logs v0.0.0-00010101000000-000000000000
@@ -34,35 +45,31 @@ require (
 replace badassops.ldap/configurator => ./mod/configurator
 
 replace badassops.ldap/cmds/common/group => ./mod/cmds/common/group
-
+replace badassops.ldap/cmds/common/sudo => ./mod/cmds/common/sudo
 replace badassops.ldap/cmds/common/user => ./mod/cmds/common/user
 
-replace badassops.ldap/cmds/common/sudo => ./mod/cmds/common/sudo
-
+replace badassops.ldap/cmds/create/menu => ./mod/cmds/create/menu
 replace badassops.ldap/cmds/create/group => ./mod/cmds/create/group
-
+replace badassops.ldap/cmds/create/sudo => ./mod/cmds/create/sudo
 replace badassops.ldap/cmds/create/user => ./mod/cmds/create/user
 
+replace badassops.ldap/cmds/delete/menu => ./mod/cmds/delete/menu
+replace badassops.ldap/cmds/delete/group => ./mod/cmds/delete/group
+replace badassops.ldap/cmds/delete/sudo => ./mod/cmds/delete/sudo
 replace badassops.ldap/cmds/delete/user => ./mod/cmds/delete/user
 
-replace badassops.ldap/cmds/delete/group => ./mod/cmds/delete/group
-
+replace badassops.ldap/cmds/modify/menu => ./mod/cmds/modify/menu
+replace badassops.ldap/cmds/modify/group => ./mod/cmds/modify/group
 replace badassops.ldap/cmds/modify/user => ./mod/cmds/modify/user
 
-replace badassops.ldap/cmds/modify/group => ./mod/cmds/modify/group
-
-replace badassops.ldap/cmds/search/user => ./mod/cmds/search/user
-
+replace badassops.ldap/cmds/search/menu => ./mod/cmds/search/menu
 replace badassops.ldap/cmds/search/group => ./mod/cmds/search/group
-
 replace badassops.ldap/cmds/search/sudo => ./mod/cmds/search/sudo
+replace badassops.ldap/cmds/search/user => ./mod/cmds/search/user
 
 replace badassops.ldap/initializer => ./mod/initializer
 
 replace badassops.ldap/ldap => ./mod/ldap
-
 replace badassops.ldap/logs => ./mod/logs
-
 replace badassops.ldap/vars => ./mod/vars
-
 replace badassops.ldap/utils => ./mod/utils

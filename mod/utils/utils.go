@@ -47,6 +47,7 @@ const (
   WhiteBase  = "\x1b[0;37m"    // White no highlighted
 
   RedUnderline = "\x1b[4;31m"    // Red underline 
+  OneLineUP    = "\x1b[A"
 
   clearLine    = "\x1b[0G\x1b[2K\x1b[0m\r"
   clearScreen  = "\x1b[H\x1b[2J"

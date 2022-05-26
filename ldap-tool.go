@@ -9,7 +9,6 @@
 package main
 
 import (
-  "bufio"
   "fmt"
   "os"
   "path/filepath"
@@ -22,18 +21,11 @@ import (
   "badassops.ldap/logs"
   "badassops.ldap/ldap"
 
-  // the search function
-  searchUser "badassops.ldap/cmds/search/user"
-  searchGroup "badassops.ldap/cmds/search/group"
-  searchSudo "badassops.ldap/cmds/search/sudo"
-
-  // the base functions ; create, modify and delete
-  createUser "badassops.ldap/cmds/create/user"
-  createGroup "badassops.ldap/cmds/create/group"
-  modifyUser "badassops.ldap/cmds/modify/user"
-  modifyGroup "badassops.ldap/cmds/modify/group"
-  deleteUser "badassops.ldap/cmds/delete/user"
-  deleteGroup "badassops.ldap/cmds/delete/group"
+  // the menus
+  searchMenu "badassops.ldap/cmds/search/menu"
+  createMenu "badassops.ldap/cmds/create/menu"
+  modifyMenu "badassops.ldap/cmds/modify/menu"
+  deleteMenu "badassops.ldap/cmds/delete/menu"
 )
 
 func main() {
@@ -99,95 +91,18 @@ func main() {
     config.Cmd = "search"
   }
 
-  reader := bufio.NewReader(os.Stdin)
   switch config.Cmd {
     case "search":
-      u.PrintHeader(u.Purple, "Search", true)
-      fmt.Printf("\tSearch (%s)ser, (%s)ll Users, (%s)roup, all Group(%s), (%s)sudo role, (%s)all sudos role or (%s)uit?\n\t(default to User)? choice: ",
-        u.CreateColorMsg(u.Green, "U"),
-        u.CreateColorMsg(u.Green, "A"),
-        u.CreateColorMsg(u.Green, "G"),
-        u.CreateColorMsg(u.Green, "S"),
-        u.CreateColorMsg(u.Blue,  "X"),
-        u.CreateColorMsg(u.Blue,  "Z"),
-        u.CreateColorMsg(u.Red,   "Q"),
-      )
-
-      choice, _ := reader.ReadString('\n')
-      choice = strings.TrimSuffix(choice, "\n")
-      switch strings.ToLower(choice) {
-        case "user",   "u": searchUser.User(conn)
-        case "users",  "a": searchUser.Users(conn)
-        case "group",  "g": searchGroup.Group(conn)
-        case "groups", "s": searchGroup.Groups(conn)
-        case "sudo",   "x": searchSudo.Sudo(conn)
-        case "sudos",  "z": searchSudo.Sudos(conn)
-        case "quit",   "q":
-            u.PrintRed("\n\tOperation cancelled\n")
-            u.PrintLine(u.Purple)
-            break
-        default: searchUser.User(conn)
-      }
+      searchMenu.SearchMenu(conn)
 
     case "create":
-      u.PrintHeader(u.Purple, "Create", true)
-      fmt.Printf("\tCreate (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
-        u.CreateColorMsg(u.Green, "U"),
-        u.CreateColorMsg(u.Green, "G"),
-        u.CreateColorMsg(u.Red,   "Q"),
-      )
-
-      choice, _ := reader.ReadString('\n')
-      choice = strings.TrimSuffix(choice, "\n")
-      switch strings.ToLower(choice) {
-        case "user",  "u": createUser.Create(conn)
-        case "group", "g": createGroup.Create(conn)
-        case "quit",  "q":
-            u.PrintRed("\n\tOperation cancelled\n")
-            u.PrintLine(u.Purple)
-            break
-        default: createUser.Create(conn)
-      }
+      createMenu.CreateMenu(conn)
 
     case "modify":
-      u.PrintHeader(u.Purple, "Modify", true)
-      fmt.Printf("\tModify (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
-        u.CreateColorMsg(u.Green, "U"),
-        u.CreateColorMsg(u.Green, "G"),
-        u.CreateColorMsg(u.Red,   "Q"),
-      )
-
-      choice, _ := reader.ReadString('\n')
-      choice = strings.TrimSuffix(choice, "\n")
-      switch strings.ToLower(choice) {
-        case "user",  "u": modifyUser.Modify(conn)
-        case "group", "g": modifyGroup.Modify(conn)
-        case "quit",  "q":
-            u.PrintRed("\n\tOperation cancelled\n")
-            u.PrintLine(u.Purple)
-            break
-        default: modifyUser.Modify(conn)
-      }
+      modifyMenu.ModifyMenu(conn)
 
     case "delete":
-      u.PrintHeader(u.Purple, "Delete", true)
-      fmt.Printf("\tDelete (%s)ser, (%s)roup or (%s)uit?\n\t(default to User)? choice: ",
-        u.CreateColorMsg(u.Green, "U"),
-        u.CreateColorMsg(u.Green, "G"),
-        u.CreateColorMsg(u.Red,   "Q"),
-      )
-
-      choice, _ := reader.ReadString('\n')
-      choice = strings.TrimSuffix(choice, "\n")
-      switch strings.ToLower(choice) {
-        case "user",  "u": deleteUser.Delete(conn)
-        case "group", "g": deleteGroup.Delete(conn)
-        case "quit",  "q":
-            u.PrintRed("\n\tOperation cancelled\n")
-            u.PrintLine(u.Purple)
-            break
-        default: deleteUser.Delete(conn)
-      }
+      deleteMenu.DeleteMenu(conn)
   }
 
   if config.Cmd != "search" {
