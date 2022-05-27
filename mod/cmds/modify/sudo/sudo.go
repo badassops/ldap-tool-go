@@ -90,21 +90,15 @@ func addFields(c *l.Connection) int {
 }
 
 func createSudoModRecord(c *l.Connection) int {
-  changes := 0
-  fmt.Printf("\n\t%sDeleting%s fields %sfirst%s...\n", u.Red, u.Off, u.Cyan, u.Off)
+  changed := 0
   if deleteFields(c) > 0 {
-    changes++
-  } else {
-    u.PrintBlue("\tNo record will be deleted \n")
+    changed++
   }
 
-  fmt.Printf("\n\t%sAdding%s fields %ssecond%s...\n", u.Red, u.Off, u.Cyan, u.Off)
   if addFields(c) > 0 {
-    changes++ 
-  } else {
-    u.PrintBlue("\tNo record will be added \n")
+    changed++
   }
-  return changes
+  return changed
 }
 
 func Modify(c *l.Connection) {
@@ -115,9 +109,14 @@ func Modify(c *l.Connection) {
     } else {
       if createSudoModRecord(c) > 0 {
         v.ModSudo.DN = fmt.Sprintf("cn=%s,ou=%s", v.ModRecord.Field["cn"], c.Config.SudoValues.SudoersBase)
-        fmt.Printf("\tDN  %v\n", v.ModSudo.DN)
-        fmt.Printf("\tADD %v\n", v.ModSudo.AddList)
-        fmt.Printf("\tDEL %v\n", v.ModSudo.DelList)
+        if !c.ModifySudoRule() {
+           u.PrintRed(fmt.Sprintf("\n\tFailed modify the sudo rule %s, check the log file\n", v.ModRecord.Field["cn"]))
+        } else {
+          u.PrintGreen(fmt.Sprintf("\n\tSudo role %s modified successfully\n", v.ModRecord.Field["cn"]))
+        }
+      } else {
+        u.PrintBlue(fmt.Sprintf("\n\tNo field were changed, no modification was made to the sudo rule %s\n",
+          v.ModRecord.Field["cn"]))
       }
     }
   }
