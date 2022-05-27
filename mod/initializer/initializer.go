@@ -41,6 +41,8 @@ func Init(c *c.Config) {
   v.GroupTemplate      = make(map[string]v.Record)
   v.ModRecord.Field    = make(map[string]string)
   v.SudoTemplate       = make(map[string]v.Record)
+  v.ModSudo.AddList    = make( map[string][]string)
+  v.ModSudo.DelList    = make( map[string][]string)
 
   // set to expire by default as today + ShadowMax
   currExpired := strconv.FormatInt(u.GetEpoch("days") + int64(c.DefaultValues.ShadowMax), 10)

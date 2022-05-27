@@ -40,6 +40,12 @@ type ModifyRecord struct {
   DelList []string
 }
 
+type ModifySudoRecord struct {
+  DN      string
+  AddList map[string][]string
+  DelList map[string][]string
+}
+
 var (
   MyVersion  = "0.1.0a"
   now      = time.Now()
@@ -62,6 +68,7 @@ var (
   Sudoers         []string
   SudoObjectClass []string
   SudoTemplate    map[string]Record
+  ModSudo         ModifySudoRecord
 
   // user record in the ldap server
   User UserRecord
