@@ -79,6 +79,31 @@ func (c *Connection) ModifyUserGroup() {
   }
 }
 
+func (c *Connection) ModifySudoRule() bool {
+  var modifiedOK bool = true
+  if len(v.ModSudo.DelList) > 0 {
+    modifyDelRule := ldapv3.NewModifyRequest(v.ModSudo.DN)
+    for fieldName, _ := range v.ModSudo.DelList {
+      for _, value := range v.ModSudo.DelList[fieldName] {
+        modifyDelRule.Delete(fieldName, []string{value})
+      }
+    }
+    if !c.modify(v.ModSudo.DN, "delete rule ", modifyDelRule) {
+      modifiedOK = modifiedOK && false
+    }
+  }
+
+  if len(v.ModSudo.AddList) > 0 {
+    modifyAddRule := ldapv3.NewModifyRequest(v.ModSudo.DN)
+    for fieldName, value := range v.ModSudo.AddList {
+      modifyAddRule.Add(fieldName, value)
+    }
+    if !c.modify(v.ModSudo.DN, "add rule ", modifyAddRule) {
+      modifiedOK = modifiedOK && false
+    }
+  }
+  return modifiedOK
+}
 
 func (c *Connection) ModifyGroupMember() bool {
     groupCN := fmt.Sprintf("cn=%s,%s", v.ModRecord.Field["groupName"], c.Config.ServerValues.GroupDN)
