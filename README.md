@@ -61,7 +61,7 @@ go run ldap-tools.go -c <your-config-file> -m <mode>
 
 ### Screen shots
 
-[screenshots](https://github.com/badassops/ldap-tool-go/blob/main/docs/screenshots)
+[screenshots](https://github.com/badassops/ldap-tool-go/blob/main/docs/screenshots) 
 
 
 ### TODO / *wishlist*
