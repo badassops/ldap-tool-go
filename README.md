@@ -61,10 +61,8 @@ go run ldap-tools.go -c <your-config-file> -m <mode>
 
 ### Screen shots
 
-[screenshots] (https://github.com/badassops/ldap-tool-go/docs/screenshots)
+[screenshots](https://github.com/badassops/ldap-tool-go/tree/development/docs/screenshots)
 
-[comment]: ![search user](/docs/screenshots/search-user.png?raw=true "Search User:)
-[comment]: ![search group](/docs/screenshots/search-group.png?raw=true "Search Group:)
 
 ### TODO / *wishlist*
  - redis for **delete of user only**
