@@ -1,0 +1,12 @@
+# v0.1.2
+
+## INFO
+- added sudo rule, add, modify and delete
+- version to v0.1.2
+
+### Binaries
+
+filename | md5sum hash
+-------- | -----------
+[ldap-tool_Darwin_x86_64.tar.gz](https://github.com/badassops/ldap-tool-go/releases/download/v0.1.1/ldap-tool_Darwin_x86_64.tar.gz) | `6e815fc801dd20ddd5cc558e0a89571a`
+[ldap-tool_Linux_x86_64.tar.gz](https://github.com/badassops/ldap-tool-go/releases/download/v0.1.1/ldap-tool_Linux_x86_64.tar.gz) | `ba75e39549b510da82d6ad116a00fbc0`

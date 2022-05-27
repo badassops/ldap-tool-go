@@ -47,7 +47,7 @@ type ModifySudoRecord struct {
 }
 
 var (
-  MyVersion  = "0.1.0a"
+  MyVersion  = "0.1.2"
   now      = time.Now()
   MyProgname  = path.Base(os.Args[0])
   myAuthor  = "Luc Suryo"
