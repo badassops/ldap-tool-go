@@ -48,6 +48,10 @@ Then hit `save`
 
 Go bottom of the page and hit `save`
 
+[screenshot top form](https://github.com/badassops/ldap-tool-go/tree/development/docs/pfsense/Authentication-Servers-form-top.png)
+[screenshot top bottom](https://github.com/badassops/ldap-tool-go/tree/development/docs/pfsense/Authentication-Servers-form-bottom.png)
+[screenshot LDAP container](https://github.com/badassops/ldap-tool-go/tree/development/docs/pfsense/select-LDAP-Container.png)
+
 
 ### GROUP STEPS
 
@@ -69,12 +73,14 @@ On the Form
 - Authentication Server : select the ldap server that was created
 - Username : an ldap username
 - Password : the user's ldap's password
-hit `Test`
+
 
 if successful it will show a `green` dialog window and show `This user is a member of groups:`
 if it had groups asigned to it.
+[screenshot success test authentication](https://github.com/badassops/ldap-tool-go/tree/development/docs/pfsense/Diagnostics-Authentication-success.png)
 
 if not successful: check your setting
+[screenshot fail test authentication](https://github.com/badassops/ldap-tool-go/tree/development/docs/pfsense/Diagnostics-Authentication-failed.png)
 
 ### The End
 Your friendly BOFH 🦄  😈
