@@ -52,7 +52,7 @@ If everything is well, then this will produce a binary called **ldap-tools**
 
 To run the code
 ```
-go run ldap-tools.go -c <your-config-file> -m <mode>
+go run ldap-tools.go -c <your-config-file> -C <command>
 ```
 
 ### Screen shots
