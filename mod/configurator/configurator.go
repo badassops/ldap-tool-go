@@ -133,18 +133,22 @@ func Configurator() *Config {
 }
 
 func (c *Config) InitializeArgs() {
-  baseCmd := fmt.Sprintf("base commands:\n\t\t\t %s, %s, %s\n",
+  baseCmd := fmt.Sprintf("commands: %s, %s, %s, %s\n",
+        u.CreateColorMsg(u.Yellow, "search"),
         u.CreateColorMsg(u.Yellow, "create"),
         u.CreateColorMsg(u.Yellow, "modify"),
         u.CreateColorMsg(u.Yellow, "delete"),
   )
-  searchCmd := fmt.Sprintf("\t\t     search: (%s)ser, (%s)ll Users, (%s)roup and All Group(%s)",
-      u.CreateColorMsg(u.Green, "U"),
-      u.CreateColorMsg(u.Green, "A"),
-      u.CreateColorMsg(u.Green, "G"),
-      u.CreateColorMsg(u.Green, "S"))
+  // searchCmd := fmt.Sprintf("\n    (%s)ser, (%s)ll Users\n    (%s)roup, all Group(%s)\n    (%s)sudo role, (%s)all sudos role ",
+  //     u.CreateColorMsg(u.Green, "U"),
+  //     u.CreateColorMsg(u.Green, "A"),
+  //     u.CreateColorMsg(u.Green, "G"),
+  //     u.CreateColorMsg(u.Green, "S"),
+  //     u.CreateColorMsg(u.Blue, "X"),
+  //     u.CreateColorMsg(u.Blue, "Z"),
+  // )
 
-  HelpMessage := fmt.Sprintf("%s%s", baseCmd, searchCmd)
+  HelpMessage := fmt.Sprintf("%s", baseCmd)
 
   errored := 0
   allowedValues := []string{"create", "modify", "delete", "search"}
@@ -156,15 +160,15 @@ func (c *Config) InitializeArgs() {
     Default:  "/usr/local/etc/ldap-tool/ldap-tool.ini",
   })
 
-  ldapEnv := parser.String("e", "environment",
+  ldapEnv := parser.String("s", "server",
     &argparse.Options{
-    Required:  false,
-    Help:    "Server environment",
+    Required:  true,
+    Help:    "Server profile name",
   })
 
-  ldapCmd := parser.Selector("m", "mode", allowedValues,
+  ldapCmd := parser.Selector("C", "command", allowedValues,
     &argparse.Options{
-    Required:  false,
+    Required:  true,
     Help:    HelpMessage,
     Default:  "search",
   })
@@ -215,7 +219,7 @@ func (c *Config) InitializeArgs() {
   }
 
   if len(*ldapCmd) == 0 {
-    u.PrintRed("the flag -m/--mode is required\n")
+    u.PrintRed("the flag -C/--command is required\n")
     errored = 1
   }
 

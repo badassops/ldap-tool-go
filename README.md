@@ -24,27 +24,23 @@ The script to be able manage OpenLDAP users and groups:
 
 ## Usage
 ```
-usage: ldap-tool [-h|--help] [-c|--configFile "<value>"]
-                 [-e|--environment "<value>"] [-m|--mode
-                 (create|modify|delete|search)] [-d|--debug]
+usage: ldap-tool [-h|--help] [-c|--configFile "<value>"] -s|--server "<value>"
+                 -C|--command (create|modify|delete|search) [-d|--debug]
                  [-i|--info] [-v|--version]
 
-                 Simple script to manage LDAP users
+                 Simple script to manage LDAP users, groups and SUDO rules
 
 Arguments:
 
-  -h  --help         Print help information
-  -c  --configFile   Path to the configuration file to be use. Default:
-                     /usr/local/etc/ldap-tool/ldap-tool.ini
-  -e  --environment  Server environment
-  -m  --mode         base commands:
-			 create, modify, delete
-		     search: (U)ser, (A)ll Users, (G)roup
-                     and All Group(S). Default: search
-  -d  --debug        Enable debug. Default: false
-  -i  --info         Show information
-  -v  --version      Show version
+  -h  --help        Print help information
+  -c  --configFile  Path to the configuration file to be use. Default:
+                    /usr/local/etc/ldap-tool/ldap-tool.ini
+  -s  --server      Server profile name
+  -C  --command     commands: search, create,
+                    modify, delete
 
+  -d  --debug       Enable debug. Default: false
+  -i  --info        Show information
 ```
 
 ### Build or run the code the code
