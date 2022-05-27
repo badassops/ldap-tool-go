@@ -26,6 +26,7 @@ import (
   createMenu "badassops.ldap/cmds/create/menu"
   modifyMenu "badassops.ldap/cmds/modify/menu"
   deleteMenu "badassops.ldap/cmds/delete/menu"
+  limit      "badassops.ldap/cmds/limit"
 )
 
 func main() {
@@ -46,7 +47,7 @@ func main() {
   // make sure the configuration file has the proper settings
   if !u.InList(config.AuthValues.AllowUsers, u.RunningUser()) {
     u.PrintRed(fmt.Sprintf("The program has to be run as these user(s): %s or use sudo, aborting..\n",
-			strings.Join(config.AuthValues.AllowUsers[:], ", ")))
+      strings.Join(config.AuthValues.AllowUsers[:], ", ")))
     os.Exit(0)
   }
   if !u.CheckFileSettings(config.ConfigFile, config.AuthValues.AllowUsers, config.AuthValues.AllowMods) {
@@ -91,18 +92,30 @@ func main() {
     config.Cmd = "search"
   }
 
-  switch config.Cmd {
-    case "search":
-      searchMenu.SearchMenu(conn)
+  // semi-hardcoded
+  if config.ServerValues.Admin != "cn=admin," + config.ServerValues.BaseDN {
+    switch config.Cmd {
+      case "search":
+        limit.UserRecord(conn)
+      case "modify":
+        limit.ModifyUserPasswordSSHKey(conn)
+      default:
+        u.PrintRed("\n\tThis command is only available for admin...\n\n")
+    }
+  } else {
+    switch config.Cmd {
+      case "search":
+        searchMenu.SearchMenu(conn)
 
-    case "create":
-      createMenu.CreateMenu(conn)
+      case "create":
+        createMenu.CreateMenu(conn)
 
-    case "modify":
-      modifyMenu.ModifyMenu(conn)
+      case "modify":
+        modifyMenu.ModifyMenu(conn)
 
-    case "delete":
-      deleteMenu.DeleteMenu(conn)
+      case "delete":
+        deleteMenu.DeleteMenu(conn)
+    }
   }
 
   if config.Cmd != "search" {
