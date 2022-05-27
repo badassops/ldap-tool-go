@@ -56,7 +56,7 @@ var (
   myEmail    = "<luc@badassops.com>"
   MyInfo = fmt.Sprintf("%s (version %s)\n%s\n%s\nWritten by %s %s\n",
     MyProgname, MyVersion, myCopyright, myLicense, myAuthor, myEmail)
-  MyDescription = "Simple script to manage LDAP users"
+  MyDescription = "Simple script to manage LDAP users, groups and SUDO rules"
 
   // ldap logs
   Logs Log
