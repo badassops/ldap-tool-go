@@ -26,6 +26,8 @@ var (
 	Purple = "\x1b[1;35m" // Purple
 	Cyan   = "\x1b[1;36m" // Cyan
 	White  = "\x1b[1;37m" // White
+
+	RedUnderline = "\x1b[4;31m" // Red underline
 )
 
 type SearchInfo struct {

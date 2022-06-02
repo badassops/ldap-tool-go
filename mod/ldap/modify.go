@@ -95,48 +95,38 @@ func (c *Connection) AddToGroup() bool {
 //   return true
 // }
 
-// func (c *Connection) ModifyUserGroup() {
-//   // group type is always groupOfNames
-//   var modUser, groupName, groupCN string
-//   modUser = fmt.Sprintf("uid=%s,%s", c.User.Field["uid"], c.Config.ServerValues.UserDN)
-//
-//   for _, groupName = range v.ModRecord.AddList {
-//     groupCN = fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
-//     modifyMember := ldapv3.NewModifyRequest(groupCN)
-//     modifyMember.Add("member", []string{modUser})
-//     c.modify(groupName, "group member (add)", modifyMember)
-//   }
-//
-//   for _, groupName = range v.ModRecord.DelList {
-//     groupCN = fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
-//     modifyMember := ldapv3.NewModifyRequest(groupCN)
-//     modifyMember.Delete("member", []string{modUser})
-//     c.modify(groupName, "group member (remove)", modifyMember)
-//   }
-// }
+func (c *Connection) DeleteSudoRule() bool {
+	delSudoRule := ldapv3.NewModifyRequest(v.WorkRecord.DN)
+	for fieldName, _ := range v.WorkRecord.SudoDelList {
+		for _, value := range v.WorkRecord.SudoDelList[fieldName] {
+			delSudoRule.Delete(fieldName, []string{value})
+		}
+	}
+	if err := c.Conn.Modify(delSudoRule); err != nil {
+		msg = fmt.Sprintf("Error deleting some of the entries of sudo rule %s, error %s",
+			v.WorkRecord.ID, err.Error())
+		l.Log(msg, "ERROR")
+		return false
+	}
+	msg = fmt.Sprintf("The sudo rule %s entries has been modified", v.WorkRecord.ID)
+	l.Log(msg, "INFO")
+	return true
+}
 
-// func (c *Connection) ModifySudoRule() bool {
-//   var modifiedOK bool = true
-//   if len(v.ModSudo.DelList) > 0 {
-//     modifyDelRule := ldapv3.NewModifyRequest(v.ModSudo.DN)
-//     for fieldName, _ := range v.ModSudo.DelList {
-//       for _, value := range v.ModSudo.DelList[fieldName] {
-//         modifyDelRule.Delete(fieldName, []string{value})
-//       }
-//     }
-//     if !c.modify(v.ModSudo.DN, "delete rule ", modifyDelRule) {
-//       modifiedOK = modifiedOK && false
-//     }
-//   }
-//
-//   if len(v.ModSudo.AddList) > 0 {
-//     modifyAddRule := ldapv3.NewModifyRequest(v.ModSudo.DN)
-//     for fieldName, value := range v.ModSudo.AddList {
-//       modifyAddRule.Add(fieldName, value)
-//     }
-//     if !c.modify(v.ModSudo.DN, "add rule ", modifyAddRule) {
-//       modifiedOK = modifiedOK && false
-//     }
-//   }
-//   return modifiedOK
-// }
+func (c *Connection) AddSudoRule() bool {
+	addSudoRule := ldapv3.NewModifyRequest(v.WorkRecord.DN)
+	for fieldName, _ := range v.WorkRecord.SudoAddList {
+		for _, value := range v.WorkRecord.SudoAddList[fieldName] {
+			addSudoRule.Add(fieldName, []string{value})
+		}
+	}
+	if err := c.Conn.Modify(addSudoRule); err != nil {
+		msg = fmt.Sprintf("Error adding some of the entries of sudo rule %s, error %s",
+			v.WorkRecord.ID, err.Error())
+		l.Log(msg, "ERROR")
+		return false
+	}
+	msg = fmt.Sprintf("The sudo rule %s entries has been modified", v.WorkRecord.ID)
+	l.Log(msg, "INFO")
+	return true
+}
