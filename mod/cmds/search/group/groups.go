@@ -11,16 +11,14 @@ package group
 import (
 	"fmt"
 
-	"badassops.ldap/cmds/common"
 	l "badassops.ldap/ldap"
 	v "badassops.ldap/vars"
-
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
-func printGroup(records *ldapv3.SearchResult) {
+func printGroups(records *ldapv3.SearchResult, recordCount int) {
 	var memberCount = 0
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 55))
 	for idx, entry := range records.Entries {
 		p.PrintBlue(fmt.Sprintf("\tdn: %s\n", entry.DN))
 		p.PrintBlue(fmt.Sprintf("\tcn: %s\n",
@@ -45,13 +43,10 @@ func printGroup(records *ldapv3.SearchResult) {
 	}
 }
 
-func Group(c *l.Connection) {
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Search Group", 18, true))
-	v.SearchResultData.WildCardSearchBase = v.GroupWildCardSearchBase
-	v.SearchResultData.RecordSearchbase = v.GroupWildCardSearchBase
-	v.SearchResultData.DisplayFieldID = v.GroupDisplayFieldID
-	if common.GetObjectRecord(c, true, "group") {
-		printGroup(v.SearchResultData.SearchResult)
-	}
+func Groups(c *l.Connection) {
+	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Search Groups", 20, true))
+	c.SearchInfo.SearchBase = v.GroupSearchBase
+	c.SearchInfo.SearchAttribute = []string{}
+	printGroups(c.Search())
 	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
 }

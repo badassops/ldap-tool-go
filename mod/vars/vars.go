@@ -7,88 +7,115 @@
 package vars
 
 import (
-  "fmt"
-  "os"
-  "path"
-  "strconv"
-  "time"
+	"fmt"
+	"os"
+	"path"
+	"strconv"
+	"time"
+
+	ldapv3 "gopkg.in/ldap.v2"
 )
 
-type Record struct {
-  Value    string // default value from the configuration
-  Prompt   string
-  NoEmpty  bool
-  UseValue bool
+var (
+	Off    = "\x1b[0m"    // Text Reset
+	Black  = "\x1b[1;30m" // Black
+	Red    = "\x1b[1;31m" // Red
+	Green  = "\x1b[1;32m" // Green
+	Yellow = "\x1b[1;33m" // Yellow
+	Blue   = "\x1b[1;34m" // Blue
+	Purple = "\x1b[1;35m" // Purple
+	Cyan   = "\x1b[1;36m" // Cyan
+	White  = "\x1b[1;37m" // White
+)
+
+type SearchInfo struct {
+	SearchBase      string
+	SearchAttribute []string
 }
 
-type UserRecord struct {
-  Field    map[string]string
-  Groups   []string
+type Record struct {
+	Value    string // default value from the configuration
+	Prompt   string
+	NoEmpty  bool
+	UseValue bool
+}
+
+type LdapRecord struct {
+	ID           string
+	DN           string
+	CN           string
+	GroupType    string
+	MemberType   string
+	Fields       map[string]string
+	Group        map[string]string
+	Groups       []string
+	GroupAddList []string
+	GroupDelList []string
+	SudoAddList  map[string][]string
+	SudoDelList  map[string][]string
 }
 
 type Log struct {
-  LogsDir       string
-  LogFile       string
-  LogMaxSize    int
-  LogMaxBackups int
-  LogMaxAge     int
+	LogsDir       string
+	LogFile       string
+	LogMaxSize    int
+	LogMaxBackups int
+	LogMaxAge     int
 }
 
-type ModifyRecord struct {
-  Field   map[string]string
-  AddList []string
-  DelList []string
-}
-
-type ModifySudoRecord struct {
-  DN      string
-  AddList map[string][]string
-  DelList map[string][]string
+type SearchResult struct {
+	RecordCount        int
+	SearchResult       *ldapv3.SearchResult
+	WildCardSearchBase string
+	RecordSearchbase   string
+	DisplayFieldID     string
 }
 
 var (
-  MyVersion  = "0.1.2"
-  now      = time.Now()
-  MyProgname  = path.Base(os.Args[0])
-  myAuthor  = "Luc Suryo"
-  myCopyright = "Copyright 2019 - " + strconv.Itoa(now.Year()) + " ©Badassops LLC"
-  myLicense  = "License 3-Clause BSD, https://opensource.org/licenses/BSD-3-Clause ♥"
-  myEmail    = "<luc@badassops.com>"
-  MyInfo = fmt.Sprintf("%s (version %s)\n%s\n%s\nWritten by %s %s\n",
-    MyProgname, MyVersion, myCopyright, myLicense, myAuthor, myEmail)
-  MyDescription = "Simple script to manage LDAP users, groups and SUDO rules"
+	MyVersion   = "0.1.2"
+	now         = time.Now()
+	MyProgname  = path.Base(os.Args[0])
+	myAuthor    = "Luc Suryo"
+	myCopyright = "Copyright 2019 - " + strconv.Itoa(now.Year()) + " ©Badassops LLC"
+	myLicense   = "License 3-Clause BSD, https://opensource.org/licenses/BSD-3-Clause ♥"
+	myEmail     = "<luc@badassops.com>"
+	MyInfo      = fmt.Sprintf("%s (version %s)\n%s\n%s\nWritten by %s %s\n",
+		MyProgname, MyVersion, myCopyright, myLicense, myAuthor, myEmail)
+	MyDescription = "Simple script to manage LDAP users, groups and SUDO rules"
 
-  // ldap logs
-  Logs Log
+	// ldap logs
+	Logs Log
 
-  // the ldap fields
-  Fields []string
+	// we sets these under variable
+	LogsDir       = "/var/log/ldap-go"
+	LogFile       = fmt.Sprintf("%s.log", MyProgname)
+	LogMaxSize    = 128 // megabytes
+	LogMaxBackups = 14  // 14 files
+	LogMaxAge     = 14  // 14 days
 
-  // the sudoer fields
-  Sudoers         []string
-  SudoObjectClass []string
-  SudoTemplate    map[string]Record
-  ModSudo         ModifySudoRecord
+	// working variable and record
+	DisplayUserFields []string
+	UserFields        []string
+	GroupFields       []string
+	SudoFields        []string
+	UserObjectClass   []string
+	GroupObjectClass  []string
+	SudoObjectClass   []string
+	WorkRecord        LdapRecord
+	Template          map[string]Record
 
-  // user record in the ldap server
-  User UserRecord
+	SearchResultData SearchResult
 
-  // group record in the ldap server
-  Group map[string]string
+	UserSearchBase     = "(objectClass=inetOrgPerson)"
+	GroupSearchBase    = "(|(objectClass=posixGroup)(objectClass=groupOfNames))"
+	SudoRuleSearchBase = "(objectClass=sudoRole)"
 
-  // ldap record to be use for create or modify a user
-  Template map[string]Record
+	UserWildCardSearchBase = "(&(objectClass=inetOrgPerson)(uid=VALUE))"
+	UserDisplayFieldID     = "uid"
 
-  // ldap record to be use for create or modify a group
-  GroupTemplate map[string]Record
+	GroupWildCardSearchBase = "(&(|(objectClass=posixGroup)(objectClass=groupOfNames))(cn=VALUE))"
+	GroupDisplayFieldID     = "cn"
 
-  // formodify user
-  ModRecord ModifyRecord
-
-  // we sets these under variable
-  LogsDir       = "/var/log/ldap-go"
-  LogFile       = fmt.Sprintf("%s.log", MyProgname)
-  LogMaxSize    = 128 // megabytes
-  LogMaxBackups = 14  // 14 files
-  LogMaxAge     = 14  // 14 days
+	SudoWildCardSearchBase = "(&(objectClass=sudoRole)(cn=VALUE))"
+	SudoDisplayFieldID     = "cn"
 )

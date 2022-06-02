@@ -6,61 +6,57 @@
 // Version    :  0.1
 //
 
-package create
+package delete
 
 import (
-  "bufio"
-  "fmt"
-  "os"
-  "strings"
+	"fmt"
 
-  u "badassops.ldap/utils"
-  l "badassops.ldap/ldap"
+	"badassops.ldap/cmds/common"
+	l "badassops.ldap/ldap"
+	v "badassops.ldap/vars"
+	"github.com/badassops/packages-go/print"
 )
 
 var (
-  valueEntered   string
-  continueDelete string
+	p = print.New()
 )
 
-func deleteUser(c *l.Connection) {
-  reader := bufio.NewReader(os.Stdin)
-  u.PrintYellow(fmt.Sprintf("\tEnter userid (login name) to be use: "))
-  valueEntered, _ = reader.ReadString('\n')
-  valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
-  if valueEntered == "" {
-    u.PrintRed(fmt.Sprintf("\n\tNo users was given aborting...\n"))
-    return
-    }
+func removeUserFromGroups(c *l.Connection) {
+	var groupsList []string
+	userUID := v.WorkRecord.ID
+	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
+	c.SearchInfo.SearchAttribute = []string{"cn", "memberUid"}
 
-  if cnt := c.CheckUser(valueEntered); cnt == 0 {
-    u.PrintRed(fmt.Sprintf("\n\tGiven user %s doen not exist, aborting...\n\n", valueEntered))
-    return
-  }
-
-  c.User.Field["dn"] = fmt.Sprintf("uid=%s,%s", valueEntered, c.Config.ServerValues.UserDN)
-  c.User.Field["uid"] = valueEntered
-
-  u.PrintRed(fmt.Sprintf("\n\tGiven user %s will be delete, this can not be undo!\n", valueEntered))
-  u.PrintYellow(fmt.Sprintf("\tContinue (default to N)? [y/n]: "))
-  continueDelete, _ = reader.ReadString('\n')
-  continueDelete = strings.ToLower(strings.TrimSuffix(continueDelete, "\n"))
-  if u.GetYN(continueDelete, false) == true {
-    if !c.DeleteUser() {
-      u.PrintRed(fmt.Sprintf("\n\tFailed to delete the user %s, check the log file\n", c.User.Field["uid"]))
-    } else {
-      u.PrintGreen(fmt.Sprintf("\n\tGiven user %s has been deleted\n", valueEntered))
-    }
-    // ignore errors
-    c.RemoveFromGroups()
-  } else {
-    u.PrintBlue(fmt.Sprintf("\n\tDeletion of the user %s cancelled\n", valueEntered))
-  }
-  return
+	records, _ := c.Search()
+	for idx, entry := range records.Entries {
+		for _, member := range entry.GetAttributeValues("memberUid") {
+			if member == userUID {
+				groupsList = append(groupsList, records.Entries[idx].GetAttributeValue("cn"))
+			}
+		}
+	}
+	if len(groupsList) > 0 {
+		for _, groupName := range groupsList {
+			v.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
+			if !c.RemoveFromGroups() {
+				p.PrintRed(fmt.Sprintf("User % was not remobe from the group %s, check the log...\n",
+					userUID, groupName))
+			}
+		}
+	}
 }
 
 func Delete(c *l.Connection) {
-  u.PrintHeader(u.Purple, "Delete User", true)
-  deleteUser(c)
-  u.PrintLine(u.Purple)
+	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Delete User", 18, true))
+	v.SearchResultData.WildCardSearchBase = v.UserWildCardSearchBase
+	v.SearchResultData.RecordSearchbase = v.UserWildCardSearchBase
+	v.SearchResultData.DisplayFieldID = v.UserDisplayFieldID
+	// we only handle posix group
+	v.WorkRecord.GroupType = "posix"
+	v.WorkRecord.MemberType = "memberUid"
+	if common.GetObjectRecord(c, true, "user") {
+		common.DeleteObjectRecord(c, v.SearchResultData.SearchResult, "user")
+		removeUserFromGroups(c)
+	}
+	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
 }

@@ -3,127 +3,160 @@
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
 //
-// Version    :  0.1
+// Version	:	0.1
 //
 
 package main
 
 import (
-  "fmt"
-  "os"
-  "path/filepath"
-  "strings"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
-  u "badassops.ldap/utils"
+	// local
+	"badassops.ldap/configurator"
+	"badassops.ldap/initializer"
+	"badassops.ldap/ldap"
+	"badassops.ldap/logs"
+	"badassops.ldap/vars"
 
-  "badassops.ldap/initializer"
-  "badassops.ldap/configurator"
-  "badassops.ldap/logs"
-  "badassops.ldap/ldap"
+	// on github
+	"github.com/badassops/packages-go/is"
+	"github.com/badassops/packages-go/lock"
+	"github.com/badassops/packages-go/print"
+	"github.com/badassops/packages-go/spinner"
 
-  // the menus
-  searchMenu "badassops.ldap/cmds/search/menu"
-  createMenu "badassops.ldap/cmds/create/menu"
-  modifyMenu "badassops.ldap/cmds/modify/menu"
-  deleteMenu "badassops.ldap/cmds/delete/menu"
-  limit      "badassops.ldap/cmds/limit"
+	// the menus
+	searchMenu "badassops.ldap/cmds/search/menu"
+	// createMenu "badassops.ldap/cmds/create/menu"
+	deleteMenu "badassops.ldap/cmds/delete/menu"
+	modifyMenu "badassops.ldap/cmds/modify/menu"
+	// limit	  "badassops.ldap/cmds/limit"
 )
 
 func main() {
-  LockPid  := os.Getpid()
-  progName, _ := os.Executable()
-  info := filepath.Base(progName)
+	LockPid := os.Getpid()
+	progName, _ := os.Executable()
+	progBase := filepath.Base(progName)
 
-  // get given parameters
-  config := configurator.Configurator()
-  config.InitializeArgs()
+	i := is.New()
+	p := print.New()
+	s := spinner.New(100)
 
-  // get the configuration
-  config.InitializeConfigs()
+	config := configurator.Configurator()
 
-  // initialize the user data dictionary
-  initializer.Init(config)
+	// get given parameters
+	config.InitializeArgs()
 
-  // make sure the configuration file has the proper settings
-  if !u.InList(config.AuthValues.AllowUsers, u.RunningUser()) {
-    u.PrintRed(fmt.Sprintf("The program has to be run as these user(s): %s or use sudo, aborting..\n",
-      strings.Join(config.AuthValues.AllowUsers[:], ", ")))
-    os.Exit(0)
-  }
-  if !u.CheckFileSettings(config.ConfigFile, config.AuthValues.AllowUsers, config.AuthValues.AllowMods) {
-    u.PrintRed("Aborting..\n")
-    os.Exit(0)
-  }
+	// get the configuration
+	config.InitializeConfigs()
 
-  // only if the given server was enabled
-  if config.ServerValues.Enabled == false {
-    u.PrintRed(fmt.Sprintf("The given server %s is not enabled, aborting..\n", config.Env ))
-    os.Exit(0)
-  }
+	// initialize the user data dictionary
+	initializer.Init(config)
 
-  // create the lock file to prevent an other script is running/started
-  config.LockPID = LockPid
+	// make sure the configuration file has the proper settings
+	runningUser, _ := i.IsRunningUser()
+	if !i.IsInList(config.AuthValues.AllowUsers, runningUser) {
+		p.PrintRed(fmt.Sprintf("The program has to be run as these user(s): %s or use sudo, aborting..\n",
+			strings.Join(config.AuthValues.AllowUsers[:], ", ")))
+		os.Exit(0)
+	}
+	ownerInfo, ownerOK := i.IsFileOwner(config.ConfigFile, config.AuthValues.AllowUsers)
+	if !ownerOK {
+		p.PrintRed(fmt.Sprintf("%s,\nAborting..\n", ownerInfo))
+		os.Exit(0)
+	}
+	permInfo, permOK := i.IsFilePermission(config.ConfigFile, config.AuthValues.AllowMods)
+	if !permOK {
+		p.PrintRed(fmt.Sprintf("%s,\nAborting..\n", permInfo))
+		os.Exit(0)
+	}
 
-  // initialize the logger system
-  LogConfig := &logs.LogConfig {
-    LogsDir:       config.LogValues.LogsDir,
-    LogFile:       config.LogValues.LogFile,
-    LogMaxSize:    config.LogValues.LogMaxSize,
-    LogMaxBackups: config.LogValues.LogMaxBackups,
-    LogMaxAge:     config.LogValues.LogMaxAge,
-  }
+	// only if the given server was enabled
+	if config.ServerValues.Enabled == false {
+		p.PrintRed(fmt.Sprintf("The given server %s is not enabled, aborting..\n", config.Server))
+		os.Exit(0)
+	}
 
-  logs.InitLogs(LogConfig)
-  logs.Log("System all clear", "INFO")
+	go s.Run()
+	// initialize the logger system
+	LogConfig := &logs.LogConfig{
+		LogsDir:       config.LogValues.LogsDir,
+		LogFile:       config.LogValues.LogFile,
+		LogMaxSize:    config.LogValues.LogMaxSize,
+		LogMaxBackups: config.LogValues.LogMaxBackups,
+		LogMaxAge:     config.LogValues.LogMaxAge,
+	}
 
-  // create lock all initializing has been done, but not for search
-  if config.Cmd != "search" {
-    u.LockIT(config.DefaultValues.LockFile, LockPid, info)
-  }
+	logs.InitLogs(LogConfig)
+	logs.Log("System all clear", "INFO")
 
-  // add a new ldap record
-  conn := ldap.New(config)
+	// create the lock file to prevent an other script is running/started
+	l := lock.New(config.DefaultValues.LockFile)
+	config.LockPID = LockPid
+	if config.Cmd != "search" {
+		// check lock file; lock file should not exist
+		if _, fileExist, _ := i.IsExist(config.DefaultValues.LockFile, "file"); fileExist {
+			lockPid, _ := l.LockGetPid()
+			if progRunning, _ := i.IsRunning(progBase, lockPid); progRunning {
+				s.Stop()
+				p.PrintRed(fmt.Sprintf("\nError there is already a process %s running, aborting...\n", progBase))
+				os.Exit(0)
+			}
+		}
+		// save to create new or overwrite the lock file
+		if err := l.LockIt(LockPid); err != nil {
+			s.Stop()
+			p.PrintRed(fmt.Sprintf("\nError creating the lock file, error %s, aborting..\n", err.Error()))
+			os.Exit(0)
+		}
+	}
 
-  if config.ServerValues.ReadOnly  == true {
-    u.PrintRed(fmt.Sprintf("\tThe server %s is set to be ready only.\n\tOnly the Search options is available...\n",
-        config.ServerValues.Server))
-    u.PrintGreen(fmt.Sprintf("\tPress enter to continue to search: "))
-    fmt.Scanln()
-    config.Cmd = "search"
-  }
+	// start the LDAP connection
+	conn := ldap.New(config)
 
-  // semi-hardcoded
-  if config.ServerValues.Admin != "cn=admin," + config.ServerValues.BaseDN {
-    switch config.Cmd {
-      case "search":
-        limit.UserRecord(conn)
-      case "modify":
-        limit.ModifyUserPasswordSSHKey(conn)
-      default:
-        u.PrintRed("\n\tThis command is only available for admin...\n\n")
-    }
-  } else {
-    switch config.Cmd {
-      case "search":
-        searchMenu.SearchMenu(conn)
+	time.Sleep(1 * time.Second)
+	s.Stop()
 
-      case "create":
-        createMenu.CreateMenu(conn)
+	if config.ServerValues.ReadOnly == true {
+		p.PrintRed(fmt.Sprintf("\tThe server %s is set to be ready only.\n\tOnly the Search options is available...\n",
+			config.ServerValues.Server))
+		p.PrintGreen("\tPress enter to continue to search: ")
+		fmt.Scanln()
+		config.Cmd = "search"
+	}
 
-      case "modify":
-        modifyMenu.ModifyMenu(conn)
+	// semi-hardcoded
+	// if config.ServerValues.Admin != "cn=admin," + config.ServerValues.BaseDN {
+	//   switch config.Cmd {
+	// 	case "search":
+	// 	  limit.UserRecord() //conn)
+	// 	case "modify":
+	// 	  limit.ModifyUserPasswordSSHKey() //conn)
+	// 	default:
+	// 	  u.PrintRed("\n\tThis command is only available for admin...\n\n")
+	//   }
+	// } else {
+	switch config.Cmd {
+	case "search":
+		searchMenu.SearchMenu(conn)
+	// case "create":
+	//   createMenu.CreateMenu() //conn)
+	case "modify":
+		modifyMenu.ModifyMenu(conn)
+	case "delete":
+		deleteMenu.DeleteMenu(conn)
+	}
+	// }
 
-      case "delete":
-        deleteMenu.DeleteMenu(conn)
-    }
-  }
+	if config.Cmd != "search" {
+		l.LockRelease()
+	}
 
-  if config.Cmd != "search" {
-    u.ReleaseIT(config.DefaultValues.LockFile, LockPid)
-  }
-
-  u.TheEnd()
-  u.PrintLine(u.Purple)
-  logs.Log("System Normal shutdown", "INFO")
-  os.Exit(0)
+	p.TheEnd()
+	fmt.Printf("\t%s\n", p.PrintLine(vars.Purple, 50))
+	logs.Log("System Normal shutdown", "INFO")
+	os.Exit(0)
 }

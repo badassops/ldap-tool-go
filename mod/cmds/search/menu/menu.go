@@ -9,48 +9,57 @@
 package menu
 
 import (
-  "bufio"
-  "fmt"
-  "os"
-  "strings"
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
 
-  u "badassops.ldap/utils"
-  l "badassops.ldap/ldap"
+	searchGroup "badassops.ldap/cmds/search/group"
+	searchSudo "badassops.ldap/cmds/search/sudo"
+	searchUser "badassops.ldap/cmds/search/user"
 
-  searchUser "badassops.ldap/cmds/search/user"
-  searchGroup "badassops.ldap/cmds/search/group"
-  searchSudo "badassops.ldap/cmds/search/sudo"
+	l "badassops.ldap/ldap"
+	v "badassops.ldap/vars"
+	"github.com/badassops/packages-go/print"
 )
 
 func SearchMenu(c *l.Connection) {
-  reader := bufio.NewReader(os.Stdin)
+	p := print.New()
+	reader := bufio.NewReader(os.Stdin)
 
-  u.PrintHeader(u.Purple, "Search", true)
-  fmt.Printf("\tSearch (%s)ser, (%s)ll Users, (%s)roup, all Group(%s)\n",
-    u.CreateColorMsg(u.Green, "U"),
-    u.CreateColorMsg(u.Green, "A"),
-    u.CreateColorMsg(u.Green, "G"),
-    u.CreateColorMsg(u.Green, "S"),
-  )
-  fmt.Printf("\t\t(%s)sudo role, (%s)all sudos role or (%s)uit?\n\t(default to User)? choice: ",
-    u.CreateColorMsg(u.Blue,  "X"),
-    u.CreateColorMsg(u.Blue,  "Z"),
-    u.CreateColorMsg(u.Red,   "Q"),
-  )
+	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Search", 20, true))
+	fmt.Printf("\tSearch (%s)ser, (%s)ll Users, (%s)roup, all Group(%s)\n",
+		p.MessageGreen("U"),
+		p.MessageGreen("A"),
+		p.MessageGreen("G"),
+		p.MessageGreen("S"),
+	)
+	fmt.Printf("\t\t(%s)sudo role, (%s)all sudos role or (%s)uit?\n\t(default to User)? choice: ",
+		p.MessageBlue("X"),
+		p.MessageBlue("Z"),
+		p.MessageRed("Q"),
+	)
 
-  choice, _ := reader.ReadString('\n')
-  choice = strings.TrimSuffix(choice, "\n")
-  switch strings.ToLower(choice) {
-    case "user",   "u": searchUser.User(c)
-    case "users",  "a": searchUser.Users(c)
-    case "group",  "g": searchGroup.Group(c)
-    case "groups", "s": searchGroup.Groups(c)
-    case "sudo",   "x": searchSudo.Sudo(c)
-    case "sudos",  "z": searchSudo.Sudos(c)
-    case "quit",   "q":
-        u.PrintRed("\n\tOperation cancelled\n")
-        u.PrintLine(u.Purple)
-        break
-    default: searchUser.User(c)
-  }
+	choice, _ := reader.ReadString('\n')
+	choice = strings.TrimSuffix(choice, "\n")
+	switch strings.ToLower(choice) {
+	case "user", "u":
+		searchUser.User(c)
+	case "users", "a":
+		searchUser.Users(c)
+	case "group", "g":
+		searchGroup.Group(c)
+	case "groups", "s":
+		searchGroup.Groups(c)
+	case "sudo", "x":
+		searchSudo.Sudo(c)
+	case "sudos", "z":
+		searchSudo.Sudos(c)
+	case "quit", "q":
+		p.PrintRed("\n\t\tOperation cancelled\n")
+		fmt.Printf("\t%s\n", p.PrintLine(print.Purple, 40))
+		break
+	default:
+		searchUser.User(c)
+	}
 }
