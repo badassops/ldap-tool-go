@@ -53,8 +53,10 @@ func addGroupEntries(c *l.Connection, groupName string) {
 }
 
 func modifyGroup(c *l.Connection, records *ldapv3.SearchResult) bool {
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
 	orgGroup := v.WorkRecord.ID
+	p.PrintPurple(fmt.Sprintf("\tUsing group: %s\n", orgGroup))
+	p.PrintYellow(fmt.Sprintf("\tPress enter to leave the value unchanged\n"))
+	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
 	v.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", v.WorkRecord.ID, c.Config.ServerValues.GroupDN)
 	for idx, entry := range records.Entries {
 		if len(records.Entries[idx].GetAttributeValue("gidNumber")) != 0 {

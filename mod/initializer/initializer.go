@@ -156,7 +156,7 @@ func Init(c *c.Config) {
 
 	v.Template["shadowExpire"] =
 		v.Record{
-			Prompt:   fmt.Sprintf("Reset password expired to (%d days from now) Y/N", c.DefaultValues.ShadowMax),
+			Prompt:   fmt.Sprintf("Reset password expired, Y/N"),
 			Value:    currExpired,
 			NoEmpty:  false,
 			UseValue: false,

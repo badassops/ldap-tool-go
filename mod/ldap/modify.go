@@ -63,37 +63,28 @@ func (c *Connection) AddToGroup() bool {
 	return true
 }
 
-// func (c *Connection) ModifyUser() bool {
-//   var errored int = 0
-//   var passChanged bool = false
-//   modifyRecord := ldapv3.NewModifyRequest(c.User.Field["dn"])
-//   for fieldName, fieldValue := range v.ModRecord.Field {
-//     if fieldName != "userPassword" {
-//       modifyRecord.Replace(fieldName, []string{fieldValue})
-//     }
-//     if fieldName == "userPassword" {
-//        c.User.Field["userPassword"] = fieldValue
-//        passChanged = true
-//     }
-//   }
-//
-//   if !c.modify(c.User.Field["uid"], "user", modifyRecord) {
-//     errored++
-//   }
-//
-//   if passChanged {
-//     if !c.setPassword() {
-//       errored++
-//     }
-//   }
-//
-//   if errored != 0 {
-//     return false
-//   }
-//   // modify only if the user modification was successfuly
-//   c.ModifyUserGroup()
-//   return true
-// }
+func (c *Connection) ModifyUser() bool {
+	var passChanged bool = false
+	modifyRecord := ldapv3.NewModifyRequest(v.WorkRecord.DN)
+	for fieldName, fieldValue := range v.WorkRecord.Fields {
+		if fieldName != "userPassword" {
+			modifyRecord.Replace(fieldName, []string{fieldValue})
+		}
+		if fieldName == "userPassword" {
+			passChanged = true
+		}
+	}
+	if err := c.Conn.Modify(modifyRecord); err != nil {
+		msg = fmt.Sprintf("Error modifying the user %s, error %s",
+			v.WorkRecord.ID, err.Error())
+		l.Log(msg, "ERROR")
+		return false
+	}
+	if passChanged {
+		return c.SetPassword()
+	}
+	return true
+}
 
 func (c *Connection) DeleteSudoRule() bool {
 	delSudoRule := ldapv3.NewModifyRequest(v.WorkRecord.DN)

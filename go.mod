@@ -3,6 +3,7 @@ module main
 go 1.18
 
 require (
+	badassops.ldap/cmds/common v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/create/group v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/create/menu v0.0.0-00010101000000-000000000000
 	badassops.ldap/cmds/create/sudo v0.0.0-00010101000000-000000000000
@@ -25,8 +26,6 @@ require (
 	badassops.ldap/ldap v0.0.0-00010101000000-000000000000
 	badassops.ldap/logs v0.0.0-00010101000000-000000000000
 	badassops.ldap/vars v0.0.0-00010101000000-000000000000
-
-	badassops.ldap/cmds/common v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -38,6 +37,7 @@ require (
 	github.com/badassops/packages-go/is v0.0.0-20220530213221-2e3686fab2d7 // indirect
 	github.com/badassops/packages-go/lock v0.0.0-20220530213221-2e3686fab2d7 // indirect
 	github.com/badassops/packages-go/print v0.0.0-20220530213221-2e3686fab2d7 // indirect
+	github.com/badassops/packages-go/random v0.0.0-20220530220720-227ab8c06333 // indirect
 	github.com/badassops/packages-go/readinput v0.0.0-20220530220720-227ab8c06333 // indirect
 	github.com/badassops/packages-go/spinner v0.0.0-20220530213221-2e3686fab2d7 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect

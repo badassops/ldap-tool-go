@@ -16,7 +16,7 @@ import (
 
 	modifyGroup "badassops.ldap/cmds/modify/group"
 	modifySudo "badassops.ldap/cmds/modify/sudo"
-	//modifyUser "badassops.ldap/cmds/modify/user"
+	modifyUser "badassops.ldap/cmds/modify/user"
 
 	l "badassops.ldap/ldap"
 	v "badassops.ldap/vars"
@@ -39,7 +39,7 @@ func ModifyMenu(c *l.Connection) {
 	choice = strings.TrimSuffix(choice, "\n")
 	switch strings.ToLower(choice) {
 	case "user", "u":
-		//modifyUser.Modify(c)
+		modifyUser.Modify(c)
 	case "group", "g":
 		modifyGroup.Modify(c)
 	case "sudo", "s":
@@ -49,6 +49,6 @@ func ModifyMenu(c *l.Connection) {
 		fmt.Printf("\t%s\n", p.PrintLine(print.Purple, 40))
 		break
 	default:
-		//modifyUser.Modify(c)
+		modifyUser.Modify(c)
 	}
 }

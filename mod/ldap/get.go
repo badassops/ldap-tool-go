@@ -9,6 +9,7 @@
 package ldap
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -45,3 +46,45 @@ func (c *Connection) GetNextGID() int {
 	}
 	return startGID + 1
 }
+
+func (c *Connection) GetUserGroups(userID, userDN string) int {
+	c.SearchInfo.SearchBase =
+		fmt.Sprintf("(|(&(objectClass=posixGroup)(memberUid=%s))(&(objectClass=groupOfNames)(member=%s)))",
+		userID, userDN)
+	c.SearchInfo.SearchAttribute = []string{"dn"}
+	records, recordsCount := c.Search()
+	for _, entry := range records.Entries {
+		c.Record.UserGroups = append(c.Record.UserGroups, entry.DN)
+	}
+	return recordsCount
+}
+
+func (c *Connection) GetAvailableGroups(userID, userDN string) int {
+	c.SearchInfo.SearchBase =
+		fmt.Sprintf("(|(&(objectClass=posixGroup)(!memberUid=%s))(&(objectClass=groupOfNames)(!member=%s)))",
+		userID, userDN)
+	c.SearchInfo.SearchAttribute = []string{"dn"}
+	records, recordsCount := c.Search()
+	for _, entry := range records.Entries {
+		c.Record.AvailableGroups = append(c.Record.AvailableGroups, entry.DN)
+	}
+	return recordsCount
+}
+
+func (c *Connection) GetGroupType() map[string][]string {
+	result := make (map[string][]string)
+	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
+	c.SearchInfo.SearchAttribute = []string{"dn"}
+	records, _ := c.Search()
+	for _, posix := range records.Entries {
+		result["posixGroup"] = append(result["posixGroup"], posix.DN)
+	}
+	c.SearchInfo.SearchBase = "(&(objectClass=groupOfNames))"
+	c.SearchInfo.SearchAttribute = []string{"dn"}
+	records, _ = c.Search()
+	for _, groupOfNames := range records.Entries {
+		result["groupOfNames"] = append(result["groupOfNames"], groupOfNames.DN)
+	}
+	return result
+}
+

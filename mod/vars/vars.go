@@ -28,6 +28,8 @@ var (
 	White  = "\x1b[1;37m" // White
 
 	RedUnderline = "\x1b[4;31m" // Red underline
+	DangerZone = fmt.Sprintf("%sDanger Zone%s, be sure you understand the implication!",
+		RedUnderline, Off)
 )
 
 type SearchInfo struct {
@@ -43,18 +45,20 @@ type Record struct {
 }
 
 type LdapRecord struct {
-	ID           string
-	DN           string
-	CN           string
-	GroupType    string
-	MemberType   string
-	Fields       map[string]string
-	Group        map[string]string
-	Groups       []string
-	GroupAddList []string
-	GroupDelList []string
-	SudoAddList  map[string][]string
-	SudoDelList  map[string][]string
+	ID              string
+	DN              string
+	CN              string
+	GroupType       string
+	MemberType      string
+	Fields          map[string]string
+	Group           map[string]string
+	Groups          []string
+	GroupAddList    []string
+	GroupDelList    []string
+	UserGroups      []string
+	AvailableGroups []string
+	SudoAddList     map[string][]string
+	SudoDelList     map[string][]string
 }
 
 type Log struct {

@@ -15,8 +15,8 @@ import (
 	"strings"
 
 	createGroup "badassops.ldap/cmds/create/group"
-	createSudo "badassops.ldap/cmds/create/sudo"
-	createUser "badassops.ldap/cmds/create/user"
+	//createSudo "badassops.ldap/cmds/create/sudo"
+	//createUser "badassops.ldap/cmds/create/user"
 
     l "badassops.ldap/ldap"
     v "badassops.ldap/vars"
