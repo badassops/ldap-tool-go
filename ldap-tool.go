@@ -13,7 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	//"time"
+	"time"
 
 	// local
 	"badassops.ldap/configurator"
@@ -26,11 +26,11 @@ import (
 	"github.com/badassops/packages-go/is"
 	"github.com/badassops/packages-go/lock"
 	"github.com/badassops/packages-go/print"
-	//"github.com/badassops/packages-go/spinner"
+	"github.com/badassops/packages-go/spinner"
 
 	// the menus
 	searchMenu "badassops.ldap/cmds/search/menu"
-	// createMenu "badassops.ldap/cmds/create/menu"
+	createMenu "badassops.ldap/cmds/create/menu"
 	deleteMenu "badassops.ldap/cmds/delete/menu"
 	modifyMenu "badassops.ldap/cmds/modify/menu"
 	// limit	  "badassops.ldap/cmds/limit"
@@ -43,7 +43,7 @@ func main() {
 
 	i := is.New()
 	p := print.New()
-	// s := spinner.New(100)
+	s := spinner.New(10)
 
 	config := configurator.Configurator()
 
@@ -80,7 +80,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	// go s.Run()
+	go s.Run()
 	// initialize the logger system
 	LogConfig := &logs.LogConfig{
 		LogsDir:       config.LogValues.LogsDir,
@@ -101,14 +101,14 @@ func main() {
 		if _, fileExist, _ := i.IsExist(config.DefaultValues.LockFile, "file"); fileExist {
 			lockPid, _ := l.LockGetPid()
 			if progRunning, _ := i.IsRunning(progBase, lockPid); progRunning {
-				// s.Stop()
+				s.Stop()
 				p.PrintRed(fmt.Sprintf("\nError there is already a process %s running, aborting...\n", progBase))
 				os.Exit(0)
 			}
 		}
 		// save to create new or overwrite the lock file
 		if err := l.LockIt(LockPid); err != nil {
-			// s.Stop()
+			s.Stop()
 			p.PrintRed(fmt.Sprintf("\nError creating the lock file, error %s, aborting..\n", err.Error()))
 			os.Exit(0)
 		}
@@ -117,8 +117,8 @@ func main() {
 	// start the LDAP connection
 	conn := ldap.New(config)
 
-	// time.Sleep(1 * time.Second)
-	// s.Stop()
+	time.Sleep(1 * time.Second)
+	s.Stop()
 
 	if config.ServerValues.ReadOnly == true {
 		p.PrintRed(fmt.Sprintf("\tThe server %s is set to be ready only.\n\tOnly the Search options is available...\n",
@@ -142,8 +142,8 @@ func main() {
 	switch config.Cmd {
 	case "search":
 		searchMenu.SearchMenu(conn)
-	// case "create":
-	//   createMenu.CreateMenu() //conn)
+	case "create":
+		createMenu.CreateMenu(conn)
 	case "modify":
 		modifyMenu.ModifyMenu(conn)
 	case "delete":

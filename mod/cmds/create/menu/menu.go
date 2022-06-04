@@ -18,20 +18,21 @@ import (
 	//createSudo "badassops.ldap/cmds/create/sudo"
 	//createUser "badassops.ldap/cmds/create/user"
 
-    l "badassops.ldap/ldap"
-    v "badassops.ldap/vars"
-    "github.com/badassops/packages-go/print"
+	l "badassops.ldap/ldap"
+	v "badassops.ldap/vars"
+	"github.com/badassops/packages-go/print"
 )
 
 func CreateMenu(c *l.Connection) {
+	p := print.New()
 	reader := bufio.NewReader(os.Stdin)
 
-	u.PrintHeader(u.Purple, "Create", true)
-	fmt.Printf("\tCreate (%s)ser, (%s)roup, (%s)sudo role or (%s)uit?\n\t(default to User)? choice: ",
-		p.MessageGreen, "U"),
-		p.MessageGreen, "G"),
-		p.MessageBlue, "S"),
-		p.MessageRed, "Q"),
+	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Create", 20, true))
+	fmt.Printf("\tModify (%s)ser, (%s)roup, (%s)udo rule or (%s)uit?\n\t(default to User)? choice: ",
+		p.MessageGreen("U"),
+		p.MessageGreen("G"),
+		p.MessageBlue("S"),
+		p.MessageRed("Q"),
 	)
 
 	choice, _ := reader.ReadString('\n')

@@ -28,7 +28,7 @@ var (
 	White  = "\x1b[1;37m" // White
 
 	RedUnderline = "\x1b[4;31m" // Red underline
-	DangerZone = fmt.Sprintf("%sDanger Zone%s, be sure you understand the implication!",
+	DangerZone   = fmt.Sprintf("%sDanger Zone%s, be sure you understand the implication!",
 		RedUnderline, Off)
 )
 

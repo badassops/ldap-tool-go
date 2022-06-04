@@ -36,10 +36,10 @@ var (
 	valueEntered string
 
 	// user's groups
-	userGroupList []string
+	userGroupList      []string
 	availableGroupList []string
 	// need to strip the full dn
-	displayUserGroupList []string
+	displayUserGroupList      []string
 	displayAvailableGroupList []string
 
 	// keep track if password was changed
@@ -54,14 +54,14 @@ func leaveGroup(c *l.Connection) {
 	groupList := c.GetGroupType()
 	for _, groupName := range c.Record.GroupDelList {
 		if i.IsInList(groupList["posixGroup"], groupName) {
-			v.WorkRecord.MemberType	= "posixGroup"
-			v.WorkRecord.MemberType	= "memberUid"
-			v.WorkRecord.ID			= v.WorkRecord.ID
+			v.WorkRecord.MemberType = "posixGroup"
+			v.WorkRecord.MemberType = "memberUid"
+			v.WorkRecord.ID = v.WorkRecord.ID
 		}
 		if i.IsInList(groupList["groupOfNames"], groupName) {
-			v.WorkRecord.MemberType	= "groupOfNames"
-			v.WorkRecord.MemberType	= "member"
-			v.WorkRecord.ID			= fmt.Sprintf("uid=%s,%s", v.WorkRecord.ID, c.Config.ServerValues.UserDN)
+			v.WorkRecord.MemberType = "groupOfNames"
+			v.WorkRecord.MemberType = "member"
+			v.WorkRecord.ID = fmt.Sprintf("uid=%s,%s", v.WorkRecord.ID, c.Config.ServerValues.UserDN)
 		}
 		v.WorkRecord.DN = groupName
 		c.RemoveFromGroups()
@@ -72,14 +72,14 @@ func joinGroup(c *l.Connection) {
 	groupList := c.GetGroupType()
 	for _, groupName := range c.Record.GroupAddList {
 		if i.IsInList(groupList["posixGroup"], groupName) {
-			v.WorkRecord.MemberType	= "posixGroup"
-			v.WorkRecord.MemberType	= "memberUid"
-			v.WorkRecord.ID			= v.WorkRecord.ID
+			v.WorkRecord.MemberType = "posixGroup"
+			v.WorkRecord.MemberType = "memberUid"
+			v.WorkRecord.ID = v.WorkRecord.ID
 		}
 		if i.IsInList(groupList["groupOfNames"], groupName) {
-			v.WorkRecord.MemberType	= "groupOfNames"
-			v.WorkRecord.MemberType	= "member"
-			v.WorkRecord.ID			= fmt.Sprintf("uid=%s,%s", v.WorkRecord.ID, c.Config.ServerValues.UserDN)
+			v.WorkRecord.MemberType = "groupOfNames"
+			v.WorkRecord.MemberType = "member"
+			v.WorkRecord.ID = fmt.Sprintf("uid=%s,%s", v.WorkRecord.ID, c.Config.ServerValues.UserDN)
 		}
 		v.WorkRecord.DN = groupName
 	}
@@ -262,8 +262,8 @@ func createModifyUserRecord(c *l.Connection, records *ldapv3.SearchResult) int {
 		valueEntered, _ = reader.ReadString('\n')
 		valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
 		switch valueEntered {
-			case "y", "yes", "d", "del":
-				c.Record.GroupDelList = append(c.Record.GroupDelList, leaveGroup)
+		case "y", "yes", "d", "del":
+			c.Record.GroupDelList = append(c.Record.GroupDelList, leaveGroup)
 		}
 	}
 
@@ -274,8 +274,8 @@ func createModifyUserRecord(c *l.Connection, records *ldapv3.SearchResult) int {
 		valueEntered, _ = reader.ReadString('\n')
 		valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
 		switch valueEntered {
-			case "y", "yes", "d", "del":
-				c.Record.GroupAddList = append(c.Record.GroupAddList, joinGroup)
+		case "y", "yes", "d", "del":
+			c.Record.GroupAddList = append(c.Record.GroupAddList, joinGroup)
 		}
 	}
 
@@ -294,7 +294,7 @@ func Modify(c *l.Connection) {
 	v.SearchResultData.RecordSearchbase = v.UserWildCardSearchBase
 	v.SearchResultData.DisplayFieldID = v.UserDisplayFieldID
 	if common.GetObjectRecord(c, true, "user") {
-		if (createModifyUserRecord(c, v.SearchResultData.SearchResult) > 0) {
+		if createModifyUserRecord(c, v.SearchResultData.SearchResult) > 0 {
 			if len(v.WorkRecord.Fields) > 0 {
 				if !c.ModifyUser() {
 					p.PrintRed(fmt.Sprintf("\n\tFailed modify the user %s, check the log file\n", v.WorkRecord.ID))

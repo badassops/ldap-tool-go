@@ -214,7 +214,7 @@ func Init(c *c.Config) {
 			UseValue: true,
 		}
 
-	// the defaul is always used
+	// the default is always used
 	v.Template["member"] =
 		v.Record{
 			Prompt:   "Auto filled based on the groupDN value",

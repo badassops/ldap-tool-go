@@ -50,7 +50,7 @@ func (c *Connection) GetNextGID() int {
 func (c *Connection) GetUserGroups(userID, userDN string) int {
 	c.SearchInfo.SearchBase =
 		fmt.Sprintf("(|(&(objectClass=posixGroup)(memberUid=%s))(&(objectClass=groupOfNames)(member=%s)))",
-		userID, userDN)
+			userID, userDN)
 	c.SearchInfo.SearchAttribute = []string{"dn"}
 	records, recordsCount := c.Search()
 	for _, entry := range records.Entries {
@@ -62,7 +62,7 @@ func (c *Connection) GetUserGroups(userID, userDN string) int {
 func (c *Connection) GetAvailableGroups(userID, userDN string) int {
 	c.SearchInfo.SearchBase =
 		fmt.Sprintf("(|(&(objectClass=posixGroup)(!memberUid=%s))(&(objectClass=groupOfNames)(!member=%s)))",
-		userID, userDN)
+			userID, userDN)
 	c.SearchInfo.SearchAttribute = []string{"dn"}
 	records, recordsCount := c.Search()
 	for _, entry := range records.Entries {
@@ -72,7 +72,7 @@ func (c *Connection) GetAvailableGroups(userID, userDN string) int {
 }
 
 func (c *Connection) GetGroupType() map[string][]string {
-	result := make (map[string][]string)
+	result := make(map[string][]string)
 	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
 	c.SearchInfo.SearchAttribute = []string{"dn"}
 	records, _ := c.Search()
@@ -88,3 +88,18 @@ func (c *Connection) GetGroupType() map[string][]string {
 	return result
 }
 
+func (c *Connection) GetAlGroups() []string{
+	groups := c.GetGroupType()
+	return append(groups["posixGroup"], groups["groupOfNames"]...)
+}
+
+func (c *Connection) GetAlGroupsGID() map[string]string {
+	gitNumberList := make(map[string]string)
+	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
+	c.SearchInfo.SearchAttribute = []string{"gidNumber", "cn"}
+	records, _ := c.Search()
+	for _, gidNumber := range records.Entries {
+		gitNumberList[gidNumber.GetAttributeValue("gidNumber")] = gidNumber.GetAttributeValue("cn")
+	}
+	return gitNumberList
+}

@@ -9,11 +9,11 @@
 package ldap
 
 import (
-  "fmt"
+	"fmt"
 
-  l "badassops.ldap/logs"
-  v "badassops.ldap/vars"
-  ldapv3 "gopkg.in/ldap.v2"
+	l "badassops.ldap/logs"
+	v "badassops.ldap/vars"
+	ldapv3 "gopkg.in/ldap.v2"
 )
 
 func (c *Connection) SetPassword() bool {
@@ -26,7 +26,7 @@ func (c *Connection) SetPassword() bool {
 		return false
 	}
 	msg = fmt.Sprintf("Successfully setting the password for for user %s to %s",
-		v.WorkRecord.ID, v.WorkRecord.Fields["userPassword"] )
+		v.WorkRecord.ID, v.WorkRecord.Fields["userPassword"])
 	l.Log(msg, "INFO")
 	return true
 }
