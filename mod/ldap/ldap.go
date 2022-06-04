@@ -31,7 +31,7 @@ type (
 	}
 )
 
-// function to initialize a user record
+// function to initialize the ldap system
 func New(config *c.Config) *Connection {
 	e := exit.New("ldap initialize", 1)
 	l := lock.New(config.DefaultValues.LockFile)

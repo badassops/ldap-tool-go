@@ -13,6 +13,7 @@ import (
 	"strconv"
 )
 
+// get the next user UID from the ldap database
 func (c *Connection) GetNextUID() int {
 	var uidValue int
 	startUID := c.Config.DefaultValues.UidStart
@@ -28,6 +29,7 @@ func (c *Connection) GetNextUID() int {
 	return startUID + 1
 }
 
+// get the next group GID from the ldap database
 func (c *Connection) GetNextGID() int {
 	var uidValue int
 	startGID := c.Config.DefaultValues.GidStart
@@ -47,6 +49,7 @@ func (c *Connection) GetNextGID() int {
 	return startGID + 1
 }
 
+// get the groups an user belong to
 func (c *Connection) GetUserGroups(userID, userDN string) int {
 	c.SearchInfo.SearchBase =
 		fmt.Sprintf("(|(&(objectClass=posixGroup)(memberUid=%s))(&(objectClass=groupOfNames)(member=%s)))",
@@ -59,6 +62,7 @@ func (c *Connection) GetUserGroups(userID, userDN string) int {
 	return recordsCount
 }
 
+// get the group of which a user does not belong to
 func (c *Connection) GetAvailableGroups(userID, userDN string) int {
 	c.SearchInfo.SearchBase =
 		fmt.Sprintf("(|(&(objectClass=posixGroup)(!memberUid=%s))(&(objectClass=groupOfNames)(!member=%s)))",
@@ -71,6 +75,7 @@ func (c *Connection) GetAvailableGroups(userID, userDN string) int {
 	return recordsCount
 }
 
+// get all group and their type: posix or groupOfNames
 func (c *Connection) GetGroupType() map[string][]string {
 	result := make(map[string][]string)
 	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
@@ -88,11 +93,13 @@ func (c *Connection) GetGroupType() map[string][]string {
 	return result
 }
 
-func (c *Connection) GetAlGroups() []string{
+// get all group in the ldap database
+func (c *Connection) GetAllGroups() []string {
 	groups := c.GetGroupType()
 	return append(groups["posixGroup"], groups["groupOfNames"]...)
 }
 
+// get all the posixGroup's group GID
 func (c *Connection) GetAlGroupsGID() map[string]string {
 	gitNumberList := make(map[string]string)
 	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"

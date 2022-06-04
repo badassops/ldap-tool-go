@@ -40,6 +40,7 @@ func tidy(s string) string {
 	return strings.TrimSpace(removeLines.Replace(s))
 }
 
+// get the caller function
 func funcCaller(depth int) string {
 	pc, _, _, ok := runtime.Caller(depth)
 	info := runtime.FuncForPC(pc)

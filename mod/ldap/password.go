@@ -16,6 +16,7 @@ import (
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
+// set an user's ldap passwod
 func (c *Connection) SetPassword() bool {
 	// once the record is create we need to hash the password
 	passwordReq := ldapv3.NewPasswordModifyRequest(

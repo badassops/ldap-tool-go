@@ -16,6 +16,7 @@ import (
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
+// delete a ldap record
 func (c *Connection) Delete(recordId, recordType string) bool {
 	delReq := ldapv3.NewDelRequest(v.WorkRecord.DN, []ldapv3.Control{})
 	if err := c.Conn.Del(delReq); err != nil {

@@ -20,23 +20,13 @@ var (
 	msg string
 )
 
-func (c *Connection) modify(recordId, recordType string, request *ldapv3.ModifyRequest) bool {
-	if err := c.Conn.Modify(request); err != nil {
-		msg = fmt.Sprintf("Error modify the %s %s, error %s", recordType, recordId, err.Error())
-		l.Log(msg, "ERROR")
-		return false
-	}
-	msg = fmt.Sprintf("The %s %s has been modify", recordType, recordId)
-	l.Log(msg, "INFO")
-	return true
-}
-
+// remove an user from a group
 func (c *Connection) RemoveFromGroups() bool {
 	// posix uses user name
 	// groupOfNames uses user's full dn
-	delReq := ldapv3.NewModifyRequest(v.WorkRecord.DN)
-	delReq.Delete(v.WorkRecord.MemberType, []string{v.WorkRecord.ID})
-	if err := c.Conn.Modify(delReq); err != nil {
+	removeReq := ldapv3.NewModifyRequest(v.WorkRecord.DN)
+	removeReq.Delete(v.WorkRecord.MemberType, []string{v.WorkRecord.ID})
+	if err := c.Conn.Modify(removeReq); err != nil {
 		msg = fmt.Sprintf("Error removing the user %s from group %s, error %s",
 			v.WorkRecord.ID, v.WorkRecord.DN, err.Error())
 		l.Log(msg, "ERROR")
@@ -47,6 +37,7 @@ func (c *Connection) RemoveFromGroups() bool {
 	return true
 }
 
+// add an user to a group
 func (c *Connection) AddToGroup() bool {
 	// posix uses user name
 	// groupOfNames uses user's full dn
@@ -63,6 +54,7 @@ func (c *Connection) AddToGroup() bool {
 	return true
 }
 
+// modify an user ldap record
 func (c *Connection) ModifyUser() bool {
 	var passChanged bool = false
 	modifyRecord := ldapv3.NewModifyRequest(v.WorkRecord.DN)
@@ -86,6 +78,7 @@ func (c *Connection) ModifyUser() bool {
 	return true
 }
 
+// delete a sudo rule
 func (c *Connection) DeleteSudoRule() bool {
 	delSudoRule := ldapv3.NewModifyRequest(v.WorkRecord.DN)
 	for fieldName, _ := range v.WorkRecord.SudoDelList {
@@ -104,6 +97,7 @@ func (c *Connection) DeleteSudoRule() bool {
 	return true
 }
 
+// add a sudo rule
 func (c *Connection) AddSudoRule() bool {
 	addSudoRule := ldapv3.NewModifyRequest(v.WorkRecord.DN)
 	for fieldName, _ := range v.WorkRecord.SudoAddList {

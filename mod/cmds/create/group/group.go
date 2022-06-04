@@ -40,7 +40,7 @@ var (
 )
 
 func createGroup(c *l.Connection) bool {
-	allGroupDN := c.GetAlGroups()
+	allGroupDN := c.GetAllGroups()
 
 	for _, fieldName := range fields {
 		if v.Template[fieldName].Value != "" {
@@ -106,7 +106,7 @@ func createGroup(c *l.Connection) bool {
 			v.WorkRecord.Fields["gidNumber"] = valueEntered
 		}
 	}
-	return c.AddGroup()
+	return c.CreateGroup()
 }
 
 func Create(c *l.Connection) {

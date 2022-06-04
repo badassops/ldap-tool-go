@@ -16,7 +16,8 @@ import (
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
-func (c *Connection) AddGroup() bool {
+// create a ldap group
+func (c *Connection) CreateGroup() bool {
 	newGroupReq := ldapv3.NewAddRequest(v.WorkRecord.Fields["dn"])
 	newGroupReq.Attribute("objectClass", []string{v.WorkRecord.Fields["objectClass"]})
 	newGroupReq.Attribute("cn", []string{v.WorkRecord.Fields["cn"]})
@@ -28,7 +29,7 @@ func (c *Connection) AddGroup() bool {
 	}
 	if err := c.Conn.Add(newGroupReq); err != nil {
 		msg = fmt.Sprintf("Error creating the group %s error %s",
-				v.WorkRecord.Fields["cn"], err.Error())
+			v.WorkRecord.Fields["cn"], err.Error())
 		l.Log(msg, "ERROR")
 		return false
 	}

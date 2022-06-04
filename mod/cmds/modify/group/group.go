@@ -28,6 +28,7 @@ var (
 	p                = print.New()
 )
 
+// remove the user from groups its belong to if this was set during the template input
 func deleteGroupEntries(c *l.Connection, groupName string) {
 	for _, userID := range v.WorkRecord.GroupDelList {
 		v.WorkRecord.ID = userID
@@ -40,6 +41,7 @@ func deleteGroupEntries(c *l.Connection, groupName string) {
 	}
 }
 
+// add the user to groups if this was set during the template input
 func addGroupEntries(c *l.Connection, groupName string) {
 	for _, userID := range v.WorkRecord.GroupAddList {
 		v.WorkRecord.ID = userID
@@ -52,6 +54,7 @@ func addGroupEntries(c *l.Connection, groupName string) {
 	}
 }
 
+// group modigy template
 func modifyGroup(c *l.Connection, records *ldapv3.SearchResult) bool {
 	orgGroup := v.WorkRecord.ID
 	p.PrintPurple(fmt.Sprintf("\tUsing group: %s\n", orgGroup))

@@ -21,6 +21,8 @@ var (
 	p = print.New()
 )
 
+// once an user has been deleted, we need to make sure
+// it are removed from all the group its belong too
 func removeUserFromGroups(c *l.Connection) {
 	var groupsList []string
 	userUID := v.WorkRecord.ID

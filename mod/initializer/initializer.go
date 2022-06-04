@@ -22,6 +22,7 @@ var (
 	msg string
 )
 
+// initialize the system/variable/template
 func Init(c *c.Config) {
 	// ldap fields that will be used
 	v.UserFields = []string{"uid", "givenName", "sn", "cn", "displayName",

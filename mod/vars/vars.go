@@ -32,11 +32,13 @@ var (
 		RedUnderline, Off)
 )
 
+// for ldap search
 type SearchInfo struct {
 	SearchBase      string
 	SearchAttribute []string
 }
 
+// for input template
 type Record struct {
 	Value    string // default value from the configuration
 	Prompt   string
@@ -44,6 +46,7 @@ type Record struct {
 	UseValue bool
 }
 
+// ldap record with all possible use fields
 type LdapRecord struct {
 	ID              string
 	DN              string
@@ -61,6 +64,7 @@ type LdapRecord struct {
 	SudoDelList     map[string][]string
 }
 
+// for logging
 type Log struct {
 	LogsDir       string
 	LogFile       string
@@ -69,6 +73,7 @@ type Log struct {
 	LogMaxAge     int
 }
 
+// for output of a ldap search
 type SearchResult struct {
 	RecordCount        int
 	SearchResult       *ldapv3.SearchResult
@@ -112,6 +117,7 @@ var (
 
 	SearchResultData SearchResult
 
+	// variables use for ldap search
 	UserSearchBase     = "(objectClass=inetOrgPerson)"
 	GroupSearchBase    = "(|(objectClass=posixGroup)(objectClass=groupOfNames))"
 	SudoRuleSearchBase = "(objectClass=sudoRole)"

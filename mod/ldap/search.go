@@ -14,6 +14,7 @@ import (
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
+// search the ldap database
 func (c *Connection) Search() (*ldapv3.SearchResult, int) {
 	searchRecords := ldapv3.NewSearchRequest(
 		c.Config.ServerValues.BaseDN,
