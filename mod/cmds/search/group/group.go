@@ -13,7 +13,6 @@ import (
 	"badassops.ldap/cmds/common"
 	l "badassops.ldap/ldap"
 	v "badassops.ldap/vars"
-
 	ldapv3 "gopkg.in/ldap.v2"
 )
 

@@ -15,7 +15,7 @@ import (
 
 	createGroup "badassops.ldap/cmds/create/group"
 	createSudo "badassops.ldap/cmds/create/sudo"
-	//createUser "badassops.ldap/cmds/create/user"
+	createUser "badassops.ldap/cmds/create/user"
 
 	l "badassops.ldap/ldap"
 	v "badassops.ldap/vars"
@@ -38,7 +38,7 @@ func CreateMenu(c *l.Connection) {
 	choice = strings.TrimSuffix(choice, "\n")
 	switch strings.ToLower(choice) {
 	case "user", "u":
-		//createUser.Create(c)
+		createUser.Create(c)
 	case "group", "g":
 		createGroup.Create(c)
 	case "sudo", "s":
@@ -48,6 +48,6 @@ func CreateMenu(c *l.Connection) {
 		fmt.Printf("\t%s\n", p.PrintLine(print.Purple, 40))
 		break
 	default:
-		//createUser.Create(c)
+		createUser.Create(c)
 	}
 }

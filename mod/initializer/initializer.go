@@ -225,7 +225,7 @@ func Init(c *c.Config) {
 
 	v.Template["sudoCommand"] =
 		v.Record{
-			Prompt: "fully qualified path of the commands allow with this rule",
+			Prompt:   "fully qualified path of the commands allow with this rule",
 			Value:    "ALL",
 			NoEmpty:  false,
 			UseValue: false,

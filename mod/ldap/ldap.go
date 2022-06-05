@@ -15,7 +15,6 @@ import (
 
 	c "badassops.ldap/configurator"
 	v "badassops.ldap/vars"
-
 	"github.com/badassops/packages-go/exit"
 	"github.com/badassops/packages-go/lock"
 	ldapv3 "gopkg.in/ldap.v2"

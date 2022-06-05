@@ -17,7 +17,6 @@ import (
 	l "badassops.ldap/ldap"
 	v "badassops.ldap/vars"
 	"github.com/badassops/packages-go/print"
-
 	ldapv3 "gopkg.in/ldap.v2"
 )
 

@@ -116,8 +116,20 @@ func (c *Connection) GetAllSudoRules() []string {
 	c.SearchInfo.SearchBase = "(&(objectClass=sudoRole))"
 	c.SearchInfo.SearchAttribute = []string{"gidNumber", "cn"}
 	records, _ := c.Search()
-	for _, sudoRule := range records.Entries  {
+	for _, sudoRule := range records.Entries {
 		sudoRuleList = append(sudoRuleList, sudoRule.GetAttributeValue("cn"))
 	}
 	return sudoRuleList
+}
+
+// get all the user uid and UID
+func (c *Connection) GetUsersUID() map[string]string {
+	userUIDList := make(map[string]string)
+	c.SearchInfo.SearchBase = "(&(objectClass=inetOrgPerson))"
+	c.SearchInfo.SearchAttribute = []string{"uidNumber", "cn"}
+	records, _ := c.Search()
+	for _, uidNumber := range records.Entries {
+		userUIDList[uidNumber.GetAttributeValue("uidNumber")] = uidNumber.GetAttributeValue("uid")
+	}
+	return userUIDList
 }

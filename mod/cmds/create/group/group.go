@@ -16,7 +16,6 @@ import (
 
 	l "badassops.ldap/ldap"
 	v "badassops.ldap/vars"
-
 	"github.com/badassops/packages-go/is"
 	"github.com/badassops/packages-go/print"
 )
@@ -88,7 +87,7 @@ func createGroup(c *l.Connection) bool {
 		fmt.Printf("\n")
 	}
 
-	if  v.WorkRecord.Fields["objectClass"] == "posixGroup" {
+	if v.WorkRecord.Fields["objectClass"] == "posixGroup" {
 		v.WorkRecord.Fields["gidNumber"] = strconv.Itoa(c.GetNextGID())
 		p.PrintPurple(fmt.Sprintf("\tOptional set groups's GID, press enter to use the next GID: %s\n",
 			v.WorkRecord.Fields["gidNumber"]))
@@ -116,7 +115,7 @@ func Create(c *l.Connection) {
 		p.PrintGreen(fmt.Sprintf("\tGroup %s created\n", v.WorkRecord.Fields["cn"]))
 	} else {
 		p.PrintRed(fmt.Sprintf("\tFailed to create the group %s, check the log file\n",
-			 v.WorkRecord.Fields["cn"]))
+			v.WorkRecord.Fields["cn"]))
 	}
 	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
 }

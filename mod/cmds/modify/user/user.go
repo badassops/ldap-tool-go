@@ -22,7 +22,6 @@ import (
 	"github.com/badassops/packages-go/is"
 	"github.com/badassops/packages-go/print"
 	"github.com/badassops/packages-go/random"
-
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
