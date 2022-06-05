@@ -1,9 +1,8 @@
+//
 // BSD 3-Clause License
 //
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
-//
-// Version    :  0.1
 //
 
 package create
@@ -12,7 +11,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	//"regexp"
 	"strconv"
 	"strings"
 
@@ -44,7 +42,8 @@ func createGroup(c *l.Connection) bool {
 
 	for _, fieldName := range fields {
 		if v.Template[fieldName].Value != "" {
-			p.PrintYellow(fmt.Sprintf("\t ** Default to: %s **\n", v.Template[fieldName].Value))
+			fmt.Printf("\t%sDefault to:%s %s%s%s\n",
+				v.Purple, v.Off, v.Cyan, v.Template[fieldName].Value, v.Off)
 		}
 
 		fmt.Printf("\t%s: ", v.Template[fieldName].Prompt)
@@ -53,7 +52,6 @@ func createGroup(c *l.Connection) bool {
 		valueEntered, _ = reader.ReadString('\n')
 		valueEntered = strings.TrimSuffix(valueEntered, "\n")
 
-		fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
 		switch fieldName {
 		case "groupName":
 			groupDN := fmt.Sprintf("cn=%s,%s", valueEntered, c.Config.ServerValues.GroupDN)
@@ -61,6 +59,7 @@ func createGroup(c *l.Connection) bool {
 				p.PrintRed(fmt.Sprintf("\n\tGiven group %s already exist, aborting...\n\n", valueEntered))
 				return false
 			}
+			fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
 			p.PrintPurple(fmt.Sprintf("\tUsing Group: %s\n\n", valueEntered))
 			v.WorkRecord.Fields["cn"] = valueEntered
 			v.WorkRecord.Fields["dn"] = groupDN
@@ -86,6 +85,7 @@ func createGroup(c *l.Connection) bool {
 			p.PrintRed("\tNo value was entered aborting..%s.\n\n")
 			return false
 		}
+		fmt.Printf("\n")
 	}
 
 	if  v.WorkRecord.Fields["objectClass"] == "posixGroup" {
@@ -106,6 +106,7 @@ func createGroup(c *l.Connection) bool {
 			v.WorkRecord.Fields["gidNumber"] = valueEntered
 		}
 	}
+	fmt.Printf("\n")
 	return c.CreateGroup()
 }
 

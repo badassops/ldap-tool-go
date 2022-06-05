@@ -1,9 +1,8 @@
+//
 // BSD 3-Clause License
 //
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
-//
-// Version    :  0.1
 //
 
 package ldap
@@ -109,4 +108,16 @@ func (c *Connection) GetAlGroupsGID() map[string]string {
 		gitNumberList[gidNumber.GetAttributeValue("gidNumber")] = gidNumber.GetAttributeValue("cn")
 	}
 	return gitNumberList
+}
+
+// get all sudo rule in the ldap database
+func (c *Connection) GetAllSudoRules() []string {
+	var sudoRuleList []string
+	c.SearchInfo.SearchBase = "(&(objectClass=sudoRole))"
+	c.SearchInfo.SearchAttribute = []string{"gidNumber", "cn"}
+	records, _ := c.Search()
+	for _, sudoRule := range records.Entries  {
+		sudoRuleList = append(sudoRuleList, sudoRule.GetAttributeValue("cn"))
+	}
+	return sudoRuleList
 }

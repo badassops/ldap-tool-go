@@ -1,9 +1,8 @@
+//
 // BSD 3-Clause License
 //
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
-//
-// Version    :  0.1
 //
 
 package menu
@@ -15,7 +14,7 @@ import (
 	"strings"
 
 	createGroup "badassops.ldap/cmds/create/group"
-	//createSudo "badassops.ldap/cmds/create/sudo"
+	createSudo "badassops.ldap/cmds/create/sudo"
 	//createUser "badassops.ldap/cmds/create/user"
 
 	l "badassops.ldap/ldap"
@@ -43,7 +42,7 @@ func CreateMenu(c *l.Connection) {
 	case "group", "g":
 		createGroup.Create(c)
 	case "sudo", "s":
-		//createSudo.Create(c)
+		createSudo.Create(c)
 	case "quit", "q":
 		p.PrintRed("\n\t\tOperation cancelled\n")
 		fmt.Printf("\t%s\n", p.PrintLine(print.Purple, 40))

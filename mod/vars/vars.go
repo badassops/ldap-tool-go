@@ -4,6 +4,7 @@
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
 //
+
 package vars
 
 import (
@@ -28,6 +29,7 @@ var (
 	White  = "\x1b[1;37m" // White
 
 	RedUnderline = "\x1b[4;31m" // Red underline
+	OneLineUP    = "\x1b[A"
 	DangerZone   = fmt.Sprintf("%sDanger Zone%s, be sure you understand the implication!",
 		RedUnderline, Off)
 )

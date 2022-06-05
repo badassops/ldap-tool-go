@@ -1,9 +1,8 @@
+//
 // BSD 3-Clause License
 //
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
-//
-// Version    :  0.1
 //
 
 package initializer
@@ -174,7 +173,7 @@ func Init(c *c.Config) {
 	// share in group and sudo rule
 	v.Template["cn"] =
 		v.Record{
-			Prompt:   "Auto filled based on the groupDN value",
+			Prompt:   "Short name, will be use to filled the dn value",
 			Value:    "",
 			NoEmpty:  true,
 			UseValue: false,
@@ -197,7 +196,7 @@ func Init(c *c.Config) {
 			UseValue: true,
 		}
 
-	// onlty use for posix group
+	// only use for posix group
 	v.Template["gidNumber"] =
 		v.Record{
 			Prompt:   "Group ID/number of the posix group",
@@ -224,27 +223,25 @@ func Init(c *c.Config) {
 			UseValue: false,
 		}
 
-	// sudo rules
 	v.Template["sudoCommand"] =
 		v.Record{
-			Prompt: fmt.Sprintf("%sfully qualified path or ALL%s\n\tEnter the command allow with this rule",
-				v.Yellow, v.Off),
-			Value:    "",
-			NoEmpty:  true,
+			Prompt: "fully qualified path of the commands allow with this rule",
+			Value:    "ALL",
+			NoEmpty:  false,
 			UseValue: false,
 		}
 
 	msg = p.MessageYellow("default to ALL")
 	v.Template["sudoHost"] =
 		v.Record{
-			Prompt:   fmt.Sprintf("%s\n\tThe host the command is allowed", msg),
+			Prompt:   "The host the command is allowed",
 			Value:    "ALL",
 			NoEmpty:  false,
 			UseValue: true,
 		}
 
-	msg = p.MessageYellow("exmple %s!authenticate")
-	msg = msg + p.MessageCyan(" or no password required")
+	msg = fmt.Sprintf("%sExmple%s %s!authenticate%s", v.Purple, v.Off, v.Cyan, v.Off)
+	msg = msg + p.MessageYellow(" for no password required")
 	v.Template["sudoOption"] =
 		v.Record{
 			Prompt:   fmt.Sprintf("%s\n\tSudo option with the command", msg),
@@ -253,20 +250,17 @@ func Init(c *c.Config) {
 			UseValue: false,
 		}
 
-	msg = p.MessageYellow("default to 4, use 3 and not higher than 10")
 	v.Template["sudoOrder"] =
 		v.Record{
-			Prompt:   fmt.Sprintf("%s\n\tThe order of the rule", msg),
+			Prompt:   "The order of the rule (between 3 and 10)",
 			Value:    "4",
 			NoEmpty:  false,
 			UseValue: true,
 		}
 
-	msg = p.MessageYellow("default to ")
-	msg = p.MessageRed("root")
 	v.Template["sudoRunAsUser"] =
 		v.Record{
-			Prompt:   fmt.Sprintf("%s\n\tRun the command as the user", msg),
+			Prompt:   "Run the command as the user",
 			Value:    "root",
 			NoEmpty:  false,
 			UseValue: true,
