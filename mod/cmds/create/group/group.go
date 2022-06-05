@@ -1,125 +1,121 @@
+//
 // BSD 3-Clause License
 //
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
 //
-// Version    :  0.1
-//
 
 package create
 
 import (
-  "bufio"
-  "fmt"
-  "os"
-  "strings"
-  "strconv"
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
-  u "badassops.ldap/utils"
-  l "badassops.ldap/ldap"
-  v "badassops.ldap/vars"
+	l "badassops.ldap/ldap"
+	v "badassops.ldap/vars"
+	"github.com/badassops/packages-go/is"
+	"github.com/badassops/packages-go/print"
 )
 
 var (
-  // group fields
-  // required: groupName and groupType
-  // required if posix: gidNumber
-  // autofilled: objectClass, cn
-  // autofilled if not posix: member 
+	// group fields
+	// required: groupName and groupType
+	// required if posix: gidNumber
+	// autofilled: objectClass, cn
+	// autofilled if not posix: member
 
-  valueEntered string
-  nextGID      int
-  fields      = []string{"groupName", "groupType"}
-  validTypes  = []string{"posix", "groupOfNames"}
+	valueEntered string
+	nextGID      int
+	fields       = []string{"groupName", "groupType"}
+	validTypes   = []string{"posix", "groupOfNames"}
 
+	p = print.New()
+	i = is.New()
 )
 
-func createGroupRecord(c *l.Connection) bool {
-  for _, fieldName := range fields {
-    if v.GroupTemplate[fieldName].Value != "" {
-      u.PrintYellow(fmt.Sprintf("\t ** Default to: %s **\n", v.GroupTemplate[fieldName].Value))
-    }
+func createGroup(c *l.Connection) bool {
+	allGroupDN := c.GetAllGroups()
 
-    if c.Config.Debug {
-      fmt.Printf("\t(%s) - %s: ", fieldName, v.GroupTemplate[fieldName].Prompt)
-    } else {
-      fmt.Printf("\t%s: ", v.GroupTemplate[fieldName].Prompt)
-    }
+	for _, fieldName := range fields {
+		if v.Template[fieldName].Value != "" {
+			fmt.Printf("\t%sDefault to:%s %s%s%s\n",
+				v.Purple, v.Off, v.Cyan, v.Template[fieldName].Value, v.Off)
+		}
 
-    reader := bufio.NewReader(os.Stdin)
-    valueEntered, _ = reader.ReadString('\n')
-    valueEntered = strings.TrimSuffix(valueEntered, "\n")
+		fmt.Printf("\t%s: ", v.Template[fieldName].Prompt)
 
-    switch fieldName {
-      case "groupName":
-        cnt := c.CheckGroup(valueEntered)
-        if cnt != 0 {
-          u.PrintRed(fmt.Sprintf("\n\tGiven user %s already exist, aborting...\n\n", valueEntered))
-          return false
-        }
-        u.PrintPurple(fmt.Sprintf("\tUsing Group: %s\n\n", valueEntered))
-        c.Group["groupName"] = valueEntered
-        c.Group["cn"] = fmt.Sprintf("cn=%s,%s", valueEntered, c.Config.ServerValues.GroupDN)
+		reader := bufio.NewReader(os.Stdin)
+		valueEntered, _ = reader.ReadString('\n')
+		valueEntered = strings.TrimSuffix(valueEntered, "\n")
 
-      case "groupType":
-        switch valueEntered {
-          case "", "p", "posix": valueEntered = "posix"
-          case "g", "groupOfNames": valueEntered = "groupOfNames"
-        }
-        if !u.InList(validTypes, valueEntered) {
-          u.PrintRed(fmt.Sprintf("\tWrong group type (%s) aborting...\n\n", valueEntered))
-          return false
-        }
-        c.Group["groupType"] = valueEntered
-    }
+		switch fieldName {
+		case "groupName":
+			groupDN := fmt.Sprintf("cn=%s,%s", valueEntered, c.Config.ServerValues.GroupDN)
+			if i.IsInList(allGroupDN, groupDN) {
+				p.PrintRed(fmt.Sprintf("\n\tGiven group %s already exist, aborting...\n\n", valueEntered))
+				return false
+			}
+			fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+			p.PrintPurple(fmt.Sprintf("\tUsing Group: %s\n\n", valueEntered))
+			v.WorkRecord.Fields["cn"] = valueEntered
+			v.WorkRecord.Fields["dn"] = groupDN
 
-    if len(valueEntered) == 0 && v.GroupTemplate[fieldName].NoEmpty == true {
-      u.PrintRed("\tNo value was entered aborting...\n\n")
-      return false
-    }
-  }
+		case "groupType":
+			switch valueEntered {
+			case "", "p", "posix":
+				v.WorkRecord.Fields["objectClass"] = "posixGroup"
+				valueEntered = "posix"
+			case "g", "groupOfNames":
+				v.WorkRecord.Fields["objectClass"] = "groupOfNames"
+				// hard coded, groupOfNames must have at least 1 member
+				v.WorkRecord.Fields["member"] = fmt.Sprintf("uid=initial-user,%s", c.Config.ServerValues.GroupDN)
+				valueEntered = "groupOfNames"
+			}
+			if !i.IsInList(validTypes, valueEntered) {
+				p.PrintRed(fmt.Sprintf("\tWrong group type (%s) aborting...\n\n", valueEntered))
+				return false
+			}
+		}
 
-  if c.Group["groupType"] == "posix" {
-    c.Group["objectClass"] = "posixGroup"
+		if (len(valueEntered) == 0) && (v.Template[fieldName].NoEmpty == true) {
+			p.PrintRed("\tNo value was entered aborting..%s.\n\n")
+			return false
+		}
+		fmt.Printf("\n")
+	}
 
-    nextGID = c.GetNextGID()
-    u.PrintPurple(fmt.Sprintf("\t\tOptional set groups's GID, press enter to use the next GID: %d\n", nextGID))
-    fmt.Printf("\t%s: ", v.GroupTemplate["gidNumber"].Prompt)
-    reader := bufio.NewReader(os.Stdin)
-    valueEntered, _ := reader.ReadString('\n')
-    valueEntered = strings.TrimSuffix(valueEntered, "\n")
-
-    if len(valueEntered) == 0 && v.GroupTemplate["gidNumber"].NoEmpty == false {
-      //u.PrintRed("\tNo value was entered aborting...\n\n")
-      //return false
-      valueEntered = strconv.Itoa(nextGID)
-    } else {
-      gidEntered, _ := strconv.Atoi(valueEntered)
-      if found, groupName := c.CheckGroupID(gidEntered); found == true {
-        u.PrintRed(fmt.Sprintf("\n\tGiven group id %v already use by the group %s, aborting...\n",
-          valueEntered, groupName))
-        return false
-      }
-    }
-    c.Group["gidNumber"] = valueEntered
-  }
-
-  if c.Group["groupType"] == "groupOfNames" {
-    c.Group["objectClass"] = "groupOfNames"
-    c.Group["member"] = v.GroupTemplate["member"].Value
-  }
-  return true
+	if v.WorkRecord.Fields["objectClass"] == "posixGroup" {
+		v.WorkRecord.Fields["gidNumber"] = strconv.Itoa(c.GetNextGID())
+		p.PrintPurple(fmt.Sprintf("\tOptional set groups's GID, press enter to use the next GID: %s\n",
+			v.WorkRecord.Fields["gidNumber"]))
+		fmt.Printf("\t%s: ", v.Template["gidNumber"].Prompt)
+		reader := bufio.NewReader(os.Stdin)
+		valueEntered, _ := reader.ReadString('\n')
+		valueEntered = strings.TrimSuffix(valueEntered, "\n")
+		if len(valueEntered) > 0 {
+			gitNumberList := c.GetAlGroupsGID()
+			if groupname, found := gitNumberList[valueEntered]; found {
+				p.PrintRed(fmt.Sprintf("\n\tGiven group id %s already use by the group %s , aborting...\n",
+					valueEntered, groupname))
+				return false
+			}
+			v.WorkRecord.Fields["gidNumber"] = valueEntered
+		}
+	}
+	fmt.Printf("\n")
+	return c.CreateGroup()
 }
 
 func Create(c *l.Connection) {
-  u.PrintHeader(u.Purple, "Create Group", true)
-  if createGroupRecord(c) {
-    u.PrintLine(u.Purple)
-    if !c.AddGroup() {
-      u.PrintRed(fmt.Sprintf("\n\tFailed to create the group %s, check the log file\n", c.Group["groupName"]))
-    } else {
-      u.PrintGreen(fmt.Sprintf("\n\tGroup %s created successfully\n", c.Group["groupName"]))
-    }
-  }
-  u.PrintLine(u.Purple)
+	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Create Group", 18, true))
+	if createGroup(c) {
+		p.PrintGreen(fmt.Sprintf("\tGroup %s created\n", v.WorkRecord.Fields["cn"]))
+	} else {
+		p.PrintRed(fmt.Sprintf("\tFailed to create the group %s, check the log file\n",
+			v.WorkRecord.Fields["cn"]))
+	}
+	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
 }

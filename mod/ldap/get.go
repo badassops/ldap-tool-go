@@ -1,145 +1,145 @@
+//
 // BSD 3-Clause License
 //
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
 //
-// Version    :  0.1
-//
 
 package ldap
 
 import (
-  "fmt"
-  "strconv"
-
-  u "badassops.ldap/utils"
-  v "badassops.ldap/vars"
-  ldapv3 "gopkg.in/ldap.v2"
+	"fmt"
+	"strconv"
 )
 
-// ** get info functions: user and group **
-
-func (c *Connection) GetUser(userName string, checkOnly bool) int {
-  attributes = []string{}
-  searchBase = fmt.Sprintf("(&(objectClass=inetOrgPerson)(uid=%s))", userName)
-  records, recordsCount = c.search(searchBase, attributes)
-  if recordsCount == 1 {
-    if checkOnly {
-      return recordsCount
-    }
-    c.User.Field["dn"] = records.Entries[0].DN
-    for _, field := range v.Fields {
-      c.User.Field[field] = records.Entries[0].GetAttributeValue(field)
-    }
-    c.GetUserGroups("groupOfNames")
-  }
-  return recordsCount
-}
-
-func (c *Connection) GetGroup(groupName string) (int, string) {
-  attributes := []string{}
-  groupTypes = []string{"posix", "groupOfNames"}
-  for _, groupType := range groupTypes {
-    switch groupType {
-      case "posix":
-        searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(cn=%s))", groupName)
-      case "groupOfNames":
-        searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(cn=%s))", groupName)
-    }
-    _, recordsCount = c.search(searchBase, attributes)
-    if recordsCount > 0 {
-      return recordsCount, groupType
-    }
-  }
-  return recordsCount, "unknown"
-}
-
-func (c *Connection) GetGroupsNameByType(groupType string) []string {
-  var searchBase string
-  attributes := []string{"cn"}
-  groupNames := []string{}
-  switch groupType{
-    case "posix":
-      searchBase = fmt.Sprintf("(&(objectClass=posixGroup))")
-    case "groupOfNames":
-      searchBase = fmt.Sprintf("(&(objectClass=groupOfNames))")
-  }
-  records, _ := c.search(searchBase, attributes)
-  for _, entry := range records.Entries {
-    for _, groupCN := range entry.GetAttributeValues("cn") {
-      groupNames = append(groupNames, groupCN)
-    }
-  }
-  return groupNames
-}
-
-func (c *Connection) GetUserGroups(groupType string) []string {
-  var groupList []string
-  switch groupType{
-    case "posix":
-      searchBase = fmt.Sprintf("(&(objectClass=posixGroup)(memberUid=%s))", c.User.Field["uid"])
-    case "groupOfNames":
-      searchBase = fmt.Sprintf("(&(objectClass=groupOfNames)(member=%s))", c.User.Field["dn"])
-  }
-  records, recordsCount := c.search(searchBase, []string{"dn"})
-  if recordsCount > 0 {
-    for _, entry := range records.Entries {
-      if u.InList(groupList, entry.DN) == false {
-        groupList = append(groupList, entry.DN)
-      }
-    }
-  }
-  return groupList
-}
-
+// get the next user UID from the ldap database
 func (c *Connection) GetNextUID() int {
-  var startUID = c.Config.DefaultValues.UidStart
-  var uidValue int
-  attributes := []string{"uidNumber"}
-  searchBase := fmt.Sprintf("(objectClass=person)")
-  records, _ := c.search(searchBase, attributes)
-  for _, entry := range records.Entries {
-      uidValue, _ = strconv.Atoi(entry.GetAttributeValue("uidNumber"))
-      if uidValue > startUID {
-        startUID = uidValue
-      }
-  }
-  return startUID + 1
+	var uidValue int
+	startUID := c.Config.DefaultValues.UidStart
+	c.SearchInfo.SearchBase = "(objectClass=person)"
+	c.SearchInfo.SearchAttribute = []string{"uidNumber"}
+	records, _ := c.Search()
+	for _, entry := range records.Entries {
+		uidValue, _ = strconv.Atoi(entry.GetAttributeValue("uidNumber"))
+		if uidValue > startUID {
+			startUID = uidValue
+		}
+	}
+	return startUID + 1
 }
 
+// get the next group GID from the ldap database
 func (c *Connection) GetNextGID() int {
-  var startGID = c.Config.DefaultValues.GidStart
-  var uidValue int
-  attributes := []string{"gidNumber"}
-  searchBase := fmt.Sprintf("(objectClass=posixGroup)")
-  records, _ := c.search(searchBase, attributes)
-  for _, entry := range records.Entries {
-      uidValue, _ = strconv.Atoi(entry.GetAttributeValue("gidNumber"))
-      if uidValue == c.Config.DefaultValues.GroupId {
-        // we skip this special gid
-        continue
-      }
-      if uidValue > startGID {
-        startGID = uidValue
-      }
-  }
-  return startGID + 1
+	var uidValue int
+	startGID := c.Config.DefaultValues.GidStart
+	c.SearchInfo.SearchBase = "(objectClass=posixGroup)"
+	c.SearchInfo.SearchAttribute = []string{"gidNumber"}
+	records, _ := c.Search()
+	for _, entry := range records.Entries {
+		uidValue, _ = strconv.Atoi(entry.GetAttributeValue("gidNumber"))
+		if uidValue == c.Config.DefaultValues.GroupId {
+			// we skip this special gid
+			continue
+		}
+		if uidValue > startGID {
+			startGID = uidValue
+		}
+	}
+	return startGID + 1
 }
 
-func (c *Connection) GetGroupType(groupName string) (bool, string) {
-    var typeGroup string
-    var cnt int
-    if cnt, typeGroup = c.GetGroup(groupName); cnt == 0 {
-        return false, "errored"
-    }
-    return true, typeGroup
+// get all the user uid and UID
+func (c *Connection) GetUsersUID() map[string]string {
+	userUIDList := make(map[string]string)
+	c.SearchInfo.SearchBase = "(&(objectClass=inetOrgPerson))"
+	c.SearchInfo.SearchAttribute = []string{"uidNumber", "uid"}
+	records, _ := c.Search()
+	for _, uidNumber := range records.Entries {
+		userUIDList[uidNumber.GetAttributeValue("uidNumber")] = uidNumber.GetAttributeValue("uid")
+	}
+	return userUIDList
 }
 
-func (c* Connection) GetSudoCN(sudoCN string) ([]*ldapv3.Entry, int) {
-  searchBase = fmt.Sprintf("(&(objectClass=top)(objectClass=sudoRole)(cn=%s))", sudoCN)
-  records, recordsCount = c.search(searchBase, attributes)
-  if recordsCount > 0 {
-    return records.Entries, recordsCount
-  }
-  return nil, 0
+// get all user uid
+func (c *Connection) GetAllUsers() []string {
+	var usersList []string
+	usersNameUid := c.GetUsersUID()
+	for userUID, _ := range usersNameUid {
+		usersList = append(usersList, usersNameUid[userUID])
+	}
+	return usersList
+}
+
+// get the groups an user belong to
+func (c *Connection) GetUserGroups(userID, userDN string) int {
+	c.SearchInfo.SearchBase =
+		fmt.Sprintf("(|(&(objectClass=posixGroup)(memberUid=%s))(&(objectClass=groupOfNames)(member=%s)))",
+			userID, userDN)
+	c.SearchInfo.SearchAttribute = []string{"dn"}
+	records, recordsCount := c.Search()
+	for _, entry := range records.Entries {
+		c.Record.UserGroups = append(c.Record.UserGroups, entry.DN)
+	}
+	return recordsCount
+}
+
+// get the group of which a user does not belong to
+func (c *Connection) GetAvailableGroups(userID, userDN string) int {
+	c.SearchInfo.SearchBase =
+		fmt.Sprintf("(|(&(objectClass=posixGroup)(!memberUid=%s))(&(objectClass=groupOfNames)(!member=%s)))",
+			userID, userDN)
+	c.SearchInfo.SearchAttribute = []string{"dn"}
+	records, recordsCount := c.Search()
+	for _, entry := range records.Entries {
+		c.Record.AvailableGroups = append(c.Record.AvailableGroups, entry.DN)
+	}
+	return recordsCount
+}
+
+// get all group and their type: posix or groupOfNames
+func (c *Connection) GetGroupType() map[string][]string {
+	result := make(map[string][]string)
+	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
+	c.SearchInfo.SearchAttribute = []string{"dn"}
+	records, _ := c.Search()
+	for _, posix := range records.Entries {
+		result["posixGroup"] = append(result["posixGroup"], posix.DN)
+	}
+	c.SearchInfo.SearchBase = "(&(objectClass=groupOfNames))"
+	c.SearchInfo.SearchAttribute = []string{"dn"}
+	records, _ = c.Search()
+	for _, groupOfNames := range records.Entries {
+		result["groupOfNames"] = append(result["groupOfNames"], groupOfNames.DN)
+	}
+	return result
+}
+
+// get all group in the ldap database
+func (c *Connection) GetAllGroups() []string {
+	groups := c.GetGroupType()
+	return append(groups["posixGroup"], groups["groupOfNames"]...)
+}
+
+// get all the posixGroup's group GID
+func (c *Connection) GetAlGroupsGID() map[string]string {
+	gitNumberList := make(map[string]string)
+	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
+	c.SearchInfo.SearchAttribute = []string{"gidNumber", "cn"}
+	records, _ := c.Search()
+	for _, gidNumber := range records.Entries {
+		gitNumberList[gidNumber.GetAttributeValue("gidNumber")] = gidNumber.GetAttributeValue("cn")
+	}
+	return gitNumberList
+}
+
+// get all sudo rule in the ldap database
+func (c *Connection) GetAllSudoRules() []string {
+	var sudoRuleList []string
+	c.SearchInfo.SearchBase = "(&(objectClass=sudoRole))"
+	c.SearchInfo.SearchAttribute = []string{"gidNumber", "cn"}
+	records, _ := c.Search()
+	for _, sudoRule := range records.Entries {
+		sudoRuleList = append(sudoRuleList, sudoRule.GetAttributeValue("cn"))
+	}
+	return sudoRuleList
 }

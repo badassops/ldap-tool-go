@@ -1,111 +1,80 @@
+//
 // BSD 3-Clause License
 //
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
 //
-// Version    :  0.1
-//
 
 package ldap
 
 import (
-  "fmt"
-  "strconv"
+	"fmt"
 
-  l "badassops.ldap/logs"
-  v "badassops.ldap/vars"
-  ldapv3 "gopkg.in/ldap.v2"
+	l "badassops.ldap/logs"
+	v "badassops.ldap/vars"
+	ldapv3 "gopkg.in/ldap.v2"
 )
 
-// create functions: user and group
+// create a ldap user
+func (c *Connection) CreateUser() bool {
+	newUserReq := ldapv3.NewAddRequest(v.WorkRecord.DN)
+	newUserReq.Attribute("objectClass", v.UserObjectClass)
+	for _, fieldName := range v.UserFields {
+		if fieldName != "userPassword" {
+			newUserReq.Attribute(fieldName, []string{v.WorkRecord.Fields[fieldName]})
+		}
+	}
+	if err := c.Conn.Add(newUserReq); err != nil {
+		msg = fmt.Sprintf("Error creating the user %s error %s",
+			v.WorkRecord.Fields["uid"], err.Error())
+		l.Log(msg, "ERROR")
+		return false
+	}
+	msg = fmt.Sprintf("The user %s has been created", v.WorkRecord.Fields["uid"])
+	l.Log(msg, "INFO")
 
-func (c *Connection) add(recordId, recordType string, request *ldapv3.AddRequest) bool {
-  if err := c.Conn.Add(request); err != nil {
-    msg = fmt.Sprintf("Error adding the %s %s, error %s", recordType, recordId, err.Error())
-    l.Log(msg, "ERROR")
-    return false
-  }
-  msg = fmt.Sprintf("The %s %s has been added", recordType, recordId)
-  l.Log(msg, "INFO")
-  return true
+	//set password
+	return c.SetPassword()
 }
 
-func (c *Connection) AddUser() bool {
-  addReq := ldapv3.NewAddRequest(c.User.Field["dn"])
-  addReq.Attribute("objectClass", userObjectClasses)
-  for _, field := range v.Fields {
-    if field != "groups" {
-      addReq.Attribute(field, []string{c.User.Field[field]})
-    }
-  }
-
-  if !c.add(c.User.Field["uid"], "user", addReq) {
-    return false
-  }
-
-  // we ignore errors adding group
-  c.addUserTogroupOfNamesGroup()
-  c.addUserToPosixGroup()
-
-  // set password
-  return c.setPassword()
+// create a ldap group
+func (c *Connection) CreateGroup() bool {
+	newGroupReq := ldapv3.NewAddRequest(v.WorkRecord.Fields["dn"])
+	newGroupReq.Attribute("objectClass", []string{v.WorkRecord.Fields["objectClass"]})
+	newGroupReq.Attribute("cn", []string{v.WorkRecord.Fields["cn"]})
+	if v.WorkRecord.Fields["objectClass"] == "posixGroup" {
+		newGroupReq.Attribute("gidNumber", []string{v.WorkRecord.Fields["gidNumber"]})
+	}
+	if v.WorkRecord.Fields["objectClass"] == "groupOfNames" {
+		newGroupReq.Attribute("member", []string{v.WorkRecord.Fields["member"]})
+	}
+	if err := c.Conn.Add(newGroupReq); err != nil {
+		msg = fmt.Sprintf("Error creating the group %s error %s",
+			v.WorkRecord.Fields["cn"], err.Error())
+		l.Log(msg, "ERROR")
+		return false
+	}
+	msg = fmt.Sprintf("The group %s has been created", v.WorkRecord.Fields["cn"])
+	l.Log(msg, "INFO")
+	return true
 }
 
-func (c *Connection) AddGroup() bool {
-  addReq := ldapv3.NewAddRequest(c.Group["cn"])
-  addReq.Attribute("objectClass", []string{c.Group["objectClass"]})
-  addReq.Attribute("cn", []string{c.Group["groupName"]})
-
-  if c.Group["groupType"] == "posix" {
-    addReq.Attribute("gidNumber", []string{c.Group["gidNumber"]})
-  }
-
-  if c.Group["groupType"] == "groupOfNames" {
-    addReq.Attribute("member", []string{c.Group["member"]})
-  }
-  return c.add(c.Group["groupName"], "group", addReq)
-}
-
-func (c *Connection) AddSudoRule() bool {
-  addReq := ldapv3.NewAddRequest(v.ModRecord.Field["dn"])
-  addReq.Attribute("objectClass", []string{"sudoRole"})
-  for _, fieldName := range v.Sudoers {
-    addReq.Attribute(fieldName, []string{v.ModRecord.Field[fieldName]})
-  }
-  return c.add(v.ModRecord.Field["cn"], "sudo rule", addReq)
-}
-
-func (c *Connection) addUserTogroupOfNamesGroup() bool {
-  // adding the user to the groups
-  var errorCnt int = 0
-  for _, group := range c.User.Groups {
-    groupCN := fmt.Sprintf("cn=%s,%s", group, c.Config.ServerValues.GroupDN)
-    addtoGroup := ldapv3.NewModifyRequest(groupCN)
-    addtoGroup.Add("member", []string{c.User.Field["dn"]})
-    if !c.modify("group", fmt.Sprintf("%s member to group %s", group, c.User.Field["uid"]), addtoGroup) {
-      errorCnt++
-    }
-  }
-  if errorCnt != 0 {
-    return false
-  }
-  return true
-}
-
-func (c *Connection) addUserToPosixGroup() bool {
-  var groupName string
-  var groupCN string
-  for _, mapValues := range c.Config.GroupValues.GroupsMap {
-    if strconv.Itoa(mapValues.Gid) == c.User.Field["gidNumber"] {
-      groupName = mapValues.Name
-      groupCN = fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
-      break
-    }
-  }
-  if len(groupName) > 0 {
-    addtoGroup := ldapv3.NewModifyRequest(groupCN)
-    addtoGroup.Add("memberUid", []string{c.User.Field["uid"]})
-    return c.modify("group", fmt.Sprintf("%s member to group %s", groupName, c.User.Field["uid"]), addtoGroup)
-  }
-  return false
+// create a ldap sudo rule
+func (c *Connection) CreateSudoRule() bool {
+	newSudoRuleReq := ldapv3.NewAddRequest(v.WorkRecord.Fields["dn"])
+	newSudoRuleReq.Attribute("objectClass", []string{v.WorkRecord.Fields["objectClass"]})
+	for _, field := range v.SudoFields {
+		if len(v.WorkRecord.Fields[field]) > 0 {
+			newSudoRuleReq.Attribute(field, []string{v.WorkRecord.Fields[field]})
+		}
+	}
+	if err := c.Conn.Add(newSudoRuleReq); err != nil {
+		msg = fmt.Sprintf("Error creating the sudo rule %s error %s",
+			v.WorkRecord.Fields["cn"], err.Error())
+		l.Log(msg, "ERROR")
+		return false
+	}
+	msg = fmt.Sprintf("The sudo rule %s has been created", v.WorkRecord.Fields["cn"])
+	l.Log(msg, "INFO")
+	return true
 }

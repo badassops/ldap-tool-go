@@ -1,132 +1,89 @@
+//
 // BSD 3-Clause License
 //
 // Copyright (c) 2022, © Badassops LLC / Luc Suryo
 // All rights reserved.
 //
-// Version    :  0.1
-//
 
 package ldap
 
 import (
-  "fmt"
-  "net"
-  "time"
+	"crypto/tls"
+	"fmt"
+	"net"
+	"time"
 
-  "crypto/tls"
-
-  v "badassops.ldap/vars"
-  u "badassops.ldap/utils"
-  c "badassops.ldap/configurator"
-  l "badassops.ldap/logs"
-  ldapv3 "gopkg.in/ldap.v2"
+	c "badassops.ldap/configurator"
+	v "badassops.ldap/vars"
+	"github.com/badassops/packages-go/exit"
+	"github.com/badassops/packages-go/lock"
+	ldapv3 "gopkg.in/ldap.v2"
 )
 
 type (
-  Connection struct {
-    Conn     *ldapv3.Conn
-    User     v.UserRecord
-    Group    map[string]string
-    Config   *c.Config
-    LockFile string
-    LockPid  int
-  }
+	Connection struct {
+		Conn       *ldapv3.Conn
+		Config     *c.Config
+		Record     v.LdapRecord
+		SearchInfo v.SearchInfo
+	}
 )
 
-var (
-  // use in other file with same package name
-
-  // these are the objectClasses needed for a user record
-  userObjectClasses = []string{"top", "person",
-    "organizationalPerson", "inetOrgPerson",
-    "posixAccount", "shadowAccount", "ldapPublicKey"}
-
-  msg          string
-  searchBase   string
-  groupType    string
-  memberField  string
-  groupTypes   []string
-  recordsCount int
-  idx           int
-
-  groupObjectClasses = []string{"groupOfNames"}
-  attributes         = []string{}
-
-  records *ldapv3.SearchResult
-  entry   *ldapv3.Entry
-  addReq  *ldapv3.AddRequest
-  delReq  *ldapv3.DelRequest
-)
-
-// function to initialize a user record
+// function to initialize the ldap system
 func New(config *c.Config) *Connection {
-  // set variable for the ldap connection
-  var ppolicy *ldapv3.ControlBeheraPasswordPolicy
+	e := exit.New("ldap initialize", 1)
+	l := lock.New(config.DefaultValues.LockFile)
 
-  // check if we can search the server, timeout set to 15 seconds
-  timeout := 15 * time.Second
-  dialConn, err := net.DialTimeout("tcp", net.JoinHostPort(config.ServerValues.Server, "389"), timeout)
-  if err != nil {
-    u.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
-    u.ExitWithMesssage(err.Error() + "\n")
-  }
-  dialConn.Close()
+	// set variable for the ldap connection
+	var ppolicy *ldapv3.ControlBeheraPasswordPolicy
 
-  ServerConn, err := ldapv3.Dial("tcp", fmt.Sprintf("%s:%d", config.ServerValues.Server ,389))
-  if err != nil {
-    u.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
-    u.ExitWithMesssage(err.Error())
-  }
+	// check if we can search the server, timeout set to 15 seconds
+	timeout := 15 * time.Second
+	dialConn, err := net.DialTimeout("tcp", net.JoinHostPort(config.ServerValues.Server, "389"), timeout)
+	if err != nil {
+		l.LockRelease()
+		e.ExitError(err)
+	}
+	dialConn.Close()
 
-  // now we need to reconnect with TLS
-  if config.ServerValues.TLS {
-    err := ServerConn.StartTLS(&tls.Config{InsecureSkipVerify: true})
-    if err != nil {
-      u.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
-      u.ExitIfError(err)
-    }
-  }
+	ServerConn, err := ldapv3.Dial("tcp", fmt.Sprintf("%s:%d", config.ServerValues.Server, 389))
+	if err != nil {
+		l.LockRelease()
+		e.ExitError(err)
+	}
 
-  // setup control
-  controls := []ldapv3.Control{}
-  controls = append(controls, ldapv3.NewControlBeheraPasswordPolicy())
+	// now we need to reconnect with TLS
+	if config.ServerValues.TLS {
+		err := ServerConn.StartTLS(&tls.Config{InsecureSkipVerify: true})
+		if err != nil {
+			l.LockRelease()
+			e.ExitError(err)
+		}
+	}
 
-  // bind to the ldap server
-  bindRequest := ldapv3.NewSimpleBindRequest(config.ServerValues.Admin, config.ServerValues.AdminPass, controls)
-  request, err := ServerConn.SimpleBind(bindRequest)
-  ppolicyControl := ldapv3.FindControl(request.Controls, ldapv3.ControlTypeBeheraPasswordPolicy)
-  if ppolicyControl != nil {
-    ppolicy = ppolicyControl.(*ldapv3.ControlBeheraPasswordPolicy)
-   }
-  if err != nil {
-    errStr := "ERROR: Cannot bind: " + err.Error()
-    if ppolicy != nil && ppolicy.Error >= 0 {
-      errStr += ":" + ppolicy.ErrorString
-    }
-    u.ReleaseIT(config.DefaultValues.LockFile, config.LockPID)
-    u.ExitWithMesssage(errStr)
-  }
+	// setup control
+	controls := []ldapv3.Control{}
+	controls = append(controls, ldapv3.NewControlBeheraPasswordPolicy())
 
-   // debug
-  if config.Debug {
-    l.Log(fmt.Sprintf("Server : %s", config.ServerValues.Server), "DEBUG")
-    l.Log(fmt.Sprintf("__ BaseDN      : %s", config.ServerValues.BaseDN), "DEBUG")
-    l.Log(fmt.Sprintf("__ Admin       : %s", config.ServerValues.Admin), "DEBUG")
-    l.Log(fmt.Sprintf("__ AdminPass   : %s", config.ServerValues.AdminPass), "DEBUG")
-    l.Log(fmt.Sprintf("__ UserDN      : %s", config.ServerValues.UserDN), "DEBUG")
-    l.Log(fmt.Sprintf("__ GroupDN     : %s", config.ServerValues.GroupDN), "DEBUG")
-    l.Log(fmt.Sprintf("__ EmailDomain : %s", config.ServerValues.EmailDomain), "DEBUG")
-    l.Log(fmt.Sprintf("__ TLS         : %t", config.ServerValues.TLS), "DEBUG")
-    l.Log(fmt.Sprintf("__ isEnabled   : %t", config.ServerValues.Enabled), "DEBUG")
-  }
+	// bind to the ldap server
+	bindRequest := ldapv3.NewSimpleBindRequest(config.ServerValues.Admin, config.ServerValues.AdminPass, controls)
+	request, err := ServerConn.SimpleBind(bindRequest)
+	ppolicyControl := ldapv3.FindControl(request.Controls, ldapv3.ControlTypeBeheraPasswordPolicy)
+	if ppolicyControl != nil {
+		ppolicy = ppolicyControl.(*ldapv3.ControlBeheraPasswordPolicy)
+	}
+	if err != nil {
+		errStr := "ERROR: Cannot bind: " + err.Error()
+		if ppolicy != nil && ppolicy.Error >= 0 {
+			errStr += ":" + ppolicy.ErrorString
+		}
+		l.LockRelease()
+		e.ExitError(err)
+	}
 
-  // the rest of the values will be filled during the process
-  return &Connection {
-    Conn:     ServerConn,
-    Config:   config,
-    User:     v.User,
-    Group:    v.Group,
-    LockFile: config.DefaultValues.LockFile,
-    LockPid:  config.LockPID,
-  }
+	// the rest of the values will be filled during the process
+	return &Connection{
+		Conn:   ServerConn,
+		Config: config,
+	}
 }
