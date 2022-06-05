@@ -28,7 +28,7 @@ func Init(c *c.Config) {
 		"gecos", "uidNumber", "gidNumber", "departmentNumber",
 		"mail", "homeDirectory", "loginShell", "userPassword",
 		"shadowLastChange", "shadowExpire", "shadowWarning", "shadowMax",
-		"sshPublicKey", "groups"}
+		"sshPublicKey"}
 
 	v.DisplayUserFields = []string{"uid", "givenName", "sn", "cn", "displayName",
 		"gecos", "uidNumber", "gidNumber", "departmentNumber",

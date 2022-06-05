@@ -48,6 +48,28 @@ func (c *Connection) GetNextGID() int {
 	return startGID + 1
 }
 
+// get all the user uid and UID
+func (c *Connection) GetUsersUID() map[string]string {
+	userUIDList := make(map[string]string)
+	c.SearchInfo.SearchBase = "(&(objectClass=inetOrgPerson))"
+	c.SearchInfo.SearchAttribute = []string{"uidNumber", "uid"}
+	records, _ := c.Search()
+	for _, uidNumber := range records.Entries {
+		userUIDList[uidNumber.GetAttributeValue("uidNumber")] = uidNumber.GetAttributeValue("uid")
+	}
+	return userUIDList
+}
+
+// get all user uid
+func (c *Connection) GetAllUsers() []string {
+	var usersList []string
+	usersNameUid := c.GetUsersUID()
+	for userUID, _ := range usersNameUid {
+		usersList = append(usersList, usersNameUid[userUID])
+	}
+	return usersList
+}
+
 // get the groups an user belong to
 func (c *Connection) GetUserGroups(userID, userDN string) int {
 	c.SearchInfo.SearchBase =
@@ -120,16 +142,4 @@ func (c *Connection) GetAllSudoRules() []string {
 		sudoRuleList = append(sudoRuleList, sudoRule.GetAttributeValue("cn"))
 	}
 	return sudoRuleList
-}
-
-// get all the user uid and UID
-func (c *Connection) GetUsersUID() map[string]string {
-	userUIDList := make(map[string]string)
-	c.SearchInfo.SearchBase = "(&(objectClass=inetOrgPerson))"
-	c.SearchInfo.SearchAttribute = []string{"uidNumber", "cn"}
-	records, _ := c.Search()
-	for _, uidNumber := range records.Entries {
-		userUIDList[uidNumber.GetAttributeValue("uidNumber")] = uidNumber.GetAttributeValue("uid")
-	}
-	return userUIDList
 }

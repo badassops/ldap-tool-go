@@ -80,8 +80,8 @@ func joinGroup(c *l.Connection) {
 			v.WorkRecord.ID = fmt.Sprintf("uid=%s,%s", v.WorkRecord.ID, c.Config.ServerValues.UserDN)
 		}
 		v.WorkRecord.DN = groupName
+		c.AddToGroup()
 	}
-	c.AddToGroup()
 }
 
 func createModifyUserRecord(c *l.Connection, records *ldapv3.SearchResult) int {
@@ -272,7 +272,7 @@ func createModifyUserRecord(c *l.Connection, records *ldapv3.SearchResult) int {
 		valueEntered, _ = reader.ReadString('\n')
 		valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
 		switch valueEntered {
-		case "y", "yes", "d", "del":
+		case "y", "yes" :
 			c.Record.GroupAddList = append(c.Record.GroupAddList, joinGroup)
 		}
 	}
