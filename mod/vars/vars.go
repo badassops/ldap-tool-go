@@ -85,7 +85,7 @@ type SearchResult struct {
 }
 
 var (
-	MyVersion   = "0.1.2"
+	MyVersion   = "0.2.0"
 	now         = time.Now()
 	MyProgname  = path.Base(os.Args[0])
 	myAuthor    = "Luc Suryo"
