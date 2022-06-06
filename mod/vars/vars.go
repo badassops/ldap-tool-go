@@ -105,7 +105,7 @@ const (
 )
 
 var (
-	MyVersion   = "0.2.0"
+	MyVersion   = "0.2.1"
 	now         = time.Now()
 	MyProgname  = path.Base(os.Args[0])
 	myAuthor    = "Luc Suryo"
