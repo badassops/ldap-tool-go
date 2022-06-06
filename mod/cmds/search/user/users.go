@@ -43,7 +43,7 @@ func printUsers(records *ldapv3.SearchResult, recordCount int) {
 	p.PrintYellow(fmt.Sprintf("\n\tTotal records: %d \n", recordCount))
 }
 
-func Users(c *l.Connection) {
+func Users(c *l.Connection, funcs *v.Funcs) {
 	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Search Users", 20, true))
 	c.SearchInfo.SearchBase = v.UserSearchBase
 	c.SearchInfo.SearchAttribute = []string{}

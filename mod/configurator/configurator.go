@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	v "badassops.ldap/vars"
+	"badassops.ldap/vars"
 	"github.com/BurntSushi/toml"
 	"github.com/akamensky/argparse"
 	"github.com/badassops/packages-go/is"
@@ -96,9 +96,8 @@ type (
 		UserDN      string
 		GroupDN     string
 		EmailDomain string
-		TLS         bool
-		Enabled     bool
-		ReadOnly    bool
+		NoTLS       bool
+		ReadWrite	bool
 	}
 
 	Redis struct {
@@ -145,7 +144,7 @@ func (c *Config) InitializeArgs() {
 
 	errored := 0
 	allowedValues := []string{"create", "modify", "delete", "search"}
-	parser := argparse.NewParser(v.MyProgname, v.MyDescription)
+	parser := argparse.NewParser(vars.MyProgname, vars.MyDescription)
 	configFile := parser.String("c", "configFile",
 		&argparse.Options{
 			Required: false,
@@ -195,14 +194,14 @@ func (c *Config) InitializeArgs() {
 
 	if *showVersion {
 		Print.ClearScreen()
-		Print.PrintYellow(v.MyProgname + " version: " + v.MyVersion + "\n")
+		Print.PrintYellow(vars.MyProgname + " version: " + vars.MyVersion + "\n")
 		os.Exit(0)
 	}
 
 	if *showInfo {
 		Print.ClearScreen()
-		Print.PrintYellow(v.MyDescription + "\n")
-		Print.PrintCyan(v.MyInfo)
+		Print.PrintYellow(vars.MyDescription + "\n")
+		Print.PrintCyan(vars.MyInfo)
 		os.Exit(0)
 	}
 

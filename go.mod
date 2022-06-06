@@ -39,6 +39,7 @@ require (
 	github.com/badassops/packages-go/print v0.0.0-20220530213221-2e3686fab2d7 // indirect
 	github.com/badassops/packages-go/random v0.0.0-20220530220720-227ab8c06333 // indirect
 	github.com/badassops/packages-go/readinput v0.0.0-20220530220720-227ab8c06333 // indirect
+	github.com/badassops/packages-go/signalhandler v0.0.0-20220530220720-227ab8c06333 // indirect
 	github.com/badassops/packages-go/spinner v0.0.0-20220530213221-2e3686fab2d7 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d // indirect

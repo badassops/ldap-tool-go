@@ -14,28 +14,20 @@ import (
 	"strconv"
 	"strings"
 
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
-
-	"github.com/badassops/packages-go/is"
-	"github.com/badassops/packages-go/print"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 )
 
-var (
-	i = is.New()
-	p = print.New()
-)
+func createSudoRecord(conn *ldap.Connection, funcs *vars.Funcs) bool {
+	sudoRules := conn.GetAllSudoRules()
 
-func createSudoRecord(c *l.Connection) bool {
-	sudoRules := c.GetAllSudoRules()
-
-	for _, fieldName := range v.SudoFields {
-		if v.Template[fieldName].Value != "" {
+	for _, fieldName := range vars.SudoFields {
+		if vars.Template[fieldName].Value != "" {
 			fmt.Printf("\t%sDefault to:%s %s%s%s\n",
-				v.Purple, v.Off, v.Cyan, v.Template[fieldName].Value, v.Off)
+				vars.Purple, vars.Off, vars.Cyan, vars.Template[fieldName].Value, vars.Off)
 		}
 
-		fmt.Printf("\t%s: ", v.Template[fieldName].Prompt)
+		fmt.Printf("\t%s: ", vars.Template[fieldName].Prompt)
 
 		reader := bufio.NewReader(os.Stdin)
 		valueEntered, _ := reader.ReadString('\n')
@@ -48,56 +40,56 @@ func createSudoRecord(c *l.Connection) bool {
 
 		switch fieldName {
 		case "cn":
-			if i.IsInList(sudoRules, valueEntered) {
-				p.PrintRed(fmt.Sprintf("\n\tGiven cn %s already exist, aborting...\n\n", valueEntered))
+			if funcs.I.IsInList(sudoRules, valueEntered) {
+				funcs.P.PrintRed(fmt.Sprintf("\n\tGiven cn %s already exist, aborting...\n\n", valueEntered))
 				return false
 			}
-			fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
-			p.PrintPurple(fmt.Sprintf("\tUsing Sudo Rule: %s\n\n", valueEntered))
-			v.WorkRecord.Fields["cn"] = valueEntered
-			v.WorkRecord.Fields["dn"] = fmt.Sprintf("cn=%s,%s", valueEntered, c.Config.SudoValues.SudoersBase)
-			v.WorkRecord.Fields["objectClass"] = "sudoRole"
+			fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
+			funcs.P.PrintPurple(fmt.Sprintf("\tUsing Sudo Rule: %s\n\n", valueEntered))
+			vars.WorkRecord.Fields["cn"] = valueEntered
+			vars.WorkRecord.Fields["dn"] = fmt.Sprintf("cn=%s,%s", valueEntered, conn.Config.SudoValues.SudoersBase)
+			vars.WorkRecord.Fields["objectClass"] = "sudoRole"
 
 		case "sudoCommand", "sudoHost", "sudoRunAsUser":
 			if len(valueEntered) > 0 {
-				v.WorkRecord.Fields[fieldName] = valueEntered
+				vars.WorkRecord.Fields[fieldName] = valueEntered
 			} else {
-				v.WorkRecord.Fields[fieldName] = v.Template[fieldName].Value
+				vars.WorkRecord.Fields[fieldName] = vars.Template[fieldName].Value
 			}
 		case "sudoOption":
 			if len(valueEntered) > 0 {
-				v.WorkRecord.Fields[fieldName] = valueEntered
+				vars.WorkRecord.Fields[fieldName] = valueEntered
 			}
 		case "sudoOrder":
-			v.WorkRecord.Fields[fieldName] = v.Template[fieldName].Value
+			vars.WorkRecord.Fields[fieldName] = vars.Template[fieldName].Value
 			if len(valueEntered) > 0 {
 				value, _ := strconv.Atoi(valueEntered)
 				if value < 3 || value > 10 {
-					p.PrintRed(fmt.Sprintf("%s\tGiven order %s is not allowed, set to the default %s\n",
-						v.OneLineUP, valueEntered, v.Template[fieldName].Value))
-					valueEntered = v.Template[fieldName].Value
+					funcs.P.PrintRed(fmt.Sprintf("%s\tGiven order %s is not allowed, set to the default %s\n",
+						vars.OneLineUP, valueEntered, vars.Template[fieldName].Value))
+					valueEntered = vars.Template[fieldName].Value
 				} else {
-					v.WorkRecord.Fields[fieldName] = valueEntered
+					vars.WorkRecord.Fields[fieldName] = valueEntered
 				}
 			}
 		}
-		if len(valueEntered) == 0 && v.Template[fieldName].NoEmpty == true {
-			p.PrintRed("\tNo value was entered aborting...\n\n")
+		if len(valueEntered) == 0 && vars.Template[fieldName].NoEmpty == true {
+			funcs.P.PrintRed("\tNo value was entered aborting...\n\n")
 			return false
 		}
 		fmt.Printf("\n")
 	}
 	fmt.Printf("\n")
-	return c.CreateSudoRule()
+	return conn.CreateSudoRule()
 }
 
-func Create(c *l.Connection) {
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Create Group", 18, true))
-	if createSudoRecord(c) {
-		p.PrintGreen(fmt.Sprintf("\tSudo rule %s created\n", v.WorkRecord.Fields["cn"]))
+func Create(conn *ldap.Connection, funcs *vars.Funcs) {
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Create Group", 18, true))
+	if createSudoRecord(conn, funcs) {
+		funcs.P.PrintGreen(fmt.Sprintf("\tSudo rule %s created\n", vars.WorkRecord.Fields["cn"]))
 	} else {
-		p.PrintRed(fmt.Sprintf("\tFailed to create the sudo rule %s, check the log file\n",
-			v.WorkRecord.Fields["cn"]))
+		funcs.P.PrintRed(fmt.Sprintf("\tFailed to create the sudo rule %s, check the log file\n",
+			vars.WorkRecord.Fields["cn"]))
 	}
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

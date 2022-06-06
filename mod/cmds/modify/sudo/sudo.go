@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"badassops.ldap/cmds/common"
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 	"github.com/badassops/packages-go/print"
 	ldapv3 "gopkg.in/ldap.v2"
 )
@@ -28,38 +28,38 @@ var (
 		"sudoOrder", "sudoRunAsUser"}
 )
 
-func modifySudo(c *l.Connection, records []*ldapv3.Entry) bool {
-	v.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", v.WorkRecord.ID, c.Config.SudoValues.SudoersBase)
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+func modifySudo(conn *ldap.Connection, records []*ldapv3.Entry, funcs *vars.Funcs) bool {
+	vars.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", vars.WorkRecord.ID, conn.Config.SudoValues.SudoersBase)
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 	reader := bufio.NewReader(os.Stdin)
 	for _, entry := range records {
-		p.PrintBlue(fmt.Sprintf("\tdn: %s\n", entry.DN))
+		funcs.P.PrintBlue(fmt.Sprintf("\tdn: %s\n", entry.DN))
 		for _, attributes := range entry.Attributes {
 			for _, value := range attributes.Values {
 				if (attributes.Name != "objectClass") && (attributes.Name != "cn") {
-					p.PrintCyan(fmt.Sprintf("\tField: %s%s%s\n", v.Red, attributes.Name, v.Off))
+					funcs.P.PrintCyan(fmt.Sprintf("\tField: %s%s%s\n", vars.Red, attributes.Name, vars.Off))
 					switch attributes.Name {
 					case "sudoCommand":
-						p.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
+						funcs.P.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
 
 					case "sudoHost":
-						p.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
+						funcs.P.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
 
 					case "sudoOption":
-						p.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
+						funcs.P.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
 
 					case "sudoOrder":
-						p.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
+						funcs.P.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
 
 					case "sudoRunAsUser":
-						p.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
+						funcs.P.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", value))
 					}
-					fmt.Printf("\tEnter %sdelete%s to delete or press enter to keep: ", v.RedUnderline, v.Off)
+					fmt.Printf("\tEnter %sdelete%s to delete or press enter to keep: ", vars.RedUnderline, vars.Off)
 					valueEntered, _ = reader.ReadString('\n')
 					valueEntered = strings.TrimSuffix(valueEntered, "\n")
 					if valueEntered == "delete" {
-						v.WorkRecord.SudoDelList[attributes.Name] =
-							append(v.WorkRecord.SudoDelList[attributes.Name], value)
+						vars.WorkRecord.SudoDelList[attributes.Name] =
+							append(vars.WorkRecord.SudoDelList[attributes.Name], value)
 					} else {
 						fmt.Printf("\n")
 					}
@@ -68,17 +68,17 @@ func modifySudo(c *l.Connection, records []*ldapv3.Entry) bool {
 		}
 	}
 
-	p.PrintCyan(fmt.Sprintf("\n\tEach field can have multiple entries\n"))
-	p.PrintCyan(fmt.Sprintf("\tPress enter to skip, or enter value for field\n"))
+	funcs.P.PrintCyan(fmt.Sprintf("\n\tEach field can have multiple entries\n"))
+	funcs.P.PrintCyan(fmt.Sprintf("\tPress enter to skip, or enter value for field\n"))
 	for _, fieldname := range allowedField {
 		for true {
-			p.PrintGreen(fmt.Sprintf("\tField %s%s%s: enter value: ", v.Purple, fieldname, v.Off))
+			funcs.P.PrintGreen(fmt.Sprintf("\tField %s%s%s: enter value: ", vars.Purple, fieldname, vars.Off))
 			reader := bufio.NewReader(os.Stdin)
 			valueEntered, _ := reader.ReadString('\n')
 			valueEntered = strings.TrimSuffix(valueEntered, "\n")
 			if len(valueEntered) != 0 {
-				v.WorkRecord.SudoAddList[fieldname] =
-					append(v.WorkRecord.SudoAddList[fieldname], valueEntered)
+				vars.WorkRecord.SudoAddList[fieldname] =
+					append(vars.WorkRecord.SudoAddList[fieldname], valueEntered)
 			} else {
 				fmt.Printf("\n")
 				break
@@ -86,28 +86,28 @@ func modifySudo(c *l.Connection, records []*ldapv3.Entry) bool {
 		}
 	}
 
-	modCount = len(v.WorkRecord.SudoDelList) + len(v.WorkRecord.SudoAddList)
+	modCount = len(vars.WorkRecord.SudoDelList) + len(vars.WorkRecord.SudoAddList)
 	if modCount == 0 {
-		p.PrintBlue(fmt.Sprintf("\n\tNo change, no modification made to sudo rule %s\n", v.WorkRecord.ID))
+		funcs.P.PrintBlue(fmt.Sprintf("\n\tNo change, no modification made to sudo rule %s\n", vars.WorkRecord.ID))
 		return false
 	}
 
-	if len(v.WorkRecord.SudoDelList) > 0 {
-		c.DeleteSudoRule()
+	if len(vars.WorkRecord.SudoDelList) > 0 {
+		conn.DeleteSudoRule()
 	}
-	if len(v.WorkRecord.SudoAddList) > 0 {
-		c.AddSudoRule()
+	if len(vars.WorkRecord.SudoAddList) > 0 {
+		conn.AddSudoRule()
 	}
 	return true
 }
 
-func Modify(c *l.Connection) {
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Sudo Rules", 18, true))
-	v.SearchResultData.WildCardSearchBase = v.SudoWildCardSearchBase
-	v.SearchResultData.RecordSearchbase = v.SudoWildCardSearchBase
-	v.SearchResultData.DisplayFieldID = v.SudoDisplayFieldID
-	if common.GetObjectRecord(c, true, "sudo rule") {
-		modifySudo(c, v.SearchResultData.SearchResult.Entries)
+func Modify(conn *ldap.Connection, funcs *vars.Funcs) {
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Sudo Rules", 18, true))
+	vars.SearchResultData.WildCardSearchBase = vars.SudoWildCardSearchBase
+	vars.SearchResultData.RecordSearchbase = vars.SudoWildCardSearchBase
+	vars.SearchResultData.DisplayFieldID = vars.SudoDisplayFieldID
+	if common.GetObjectRecord(conn, true, "sudo rule", funcs) {
+		modifySudo(conn, vars.SearchResultData.SearchResult.Entries, funcs)
 	}
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

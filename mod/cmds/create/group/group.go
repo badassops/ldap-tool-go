@@ -14,10 +14,8 @@ import (
 	"strconv"
 	"strings"
 
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
-	"github.com/badassops/packages-go/is"
-	"github.com/badassops/packages-go/print"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 )
 
 var (
@@ -31,21 +29,18 @@ var (
 	nextGID      int
 	fields       = []string{"groupName", "groupType"}
 	validTypes   = []string{"posix", "groupOfNames"}
-
-	p = print.New()
-	i = is.New()
 )
 
-func createGroup(c *l.Connection) bool {
-	allGroupDN := c.GetAllGroups()
+func createGroup(conn *ldap.Connection, funcs *vars.Funcs) bool {
+	allGroupDN := conn.GetAllGroups()
 
 	for _, fieldName := range fields {
-		if v.Template[fieldName].Value != "" {
+		if vars.Template[fieldName].Value != "" {
 			fmt.Printf("\t%sDefault to:%s %s%s%s\n",
-				v.Purple, v.Off, v.Cyan, v.Template[fieldName].Value, v.Off)
+				vars.Purple, vars.Off, vars.Cyan, vars.Template[fieldName].Value, vars.Off)
 		}
 
-		fmt.Printf("\t%s: ", v.Template[fieldName].Prompt)
+		fmt.Printf("\t%s: ", vars.Template[fieldName].Prompt)
 
 		reader := bufio.NewReader(os.Stdin)
 		valueEntered, _ = reader.ReadString('\n')
@@ -53,69 +48,69 @@ func createGroup(c *l.Connection) bool {
 
 		switch fieldName {
 		case "groupName":
-			groupDN := fmt.Sprintf("cn=%s,%s", valueEntered, c.Config.ServerValues.GroupDN)
-			if i.IsInList(allGroupDN, groupDN) {
-				p.PrintRed(fmt.Sprintf("\n\tGiven group %s already exist, aborting...\n\n", valueEntered))
+			groupDN := fmt.Sprintf("cn=%s,%s", valueEntered, conn.Config.ServerValues.GroupDN)
+			if funcs.I.IsInList(allGroupDN, groupDN) {
+				funcs.P.PrintRed(fmt.Sprintf("\n\tGiven group %s already exist, aborting...\n\n", valueEntered))
 				return false
 			}
-			fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
-			p.PrintPurple(fmt.Sprintf("\tUsing Group: %s\n\n", valueEntered))
-			v.WorkRecord.Fields["cn"] = valueEntered
-			v.WorkRecord.Fields["dn"] = groupDN
+			fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
+			funcs.P.PrintPurple(fmt.Sprintf("\tUsing Group: %s\n\n", valueEntered))
+			vars.WorkRecord.Fields["cn"] = valueEntered
+			vars.WorkRecord.Fields["dn"] = groupDN
 
 		case "groupType":
 			switch valueEntered {
 			case "", "p", "posix":
-				v.WorkRecord.Fields["objectClass"] = "posixGroup"
+				vars.WorkRecord.Fields["objectClass"] = "posixGroup"
 				valueEntered = "posix"
 			case "g", "groupOfNames":
-				v.WorkRecord.Fields["objectClass"] = "groupOfNames"
+				vars.WorkRecord.Fields["objectClass"] = "groupOfNames"
 				// hard coded, groupOfNames must have at least 1 member
-				v.WorkRecord.Fields["member"] = fmt.Sprintf("uid=initial-user,%s", c.Config.ServerValues.GroupDN)
+				vars.WorkRecord.Fields["member"] = fmt.Sprintf("uid=initial-user,%s", conn.Config.ServerValues.GroupDN)
 				valueEntered = "groupOfNames"
 			}
-			if !i.IsInList(validTypes, valueEntered) {
-				p.PrintRed(fmt.Sprintf("\tWrong group type (%s) aborting...\n\n", valueEntered))
+			if !funcs.I.IsInList(validTypes, valueEntered) {
+				funcs.P.PrintRed(fmt.Sprintf("\tWrong group type (%s) aborting...\n\n", valueEntered))
 				return false
 			}
 		}
 
-		if (len(valueEntered) == 0) && (v.Template[fieldName].NoEmpty == true) {
-			p.PrintRed("\tNo value was entered aborting..%s.\n\n")
+		if (len(valueEntered) == 0) && (vars.Template[fieldName].NoEmpty == true) {
+			funcs.P.PrintRed("\tNo value was entered aborting..%s.\n\n")
 			return false
 		}
 		fmt.Printf("\n")
 	}
 
-	if v.WorkRecord.Fields["objectClass"] == "posixGroup" {
-		v.WorkRecord.Fields["gidNumber"] = strconv.Itoa(c.GetNextGID())
-		p.PrintPurple(fmt.Sprintf("\tOptional set groups's GID, press enter to use the next GID: %s\n",
-			v.WorkRecord.Fields["gidNumber"]))
-		fmt.Printf("\t%s: ", v.Template["gidNumber"].Prompt)
+	if vars.WorkRecord.Fields["objectClass"] == "posixGroup" {
+		vars.WorkRecord.Fields["gidNumber"] = strconv.Itoa(conn.GetNextGID())
+		funcs.P.PrintPurple(fmt.Sprintf("\tOptional set groups's GID, press enter to use the next GID: %s\n",
+			vars.WorkRecord.Fields["gidNumber"]))
+		fmt.Printf("\t%s: ", vars.Template["gidNumber"].Prompt)
 		reader := bufio.NewReader(os.Stdin)
 		valueEntered, _ := reader.ReadString('\n')
 		valueEntered = strings.TrimSuffix(valueEntered, "\n")
 		if len(valueEntered) > 0 {
-			gitNumberList := c.GetAlGroupsGID()
+			gitNumberList := conn.GetAlGroupsGID()
 			if groupname, found := gitNumberList[valueEntered]; found {
-				p.PrintRed(fmt.Sprintf("\n\tGiven group id %s already use by the group %s , aborting...\n",
+				funcs.P.PrintRed(fmt.Sprintf("\n\tGiven group id %s already use by the group %s , aborting...\n",
 					valueEntered, groupname))
 				return false
 			}
-			v.WorkRecord.Fields["gidNumber"] = valueEntered
+			vars.WorkRecord.Fields["gidNumber"] = valueEntered
 		}
 	}
 	fmt.Printf("\n")
-	return c.CreateGroup()
+	return conn.CreateGroup()
 }
 
-func Create(c *l.Connection) {
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Create Group", 18, true))
-	if createGroup(c) {
-		p.PrintGreen(fmt.Sprintf("\tGroup %s created\n", v.WorkRecord.Fields["cn"]))
+func Create(conn *ldap.Connection, funcs *vars.Funcs) {
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Create Group", 18, true))
+	if createGroup(conn, funcs) {
+		funcs.P.PrintGreen(fmt.Sprintf("\tGroup %s created\n", vars.WorkRecord.Fields["cn"]))
 	} else {
-		p.PrintRed(fmt.Sprintf("\tFailed to create the group %s, check the log file\n",
-			v.WorkRecord.Fields["cn"]))
+		funcs.P.PrintRed(fmt.Sprintf("\tFailed to create the group %s, check the log file\n",
+			vars.WorkRecord.Fields["cn"]))
 	}
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

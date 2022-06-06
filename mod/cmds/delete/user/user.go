@@ -11,24 +11,19 @@ import (
 	"fmt"
 
 	"badassops.ldap/cmds/common"
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
-	"github.com/badassops/packages-go/print"
-)
-
-var (
-	p = print.New()
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 )
 
 // once an user has been deleted, we need to make sure
 // it are removed from all the group its belong too
-func removeUserFromGroups(c *l.Connection) {
+func removeUserFromGroups(conn *ldap.Connection, funcs *vars.Funcs) {
 	var groupsList []string
-	userUID := v.WorkRecord.ID
-	c.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
-	c.SearchInfo.SearchAttribute = []string{"cn", "memberUid"}
+	userUID := vars.WorkRecord.ID
+	conn.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
+	conn.SearchInfo.SearchAttribute = []string{"cn", "memberUid"}
 
-	records, _ := c.Search()
+	records, _ := conn.Search()
 	for idx, entry := range records.Entries {
 		for _, member := range entry.GetAttributeValues("memberUid") {
 			if member == userUID {
@@ -38,26 +33,26 @@ func removeUserFromGroups(c *l.Connection) {
 	}
 	if len(groupsList) > 0 {
 		for _, groupName := range groupsList {
-			v.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", groupName, c.Config.ServerValues.GroupDN)
-			if !c.RemoveFromGroups() {
-				p.PrintRed(fmt.Sprintf("User % was not remobe from the group %s, check the log...\n",
+			vars.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", groupName, conn.Config.ServerValues.GroupDN)
+			if !conn.RemoveFromGroups() {
+				funcs.P.PrintRed(fmt.Sprintf("User % was not remobe from the group %s, check the log...\n",
 					userUID, groupName))
 			}
 		}
 	}
 }
 
-func Delete(c *l.Connection) {
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Delete User", 18, true))
-	v.SearchResultData.WildCardSearchBase = v.UserWildCardSearchBase
-	v.SearchResultData.RecordSearchbase = v.UserWildCardSearchBase
-	v.SearchResultData.DisplayFieldID = v.UserDisplayFieldID
+func Delete(conn *ldap.Connection, funcs *vars.Funcs) {
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Delete User", 18, true))
+	vars.SearchResultData.WildCardSearchBase = vars.UserWildCardSearchBase
+	vars.SearchResultData.RecordSearchbase = vars.UserWildCardSearchBase
+	vars.SearchResultData.DisplayFieldID = vars.UserDisplayFieldID
 	// we only handle posix group
-	v.WorkRecord.GroupType = "posix"
-	v.WorkRecord.MemberType = "memberUid"
-	if common.GetObjectRecord(c, true, "user") {
-		common.DeleteObjectRecord(c, v.SearchResultData.SearchResult, "user")
-		removeUserFromGroups(c)
+	vars.WorkRecord.GroupType = "posix"
+	vars.WorkRecord.MemberType = "memberUid"
+	if common.GetObjectRecord(conn, true, "user", funcs) {
+		common.DeleteObjectRecord(conn, vars.SearchResultData.SearchResult, "user", funcs)
+		removeUserFromGroups(conn, funcs)
 	}
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }
