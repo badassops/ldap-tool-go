@@ -17,48 +17,46 @@ import (
 	searchSudo "badassops.ldap/cmds/search/sudo"
 	searchUser "badassops.ldap/cmds/search/user"
 
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
-	"github.com/badassops/packages-go/print"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 )
 
-func SearchMenu(c *l.Connection) {
-	p := print.New()
+func SearchMenu(conn *ldap.Connection, funcs *vars.Funcs) {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Search", 20, true))
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Search", 20, true))
 	fmt.Printf("\tSearch (%s)ser, (%s)ll Users, (%s)roup, all Group(%s)\n",
-		p.MessageGreen("U"),
-		p.MessageGreen("A"),
-		p.MessageGreen("G"),
-		p.MessageGreen("S"),
+		funcs.P.MessageGreen("U"),
+		funcs.P.MessageGreen("A"),
+		funcs.P.MessageGreen("G"),
+		funcs.P.MessageGreen("S"),
 	)
 	fmt.Printf("\t\t(%s)sudo role, (%s)all sudos role or (%s)uit?\n\t(default to User)? choice: ",
-		p.MessageBlue("X"),
-		p.MessageBlue("Z"),
-		p.MessageRed("Q"),
+		funcs.P.MessageBlue("X"),
+		funcs.P.MessageBlue("Z"),
+		funcs.P.MessageRed("Q"),
 	)
 
 	choice, _ := reader.ReadString('\n')
 	choice = strings.TrimSuffix(choice, "\n")
 	switch strings.ToLower(choice) {
 	case "user", "u":
-		searchUser.User(c)
+		searchUser.User(conn, funcs)
 	case "users", "a":
-		searchUser.Users(c)
+		searchUser.Users(conn, funcs)
 	case "group", "g":
-		searchGroup.Group(c)
+		searchGroup.Group(conn, funcs)
 	case "groups", "s":
-		searchGroup.Groups(c)
+		searchGroup.Groups(conn, funcs)
 	case "sudo", "x":
-		searchSudo.Sudo(c)
+		searchSudo.Sudo(conn, funcs)
 	case "sudos", "z":
-		searchSudo.Sudos(c)
+		searchSudo.Sudos(conn, funcs)
 	case "quit", "q":
-		p.PrintRed("\n\t\tOperation cancelled\n")
-		fmt.Printf("\t%s\n", p.PrintLine(print.Purple, 40))
+		funcs.P.PrintRed("\n\t\tOperation cancelled\n")
+		fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 40))
 		break
 	default:
-		searchUser.User(c)
+		searchUser.User(conn, funcs)
 	}
 }

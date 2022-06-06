@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	v "badassops.ldap/vars"
+	"badassops.ldap/vars"
 	"github.com/BurntSushi/toml"
 	"github.com/akamensky/argparse"
 	"github.com/badassops/packages-go/is"
@@ -89,16 +89,15 @@ type (
 	}
 
 	Server struct {
-		Server      string
-		BaseDN      string
-		Admin       string
-		AdminPass   string
-		UserDN      string
-		GroupDN     string
-		EmailDomain string
-		TLS         bool
-		Enabled     bool
-		ReadOnly    bool
+		Server      string `toml:"server,omitempty"`
+		BaseDN      string `toml:"basedn,omitempty"`
+		Admin       string `toml:"admin,omitempty"`
+		AdminPass   string `toml:"adminpass,omitempty"`
+		UserDN      string `toml:"userdn,omitempty"`
+		GroupDN     string `toml:"groupdn,omitempty"`
+		EmailDomain string `toml:"emaildomain,omitempty"`
+		NoTLS       bool   `toml:"notls,omitempty"`
+		ReadWrite   bool   `toml:"readwrite,omitempty"`
 	}
 
 	Redis struct {
@@ -115,7 +114,7 @@ type (
 		LogConfig LogConfig         `toml:"logconfig"`
 		Envs      Envs              `toml:"envs"`
 		Groups    Groups            `toml:"groups"`
-		Servers   map[string]Server `toml:"servers"`
+		Servers   map[string]Server `toml:"servers,omitempty"`
 		Redis     Redis             `toml:"redis"`
 	}
 )
@@ -136,7 +135,7 @@ func Configurator() *Config {
 }
 
 func (c *Config) InitializeArgs() {
-	HelpMessage := fmt.Sprintf("commands: %s, %s, %s, %s\n",
+	HelpMessage := fmt.Sprintf("commands: %s, %s, %s, %s",
 		Print.MessageYellow("search"),
 		Print.MessageYellow("create"),
 		Print.MessageYellow("modify"),
@@ -145,18 +144,19 @@ func (c *Config) InitializeArgs() {
 
 	errored := 0
 	allowedValues := []string{"create", "modify", "delete", "search"}
-	parser := argparse.NewParser(v.MyProgname, v.MyDescription)
+	parser := argparse.NewParser(vars.MyProgname, vars.MyDescription)
 	configFile := parser.String("c", "configFile",
 		&argparse.Options{
 			Required: false,
 			Help:     "Path to the configuration file to be use",
-			Default:  "/usr/local/etc/ldap-tool/ldap-tool.ini",
+			Default:  "/usr/local/etc/ldap-tool/config.ini",
 		})
 
 	server := parser.String("s", "server",
 		&argparse.Options{
 			Required: false,
 			Help:     "Server profile name",
+			Default:  "default",
 		})
 
 	cmd := parser.Selector("C", "command", allowedValues,
@@ -195,14 +195,14 @@ func (c *Config) InitializeArgs() {
 
 	if *showVersion {
 		Print.ClearScreen()
-		Print.PrintYellow(v.MyProgname + " version: " + v.MyVersion + "\n")
+		Print.PrintYellow(vars.MyProgname + " version: " + vars.MyVersion + "\n")
 		os.Exit(0)
 	}
 
 	if *showInfo {
 		Print.ClearScreen()
-		Print.PrintYellow(v.MyDescription + "\n")
-		Print.PrintCyan(v.MyInfo)
+		Print.PrintYellow(vars.MyDescription + "\n")
+		Print.PrintCyan(vars.MyInfo)
 		os.Exit(0)
 	}
 
@@ -238,21 +238,59 @@ func (c *Config) InitializeArgs() {
 }
 
 // function to add the values to the Config object from the configuration file
-func (c *Config) InitializeConfigs() {
+func (config *Config) InitializeConfigs() {
 	var configValues tomlConfig
-	if _, err := toml.DecodeFile(c.ConfigFile, &configValues); err != nil {
+	if _, err := toml.DecodeFile(config.ConfigFile, &configValues); err != nil {
 		Print.PrintRed("Error reading the configuration file\n")
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
+	if len(configValues.Servers[config.Server].Server) == 0 ||
+		len(configValues.Servers[config.Server].BaseDN) == 0 ||
+		len(configValues.Servers[config.Server].Admin) == 0 ||
+		len(configValues.Servers[config.Server].AdminPass) == 0 ||
+		len(configValues.Servers[config.Server].UserDN) == 0 ||
+		len(configValues.Servers[config.Server].GroupDN) == 0 {
+		Print.PrintRed("\tError reading the configuration file, some value are missing\n")
+		Print.PrintBlue("\tRequired fields: server, baseDN, admin, adminPass, userDN and GroupDN\n")
+		Print.PrintBlue("\tOptional fields: emailDomain, noTLS and readWrite\n")
+		Print.PrintBlue(fmt.Sprintf("\tMake sure there is configuration for the server %s%s%s\n",
+			vars.Red, config.Server, vars.Off))
+		Print.PrintBlue(fmt.Sprintf("\tThere should be %s[server.%s]%s%s under the %s[servers]%s section%s\n",
+			vars.Cyan, config.Server, vars.Off, vars.Yellow, vars.Cyan, vars.Yellow, vars.Off))
+		Print.PrintBlue("\tAborting...\n")
+		os.Exit(1)
+	}
+
+	if configValues.Servers[config.Server].Admin != "cn=admin," + configValues.Servers[config.Server].BaseDN {
+		// hardcoded that password length (min 16) and force complex
+		// and set password age settings to safe values
+		// this is the case the script uses an user configuration instead one from an admin
+		if configValues.Defaults.PassLenght < 16 {
+			configValues.Defaults.PassLenght = 16
+		}
+		if configValues.Defaults.PassComplex == false {
+			configValues.Defaults.PassComplex = true
+		}
+		if configValues.Defaults.ShadowMin < 30 {
+			configValues.Defaults.ShadowMin = 30
+		}
+		if configValues.Defaults.ShadowAge < 60 {
+			configValues.Defaults.ShadowAge = 60
+		}
+		if configValues.Defaults.ShadowMax < 90 {
+			configValues.Defaults.ShadowMax = 90
+		}
+	}
+
 	// from the configuration file
-	c.AuthValues = configValues.Auth
-	c.DefaultValues = configValues.Defaults
-	c.SudoValues = configValues.Sudo
-	c.LogValues = configValues.LogConfig
-	c.EnvValues = configValues.Envs
-	c.GroupValues = configValues.Groups
-	c.ServerValues = configValues.Servers[c.Server]
-	c.RedisValues = configValues.Redis
+	config.AuthValues = configValues.Auth
+	config.DefaultValues = configValues.Defaults
+	config.SudoValues = configValues.Sudo
+	config.LogValues = configValues.LogConfig
+	config.EnvValues = configValues.Envs
+	config.GroupValues = configValues.Groups
+	config.ServerValues = configValues.Servers[config.Server]
+	config.RedisValues = configValues.Redis
 }

@@ -14,22 +14,25 @@ import (
 )
 
 // search the ldap database
-func (c *Connection) Search() (*ldapv3.SearchResult, int) {
+func (conn *Connection) Search() (*ldapv3.SearchResult, int) {
 	searchRecords := ldapv3.NewSearchRequest(
-		c.Config.ServerValues.BaseDN,
+		conn.Config.ServerValues.BaseDN,
 		ldapv3.ScopeWholeSubtree,
 		ldapv3.NeverDerefAliases, 0, 0, false,
-		c.SearchInfo.SearchBase,
-		c.SearchInfo.SearchAttribute,
+		conn.SearchInfo.SearchBase,
+		conn.SearchInfo.SearchAttribute,
 		nil,
 	)
-	searchResult, err := c.Conn.Search(searchRecords)
+	searchResult, err := conn.Conn.Search(searchRecords)
 	if err != nil {
-		c.Conn.Close()
-		l := lock.New(c.Config.DefaultValues.LockFile)
-		e := exit.New("ldap search", 1)
-		l.LockRelease()
-		e.ExitError(err)
+		conn.Conn.Close()
+		// create a new lock, so we can remove the lock file
+		// without the need to pass it as an argument
+		// so with exit
+		lockPtr := lock.New(conn.Config.DefaultValues.LockFile)
+		exitPtr := exit.New("ldap search", 1)
+		lockPtr.LockRelease()
+		exitPtr.ExitError(err)
 	}
 	return searchResult, len(searchResult.Entries)
 }

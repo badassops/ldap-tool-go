@@ -10,23 +10,23 @@ package ldap
 import (
 	"fmt"
 
-	l "badassops.ldap/logs"
-	v "badassops.ldap/vars"
+	"badassops.ldap/logs"
+	"badassops.ldap/vars"
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
 // set an user's ldap passwod
-func (c *Connection) SetPassword() bool {
+func (conn *Connection) SetPassword() bool {
 	// once the record is create we need to hash the password
 	passwordReq := ldapv3.NewPasswordModifyRequest(
-		v.WorkRecord.DN, "", v.WorkRecord.Fields["userPassword"])
-	if _, err := c.Conn.PasswordModify(passwordReq); err != nil {
-		msg = fmt.Sprintf("Failed setting password for the user %s, error %s", v.WorkRecord.ID, err.Error())
-		l.Log(msg, "ERROR")
+		vars.WorkRecord.DN, "", vars.WorkRecord.Fields["userPassword"])
+	if _, err := conn.Conn.PasswordModify(passwordReq); err != nil {
+		msg = fmt.Sprintf("Failed setting password for the user %s, error %s", vars.WorkRecord.ID, err.Error())
+		logs.Log(msg, "ERROR")
 		return false
 	}
 	msg = fmt.Sprintf("Successfully setting the password for for user %s to %s",
-		v.WorkRecord.ID, v.WorkRecord.Fields["userPassword"])
-	l.Log(msg, "INFO")
+		vars.WorkRecord.ID, vars.WorkRecord.Fields["userPassword"])
+	logs.Log(msg, "INFO")
 	return true
 }

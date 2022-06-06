@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"badassops.ldap/cmds/common"
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 	"github.com/badassops/packages-go/print"
 	ldapv3 "gopkg.in/ldap.v2"
 )
@@ -27,105 +27,105 @@ var (
 )
 
 // remove the user from groups its belong to if this was set during the template input
-func deleteGroupEntries(c *l.Connection, groupName string) {
-	for _, userID := range v.WorkRecord.GroupDelList {
-		v.WorkRecord.ID = userID
-		if !c.RemoveFromGroups() {
-			p.PrintRed(fmt.Sprintf("\tFailed to remove the user %s from the group %s, check the log file\n",
-				userID, v.WorkRecord.DN))
+func deleteGroupEntries(conn *ldap.Connection, groupName string, funcs *vars.Funcs) {
+	for _, userID := range vars.WorkRecord.GroupDelList {
+		vars.WorkRecord.ID = userID
+		if !conn.RemoveFromGroups() {
+			funcs.P.PrintRed(fmt.Sprintf("\tFailed to remove the user %s from the group %s, check the log file\n",
+				userID, vars.WorkRecord.DN))
 		} else {
-			p.PrintGreen(fmt.Sprintf("\tUser %s removed from group %s\n", userID, groupName))
+			funcs.P.PrintGreen(fmt.Sprintf("\tUser %s removed from group %s\n", userID, groupName))
 		}
 	}
 }
 
 // add the user to groups if this was set during the template input
-func addGroupEntries(c *l.Connection, groupName string) {
-	for _, userID := range v.WorkRecord.GroupAddList {
-		v.WorkRecord.ID = userID
-		if !c.AddToGroup() {
-			p.PrintRed(fmt.Sprintf("\n\tFailed to add the user %s to the group %s, check the log file\n",
-				userID, v.WorkRecord.DN))
+func addGroupEntries(conn *ldap.Connection, groupName string, funcs *vars.Funcs) {
+	for _, userID := range vars.WorkRecord.GroupAddList {
+		vars.WorkRecord.ID = userID
+		if !conn.AddToGroup() {
+			funcs.P.PrintRed(fmt.Sprintf("\n\tFailed to add the user %s to the group %s, check the log file\n",
+				userID, vars.WorkRecord.DN))
 		} else {
-			p.PrintGreen(fmt.Sprintf("\tUser %s added to group %s\n", userID, groupName))
+			funcs.P.PrintGreen(fmt.Sprintf("\tUser %s added to group %s\n", userID, groupName))
 		}
 	}
 }
 
 // group modigy template
-func modifyGroup(c *l.Connection, records *ldapv3.SearchResult) bool {
-	orgGroup := v.WorkRecord.ID
-	p.PrintPurple(fmt.Sprintf("\tUsing group: %s\n", orgGroup))
-	p.PrintYellow(fmt.Sprintf("\tPress enter to leave the value unchanged\n"))
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
-	v.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", v.WorkRecord.ID, c.Config.ServerValues.GroupDN)
+func modifyGroup(conn *ldap.Connection, records *ldapv3.SearchResult, funcs *vars.Funcs) bool {
+	orgGroup := vars.WorkRecord.ID
+	funcs.P.PrintPurple(fmt.Sprintf("\tUsing group: %s\n", orgGroup))
+	funcs.P.PrintYellow(fmt.Sprintf("\tPress enter to leave the value unchanged\n"))
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
+	vars.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", vars.WorkRecord.ID, conn.Config.ServerValues.GroupDN)
 	for idx, entry := range records.Entries {
 		if len(records.Entries[idx].GetAttributeValue("gidNumber")) != 0 {
-			v.WorkRecord.MemberType = "memberUid"
+			vars.WorkRecord.MemberType = "memberUid"
 			for _, member := range entry.GetAttributeValues("memberUid") {
-				p.PrintCyan(fmt.Sprintf("\tmember: %s\n", member))
+				funcs.P.PrintCyan(fmt.Sprintf("\tmember: %s\n", member))
 			}
 		} else {
-			v.WorkRecord.MemberType = "member"
+			vars.WorkRecord.MemberType = "member"
 			for _, member := range entry.GetAttributeValues("member") {
-				p.PrintCyan(fmt.Sprintf("\tmember: %s\n", member))
+				funcs.P.PrintCyan(fmt.Sprintf("\tmember: %s\n", member))
 			}
 		}
 	}
 
-	p.PrintRed("\n\tEnter the user(s) to be deleted, select from the list above, (default to skip)\n")
+	funcs.P.PrintRed("\n\tEnter the user(s) to be deleted, select from the list above, (default to skip)\n")
 	reader := bufio.NewReader(os.Stdin)
 	for true {
 		fmt.Printf("\tUser : ")
 		valueEntered, _ = reader.ReadString('\n')
 		valueEntered = strings.TrimSuffix(valueEntered, "\n")
 		if valueEntered != "" {
-			if v.WorkRecord.MemberType == "member" {
-				valueEntered = fmt.Sprintf("uid=%s,%s", valueEntered, c.Config.ServerValues.UserDN)
+			if vars.WorkRecord.MemberType == "member" {
+				valueEntered = fmt.Sprintf("uid=%s,%s", valueEntered, conn.Config.ServerValues.UserDN)
 			}
-			v.WorkRecord.GroupDelList = append(v.WorkRecord.GroupDelList, valueEntered)
+			vars.WorkRecord.GroupDelList = append(vars.WorkRecord.GroupDelList, valueEntered)
 		} else {
 			break
 		}
 	}
 
-	p.PrintGreen("\n\tEnter the user(s) to be added, (default to skip)\n")
+	funcs.P.PrintGreen("\n\tEnter the user(s) to be added, (default to skip)\n")
 	for true {
 		fmt.Printf("\tUser : ")
 		valueEntered, _ := reader.ReadString('\n')
 		valueEntered = strings.TrimSuffix(valueEntered, "\n")
 		if valueEntered != "" {
-			if v.WorkRecord.MemberType == "member" {
-				valueEntered = fmt.Sprintf("uid=%s,%s", valueEntered, c.Config.ServerValues.UserDN)
+			if vars.WorkRecord.MemberType == "member" {
+				valueEntered = fmt.Sprintf("uid=%s,%s", valueEntered, conn.Config.ServerValues.UserDN)
 			}
-			v.WorkRecord.GroupAddList = append(v.WorkRecord.GroupAddList, valueEntered)
+			vars.WorkRecord.GroupAddList = append(vars.WorkRecord.GroupAddList, valueEntered)
 		} else {
 			break
 		}
 	}
 
-	modCount = len(v.WorkRecord.GroupDelList) + len(v.WorkRecord.GroupAddList)
+	modCount = len(vars.WorkRecord.GroupDelList) + len(vars.WorkRecord.GroupAddList)
 	if modCount == 0 {
-		p.PrintBlue(fmt.Sprintf("\n\tNo change, no modification made to group %s\n", orgGroup))
+		funcs.P.PrintBlue(fmt.Sprintf("\n\tNo change, no modification made to group %s\n", orgGroup))
 		return false
 	}
 
-	if len(v.WorkRecord.GroupDelList) > 0 {
-		deleteGroupEntries(c, orgGroup)
+	if len(vars.WorkRecord.GroupDelList) > 0 {
+		deleteGroupEntries(conn, orgGroup, funcs)
 	}
-	if len(v.WorkRecord.GroupAddList) > 0 {
-		addGroupEntries(c, orgGroup)
+	if len(vars.WorkRecord.GroupAddList) > 0 {
+		addGroupEntries(conn, orgGroup, funcs)
 	}
 	return true
 }
 
-func Modify(c *l.Connection) {
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Modify Group", 18, true))
-	v.SearchResultData.WildCardSearchBase = v.GroupWildCardSearchBase
-	v.SearchResultData.RecordSearchbase = v.GroupWildCardSearchBase
-	v.SearchResultData.DisplayFieldID = v.GroupDisplayFieldID
-	if common.GetObjectRecord(c, true, "group") {
-		modifyGroup(c, v.SearchResultData.SearchResult)
+func Modify(conn *ldap.Connection, funcs *vars.Funcs) {
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Modify Group", 18, true))
+	vars.SearchResultData.WildCardSearchBase = vars.GroupWildCardSearchBase
+	vars.SearchResultData.RecordSearchbase = vars.GroupWildCardSearchBase
+	vars.SearchResultData.DisplayFieldID = vars.GroupDisplayFieldID
+	if common.GetObjectRecord(conn, true, "group", funcs) {
+		modifyGroup(conn, vars.SearchResultData.SearchResult, funcs)
 	}
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

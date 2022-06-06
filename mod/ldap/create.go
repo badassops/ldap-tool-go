@@ -10,71 +10,71 @@ package ldap
 import (
 	"fmt"
 
-	l "badassops.ldap/logs"
-	v "badassops.ldap/vars"
+	"badassops.ldap/logs"
+	"badassops.ldap/vars"
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
 // create a ldap user
-func (c *Connection) CreateUser() bool {
-	newUserReq := ldapv3.NewAddRequest(v.WorkRecord.DN)
-	newUserReq.Attribute("objectClass", v.UserObjectClass)
-	for _, fieldName := range v.UserFields {
+func (conn *Connection) CreateUser() bool {
+	newUserReq := ldapv3.NewAddRequest(vars.WorkRecord.DN)
+	newUserReq.Attribute("objectClass", vars.UserObjectClass)
+	for _, fieldName := range vars.UserFields {
 		if fieldName != "userPassword" {
-			newUserReq.Attribute(fieldName, []string{v.WorkRecord.Fields[fieldName]})
+			newUserReq.Attribute(fieldName, []string{vars.WorkRecord.Fields[fieldName]})
 		}
 	}
-	if err := c.Conn.Add(newUserReq); err != nil {
+	if err := conn.Conn.Add(newUserReq); err != nil {
 		msg = fmt.Sprintf("Error creating the user %s error %s",
-			v.WorkRecord.Fields["uid"], err.Error())
-		l.Log(msg, "ERROR")
+			vars.WorkRecord.Fields["uid"], err.Error())
+		logs.Log(msg, "ERROR")
 		return false
 	}
-	msg = fmt.Sprintf("The user %s has been created", v.WorkRecord.Fields["uid"])
-	l.Log(msg, "INFO")
+	msg = fmt.Sprintf("The user %s has been created", vars.WorkRecord.Fields["uid"])
+	logs.Log(msg, "INFO")
 
 	//set password
-	return c.SetPassword()
+	return conn.SetPassword()
 }
 
 // create a ldap group
-func (c *Connection) CreateGroup() bool {
-	newGroupReq := ldapv3.NewAddRequest(v.WorkRecord.Fields["dn"])
-	newGroupReq.Attribute("objectClass", []string{v.WorkRecord.Fields["objectClass"]})
-	newGroupReq.Attribute("cn", []string{v.WorkRecord.Fields["cn"]})
-	if v.WorkRecord.Fields["objectClass"] == "posixGroup" {
-		newGroupReq.Attribute("gidNumber", []string{v.WorkRecord.Fields["gidNumber"]})
+func (conn *Connection) CreateGroup() bool {
+	newGroupReq := ldapv3.NewAddRequest(vars.WorkRecord.Fields["dn"])
+	newGroupReq.Attribute("objectClass", []string{vars.WorkRecord.Fields["objectClass"]})
+	newGroupReq.Attribute("cn", []string{vars.WorkRecord.Fields["cn"]})
+	if vars.WorkRecord.Fields["objectClass"] == "posixGroup" {
+		newGroupReq.Attribute("gidNumber", []string{vars.WorkRecord.Fields["gidNumber"]})
 	}
-	if v.WorkRecord.Fields["objectClass"] == "groupOfNames" {
-		newGroupReq.Attribute("member", []string{v.WorkRecord.Fields["member"]})
+	if vars.WorkRecord.Fields["objectClass"] == "groupOfNames" {
+		newGroupReq.Attribute("member", []string{vars.WorkRecord.Fields["member"]})
 	}
-	if err := c.Conn.Add(newGroupReq); err != nil {
+	if err := conn.Conn.Add(newGroupReq); err != nil {
 		msg = fmt.Sprintf("Error creating the group %s error %s",
-			v.WorkRecord.Fields["cn"], err.Error())
-		l.Log(msg, "ERROR")
+			vars.WorkRecord.Fields["cn"], err.Error())
+		logs.Log(msg, "ERROR")
 		return false
 	}
-	msg = fmt.Sprintf("The group %s has been created", v.WorkRecord.Fields["cn"])
-	l.Log(msg, "INFO")
+	msg = fmt.Sprintf("The group %s has been created", vars.WorkRecord.Fields["cn"])
+	logs.Log(msg, "INFO")
 	return true
 }
 
 // create a ldap sudo rule
-func (c *Connection) CreateSudoRule() bool {
-	newSudoRuleReq := ldapv3.NewAddRequest(v.WorkRecord.Fields["dn"])
-	newSudoRuleReq.Attribute("objectClass", []string{v.WorkRecord.Fields["objectClass"]})
-	for _, field := range v.SudoFields {
-		if len(v.WorkRecord.Fields[field]) > 0 {
-			newSudoRuleReq.Attribute(field, []string{v.WorkRecord.Fields[field]})
+func (conn *Connection) CreateSudoRule() bool {
+	newSudoRuleReq := ldapv3.NewAddRequest(vars.WorkRecord.Fields["dn"])
+	newSudoRuleReq.Attribute("objectClass", []string{vars.WorkRecord.Fields["objectClass"]})
+	for _, field := range vars.SudoFields {
+		if len(vars.WorkRecord.Fields[field]) > 0 {
+			newSudoRuleReq.Attribute(field, []string{vars.WorkRecord.Fields[field]})
 		}
 	}
-	if err := c.Conn.Add(newSudoRuleReq); err != nil {
+	if err := conn.Conn.Add(newSudoRuleReq); err != nil {
 		msg = fmt.Sprintf("Error creating the sudo rule %s error %s",
-			v.WorkRecord.Fields["cn"], err.Error())
-		l.Log(msg, "ERROR")
+			vars.WorkRecord.Fields["cn"], err.Error())
+		logs.Log(msg, "ERROR")
 		return false
 	}
-	msg = fmt.Sprintf("The sudo rule %s has been created", v.WorkRecord.Fields["cn"])
-	l.Log(msg, "INFO")
+	msg = fmt.Sprintf("The sudo rule %s has been created", vars.WorkRecord.Fields["cn"])
+	logs.Log(msg, "INFO")
 	return true
 }

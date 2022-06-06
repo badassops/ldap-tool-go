@@ -19,14 +19,15 @@ in **Python**, but it was not always working on someone else's laptop do the spe
 
 ### Capabilities
 The script to be able manage OpenLDAP users and groups:
-- add, modify, search and delete
-	an user or a group
+- add, modify, search and delete an user or a group
+- if the admin define is an user, it will be able to get the user's record (search) 
+  and modify the user's password (modify)
 
 ## Usage
 ```
-usage: ldap-tool [-h|--help] [-c|--configFile "<value>"] -s|--server "<value>"
-                 -C|--command (create|modify|delete|search) [-d|--debug]
-                 [-i|--info] [-v|--version]
+usage: ldap-tool [-h|--help] [-c|--configFile "<value>"] [-s|--server
+                 "<value>"] [-C|--command (create|modify|delete|search)]
+                 [-d|--debug] [-i|--info] [-v|--version]
 
                  Simple script to manage LDAP users, groups and SUDO rules
 
@@ -35,12 +36,12 @@ Arguments:
   -h  --help        Print help information
   -c  --configFile  Path to the configuration file to be use. Default:
                     /usr/local/etc/ldap-tool/ldap-tool.ini
-  -s  --server      Server profile name
+  -s  --server      Server profile name. Default: default
   -C  --command     commands: search, create,
-                    modify, delete
-
+                    modify, delete. Default: search
   -d  --debug       Enable debug. Default: false
   -i  --info        Show information
+  -v  --version     Show version
 ```
 
 ### Build or run the code the code

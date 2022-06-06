@@ -13,28 +13,26 @@ import (
 	"os"
 	"strings"
 
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
-	"github.com/badassops/packages-go/print"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 	"github.com/badassops/packages-go/readinput"
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
-func GetObjectRecord(c *l.Connection, firstTime bool, displayName string) bool {
+func GetObjectRecord(c *ldap.Connection, firstTime bool, displayName string, funcs *vars.Funcs) bool {
 	var records *ldapv3.SearchResult
 	var recordCount int
-	var displayFieldID = v.SearchResultData.DisplayFieldID
-	var wildCardSearchBase = v.SearchResultData.WildCardSearchBase
-	var recordSearchbase = v.SearchResultData.RecordSearchbase
+	var displayFieldID = vars.SearchResultData.DisplayFieldID
+	var wildCardSearchBase = vars.SearchResultData.WildCardSearchBase
+	var recordSearchbase = vars.SearchResultData.RecordSearchbase
 
-	p := print.New()
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("\tEnter %s name to be use: ", displayName)
 	enterData, _ := reader.ReadString('\n')
 	enterData = strings.TrimSuffix(enterData, "\n")
 
 	if enterData == "" {
-		p.PrintRed(fmt.Sprintf("\n\tNo %s name was given aborting...\n", displayName))
+		funcs.P.PrintRed(fmt.Sprintf("\n\tNo %s name was given aborting...\n", displayName))
 		return false
 	}
 
@@ -49,12 +47,12 @@ func GetObjectRecord(c *l.Connection, firstTime bool, displayName string) bool {
 			c.SearchInfo.SearchAttribute = []string{displayFieldID}
 			records, _ = c.Search()
 			for idx, _ := range records.Entries {
-				p.PrintBlue(fmt.Sprintf("\t%s: %s\n",
+				funcs.P.PrintBlue(fmt.Sprintf("\t%s: %s\n",
 					displayFieldID,
 					records.Entries[idx].GetAttributeValue(displayFieldID)))
 			}
 			fmt.Printf("\n\tSelect the %s from the above list:\n", displayName)
-			return GetObjectRecord(c, false, displayName)
+			return GetObjectRecord(c, false, displayName, funcs)
 		}
 	}
 
@@ -64,11 +62,11 @@ func GetObjectRecord(c *l.Connection, firstTime bool, displayName string) bool {
 	records, recordCount = c.Search()
 
 	if recordCount == 0 {
-		p.PrintRed(fmt.Sprintf("\n\t%s %s was not found, aborting...\n", strings.Title(displayName), enterData))
+		funcs.P.PrintRed(fmt.Sprintf("\n\t%s %s was not found, aborting...\n", strings.Title(displayName), enterData))
 		return false
 	}
-	v.SearchResultData.RecordCount = recordCount
-	v.SearchResultData.SearchResult = records
-	v.WorkRecord.ID = enterData
+	vars.SearchResultData.RecordCount = recordCount
+	vars.SearchResultData.SearchResult = records
+	vars.WorkRecord.ID = enterData
 	return true
 }

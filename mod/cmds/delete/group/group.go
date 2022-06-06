@@ -11,23 +11,18 @@ import (
 	"fmt"
 
 	"badassops.ldap/cmds/common"
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
-	"github.com/badassops/packages-go/print"
-)
-
-var (
-	p = print.New()
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 )
 
 // delete a ldap record
-func Delete(c *l.Connection) {
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Delete Group", 18, true))
-	v.SearchResultData.WildCardSearchBase = v.GroupWildCardSearchBase
-	v.SearchResultData.RecordSearchbase = v.GroupWildCardSearchBase
-	v.SearchResultData.DisplayFieldID = v.GroupDisplayFieldID
-	if common.GetObjectRecord(c, true, "group") {
-		common.DeleteObjectRecord(c, v.SearchResultData.SearchResult, "group")
+func Delete(conn *ldap.Connection, funcs *vars.Funcs) {
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Delete Group", 18, true))
+	vars.SearchResultData.WildCardSearchBase = vars.GroupWildCardSearchBase
+	vars.SearchResultData.RecordSearchbase = vars.GroupWildCardSearchBase
+	vars.SearchResultData.DisplayFieldID = vars.GroupDisplayFieldID
+	if common.GetObjectRecord(conn, true, "group", funcs) {
+		common.DeleteObjectRecord(conn, vars.SearchResultData.SearchResult, "group", funcs)
 	}
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

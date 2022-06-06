@@ -13,8 +13,8 @@ import (
 	"net"
 	"time"
 
-	c "badassops.ldap/configurator"
-	v "badassops.ldap/vars"
+	"badassops.ldap/configurator"
+	"badassops.ldap/vars"
 	"github.com/badassops/packages-go/exit"
 	"github.com/badassops/packages-go/lock"
 	ldapv3 "gopkg.in/ldap.v2"
@@ -23,14 +23,14 @@ import (
 type (
 	Connection struct {
 		Conn       *ldapv3.Conn
-		Config     *c.Config
-		Record     v.LdapRecord
-		SearchInfo v.SearchInfo
+		Config     *configurator.Config
+		Record     vars.LdapRecord
+		SearchInfo vars.SearchInfo
 	}
 )
 
 // function to initialize the ldap system
-func New(config *c.Config) *Connection {
+func New(config *configurator.Config) *Connection {
 	e := exit.New("ldap initialize", 1)
 	l := lock.New(config.DefaultValues.LockFile)
 
@@ -52,13 +52,19 @@ func New(config *c.Config) *Connection {
 		e.ExitError(err)
 	}
 
-	// now we need to reconnect with TLS
-	if config.ServerValues.TLS {
+	// now we need to reconnect with TLS; default to TLS (NoTLS == false)
+	if config.ServerValues.NoTLS == false {
 		err := ServerConn.StartTLS(&tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			l.LockRelease()
 			e.ExitError(err)
 		}
+	} else {
+		fmt.Printf("\n\t%sWaring%s, TLS has been disabled! (noTls is set to %strue%s)\n",
+			vars.Red, vars.Off, vars.Red, vars.Off)
+		fmt.Printf("\t%s\n", vars.DangerZone)
+		fmt.Printf("\t%sPress enter to continue to search: %s", vars.Yellow, vars.Off)
+		fmt.Scanln()
 	}
 
 	// setup control

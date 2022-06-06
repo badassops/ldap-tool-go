@@ -12,51 +12,51 @@ import (
 	"strconv"
 
 	"badassops.ldap/cmds/common"
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
-func printUser(c *l.Connection, records *ldapv3.SearchResult) {
+func printUser(conn *ldap.Connection, records *ldapv3.SearchResult, funcs *vars.Funcs) {
 	// the values are in days so we need to multiple by 86400
 	value, _ := strconv.ParseInt(records.Entries[0].GetAttributeValue("shadowLastChange"), 10, 64)
-	passChanged := e.ReadableEpoch(value * 86400)
+	passChanged := funcs.E.ReadableEpoch(value * 86400)
 
 	value, _ = strconv.ParseInt(records.Entries[0].GetAttributeValue("shadowExpire"), 10, 64)
-	passExpired := e.ReadableEpoch(value * 86400)
+	passExpired := funcs.E.ReadableEpoch(value * 86400)
 
 	userName := records.Entries[0].GetAttributeValue("uid")
-	fmt.Printf("\n\t%s\n", p.PrintLine(v.Purple, 50))
-	p.PrintBlue(fmt.Sprintf("\tdn: %s\n", records.Entries[0].DN))
+	fmt.Printf("\n\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
+	funcs.P.PrintBlue(fmt.Sprintf("\tdn: %s\n", records.Entries[0].DN))
 	userDN := records.Entries[0].DN
-	for _, fieldName := range v.DisplayUserFields {
-		p.PrintCyan(fmt.Sprintf("\t%s: %s\n", fieldName, records.Entries[0].GetAttributeValue(fieldName)))
+	for _, fieldName := range vars.DisplayUserFields {
+		funcs.P.PrintCyan(fmt.Sprintf("\t%s: %s\n", fieldName, records.Entries[0].GetAttributeValue(fieldName)))
 	}
 
-	c.SearchInfo.SearchBase =
+	conn.SearchInfo.SearchBase =
 		fmt.Sprintf("(|(&(objectClass=posixGroup)(memberUid=%s))(&(objectClass=groupOfNames)(member=%s)))",
 			userName, userDN)
-	c.SearchInfo.SearchAttribute = []string{"dn"}
-	groupRecords, _ := c.Search()
-	fmt.Printf("\n\t%s\n", p.PrintLine(v.Purple, 50))
-	p.PrintPurple(fmt.Sprintf("\tUser %s groups:\n", userName))
+	conn.SearchInfo.SearchAttribute = []string{"dn"}
+	groupRecords, _ := conn.Search()
+	fmt.Printf("\n\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
+	funcs.P.PrintPurple(fmt.Sprintf("\tUser %s groups:\n", userName))
 	for _, entry := range groupRecords.Entries {
-		p.PrintCyan(fmt.Sprintf("\tdn: %s\n", entry.DN))
+		funcs.P.PrintCyan(fmt.Sprintf("\tdn: %s\n", entry.DN))
 	}
 
-	fmt.Printf("\n\t%s\n", p.PrintLine(v.Purple, 50))
-	p.PrintPurple(fmt.Sprintf("\tUser %s password information\n", userName))
-	p.PrintCyan(fmt.Sprintf("\tPassword last changed on %s\n", passChanged))
-	p.PrintRed(fmt.Sprintf("\tPassword will expired on %s\n\n", passExpired))
+	fmt.Printf("\n\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
+	funcs.P.PrintPurple(fmt.Sprintf("\tUser %s password information\n", userName))
+	funcs.P.PrintCyan(fmt.Sprintf("\tPassword last changed on %s\n", passChanged))
+	funcs.P.PrintRed(fmt.Sprintf("\tPassword will expired on %s\n\n", passExpired))
 }
 
-func User(c *l.Connection) {
-	fmt.Printf("\t%s\n", p.PrintHeader(v.Blue, v.Purple, "Search User", 18, true))
-	v.SearchResultData.WildCardSearchBase = v.UserWildCardSearchBase
-	v.SearchResultData.RecordSearchbase = v.UserWildCardSearchBase
-	v.SearchResultData.DisplayFieldID = v.UserDisplayFieldID
-	if common.GetObjectRecord(c, true, "user") {
-		printUser(c, v.SearchResultData.SearchResult)
+func User(conn *ldap.Connection, funcs *vars.Funcs) {
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Search User", 18, true))
+	vars.SearchResultData.WildCardSearchBase = vars.UserWildCardSearchBase
+	vars.SearchResultData.RecordSearchbase = vars.UserWildCardSearchBase
+	vars.SearchResultData.DisplayFieldID = vars.UserDisplayFieldID
+	if common.GetObjectRecord(conn, true, "user", funcs) {
+		printUser(conn, vars.SearchResultData.SearchResult, funcs)
 	}
-	fmt.Printf("\t%s\n", p.PrintLine(v.Purple, 50))
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

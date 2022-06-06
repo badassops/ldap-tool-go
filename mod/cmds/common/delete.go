@@ -13,55 +13,56 @@ import (
 	"os"
 	"strings"
 
-	l "badassops.ldap/ldap"
-	v "badassops.ldap/vars"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
 	"github.com/badassops/packages-go/readinput"
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
-func DeleteObjectRecord(c *l.Connection, records *ldapv3.SearchResult, objectType string) {
+func DeleteObjectRecord(conn *ldap.Connection, records *ldapv3.SearchResult, objectType string, funcs *vars.Funcs) {
 	reader := bufio.NewReader(os.Stdin)
 
 	switch objectType {
 	case "user":
-		objectID = records.Entries[0].GetAttributeValue("uid")
-		protectedList = c.Config.GroupValues.Groups
-		v.WorkRecord.DN = fmt.Sprintf("uid=%s,%s", objectID, c.Config.ServerValues.UserDN)
-		v.WorkRecord.ID = objectID
+		vars.ObjectID = records.Entries[0].GetAttributeValue("uid")
+		vars.ProtectedList = conn.Config.GroupValues.Groups
+		vars.WorkRecord.DN = fmt.Sprintf("uid=%s,%s", vars.ObjectID, conn.Config.ServerValues.UserDN)
+		vars.WorkRecord.ID = vars.ObjectID
 
 	case "group":
-		objectID = records.Entries[0].GetAttributeValue("cn")
-		protectedList = append(c.Config.GroupValues.Groups, c.Config.GroupValues.SpecialGroups...)
-		v.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", objectID, c.Config.ServerValues.GroupDN)
-		v.WorkRecord.ID = objectID
+		vars.ObjectID = records.Entries[0].GetAttributeValue("cn")
+		vars.ProtectedList = append(conn.Config.GroupValues.Groups, conn.Config.GroupValues.SpecialGroups...)
+		vars.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", vars.ObjectID, conn.Config.ServerValues.GroupDN)
+		vars.WorkRecord.ID = vars.ObjectID
 
 	case "sudo rules":
-		objectID = records.Entries[0].GetAttributeValue("cn")
-		protectedList = c.Config.SudoValues.ExcludeSudo
-		v.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", objectID, c.Config.SudoValues.SudoersBase)
-		v.WorkRecord.ID = objectID
+		vars.ObjectID = records.Entries[0].GetAttributeValue("cn")
+		vars.ProtectedList = conn.Config.SudoValues.ExcludeSudo
+		vars.WorkRecord.DN = fmt.Sprintf("cn=%s,%s", vars.ObjectID, conn.Config.SudoValues.SudoersBase)
+		vars.WorkRecord.ID = vars.ObjectID
 	}
 
 	if objectType != "user" {
-		if i.IsInList(protectedList, objectID) {
-			p.PrintRed(fmt.Sprintf("\n\tGiven %s %s is protected and can not be deleted, aborting...\n\n",
-				objectType, objectID))
+		if funcs.I.IsInList(vars.ProtectedList, vars.ObjectID) {
+			funcs.P.PrintRed(fmt.Sprintf("\n\tGiven %s %s is protected and can not be deleted, aborting...\n\n",
+				objectType, vars.ObjectID))
 			return
 		}
 	}
 
-	p.PrintRed(fmt.Sprintf("\n\tGiven %s %s will be delete, this can not be undo!\n", objectType, objectID))
-	p.PrintYellow(fmt.Sprintf("\tContinue (default to N)? [y/n]: "))
+	funcs.P.PrintRed(fmt.Sprintf("\n\tGiven %s %s will be delete, this can not be undo!\n", objectType, vars.ObjectID))
+	funcs.P.PrintYellow(fmt.Sprintf("\tContinue (default to N)? [y/n]: "))
 	continueDelete, _ := reader.ReadString('\n')
 	continueDelete = strings.ToLower(strings.TrimSuffix(continueDelete, "\n"))
 	if readinput.ReadYN(continueDelete, false) == true {
-		if !c.Delete(objectID, objectType) {
-			p.PrintRed(fmt.Sprintf("\n\tFailed to delete the %s %s, check the log file\n", objectType, objectID))
+		if !conn.Delete(vars.ObjectID, objectType) {
+			funcs.P.PrintRed(fmt.Sprintf("\n\tFailed to delete the %s %s, check the log file\n",
+				objectType, vars.ObjectID))
 		} else {
-			p.PrintGreen(fmt.Sprintf("\n\tGiven %s %s has been deleted\n", objectType, objectID))
+			funcs.P.PrintGreen(fmt.Sprintf("\n\tGiven %s %s has been deleted\n", objectType, vars.ObjectID))
 		}
 	} else {
-		p.PrintBlue(fmt.Sprintf("\n\tDeletion of the %s %s cancelled\n", objectType, objectID))
+		funcs.P.PrintBlue(fmt.Sprintf("\n\tDeletion of the %s %s cancelled\n", objectType, vars.ObjectID))
 	}
 	return
 }

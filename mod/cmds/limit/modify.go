@@ -14,69 +14,60 @@ import (
 	"regexp"
 	"strings"
 
-	l "badassops.ldap/ldap"
-	u "badassops.ldap/utils"
-	v "badassops.ldap/vars"
+	"badassops.ldap/ldap"
+	"badassops.ldap/vars"
+	ldapv3 "gopkg.in/ldap.v2"
 )
 
-var (
-	fields = []string{"userPassword", "sshPublicKey"}
+func modifyUserPassword(conn *ldap.Connection, records *ldapv3.SearchResult, funcs *vars.Funcs) {
+	fieldName := "userPassword"
+	reader := bufio.NewReader(os.Stdin)
 
-	// input
-	valueEntered string
-)
+	userName := records.Entries[0].GetAttributeValue("uid")
+	vars.WorkRecord.DN = fmt.Sprintf("uid=%s,%s", userName, conn.Config.ServerValues.UserDN)
+	fmt.Printf("\n\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
+	funcs.P.PrintPurple(fmt.Sprintf("\tUsing user: %s\n", userName))
+	funcs.P.PrintYellow(fmt.Sprintf("\tPress enter to leave the value unchanged\n"))
 
-func createModifyUserPasswordSSHKey(c *l.Connection) int {
-	changeCount := 0
-	u.PrintPurple(fmt.Sprintf("\tUsing user: %s\n", c.User.Field["uid"]))
-	u.PrintYellow(fmt.Sprintf("\tPress enter to leave the value unchanged\n"))
-	u.PrintLine(u.Purple)
+	passWord := funcs.R.Generate()
+	funcs.P.PrintCyan(fmt.Sprintf("\n\tCurrent value (encrypted!): %s%s%s\n",
+		vars.Green, records.Entries[0].GetAttributeValue(fieldName), vars.Off))
+	funcs.P.PrintYellow(fmt.Sprintf("\t\tsuggested password: %s\n", passWord))
 
-	for _, fieldName := range fields {
-		// these will be valid once the field was filled since they depends
-		// on some of the fields value
-		switch fieldName {
-		case "userPassword":
-			passWord := u.GenerateRandom(
-				c.Config.DefaultValues.PassComplex,
-				c.Config.DefaultValues.PassLenght)
-			u.PrintCyan(fmt.Sprintf("\tCurrent value (encrypted!): %s\n", c.User.Field[fieldName]))
-			u.PrintYellow(fmt.Sprintf("\t\tsuggested password: %s\n", passWord))
+	funcs.P.PrintPurple(fmt.Sprintf("\t%s: ", vars.Template[fieldName].Prompt))
+	valueEntered, _ := reader.ReadString('\n')
+	valueEntered = strings.TrimSuffix(valueEntered, "\n")
 
-		case "sshPublicKey":
-			u.PrintCyan(fmt.Sprintf("\tCurrent value: %s\n", c.User.Field[fieldName]))
-
-		}
-
-		fmt.Printf("\t%s: ", v.Template[fieldName].Prompt)
-		reader := bufio.NewReader(os.Stdin)
-		valueEntered, _ = reader.ReadString('\n')
-		valueEntered = strings.TrimSuffix(valueEntered, "\n")
-		if len(valueEntered) != 0 {
-			v.ModRecord.Field[fieldName] = valueEntered
-			changeCount++
-		}
-	}
-	return changeCount
-}
-
-func ModifyUserPasswordSSHKey(c *l.Connection) {
-	reg, _ := regexp.Compile("^uid=|,ou=users,.*")
-	userID := reg.ReplaceAllString(c.Config.ServerValues.Admin, "")
-	u.PrintHeader(u.Purple, fmt.Sprintf("Modify User's Password / SSH Public Key %s", userID), true)
-	if c.GetUser(userID, false) == 0 {
-		u.PrintColor(u.Red, fmt.Sprintf("\n\tUser %s was not found, aborting...\n", userID))
+	if len(valueEntered) != 0 {
+		vars.WorkRecord.Fields[fieldName] = valueEntered
+		vars.WorkRecord.Fields["shadowLastChange"] = vars.Template["shadowLastChange"].Value
+	} else {
+		fmt.Printf("\n\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
+		funcs.P.PrintBlue(fmt.Sprintf("\n\tNo password was entered, the user %s's password was not changed\n",
+			userName))
 		return
 	}
-	if createModifyUserPasswordSSHKey(c) == 0 {
-		u.PrintBlue(fmt.Sprintf("\n\tNo field were changed, no modification was made for the user %s\n", userID))
-	} else {
-		c.User.Field["uid"] = userID
-		if !c.ModifyUser() {
-			u.PrintRed(fmt.Sprintf("\n\tFailed modify the user %s, check the log file\n", c.User.Field["uid"]))
-		} else {
-			u.PrintGreen(fmt.Sprintf("\n\tUser %s modified successfully\n", c.User.Field["uid"]))
-		}
+
+	if !conn.ModifyUser() {
+		funcs.P.PrintRed(fmt.Sprintf("\n\tFailed modify the %s's password, check the log file\n", userName))
+		funcs.P.PrintYellow("Make sure you are not a replica server!\n")
+		return
 	}
-	u.PrintLine(u.Purple)
+	funcs.P.PrintGreen(fmt.Sprintf("\n\tUser %s modified successfully\n", userName))
+}
+
+func ModifyUserPassword(conn *ldap.Connection, funcs *vars.Funcs) {
+	reg, _ := regexp.Compile("^uid=|,ou=users,.*")
+	userID := reg.ReplaceAllString(conn.Config.ServerValues.Admin, "")
+	conn.SearchInfo.SearchBase = strings.ReplaceAll(vars.UserWildCardSearchBase, "VALUE", userID)
+	conn.SearchInfo.SearchAttribute = []string{}
+	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Modify Own Password", 14, true))
+	record, recordCount := conn.Search()
+	if recordCount != 1 {
+		funcs.P.PrintRed(fmt.Sprintf("\n\tUser %s was not found, aborting...\n", userID))
+		return
+	} else {
+		modifyUserPassword(conn, record, funcs)
+	}
+	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }
