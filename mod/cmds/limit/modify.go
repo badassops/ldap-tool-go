@@ -39,6 +39,16 @@ func modifyUserPassword(conn *ldap.Connection, records *ldapv3.SearchResult, fun
 	valueEntered = strings.TrimSuffix(valueEntered, "\n")
 
 	if len(valueEntered) != 0 {
+		if len(valueEntered) < conn.Config.DefaultValues.PassLenght {
+			funcs.P.PrintRed(fmt.Sprintf("\n\tPassword is to short, minimun is %d, aborting...\n",
+				conn.Config.DefaultValues.PassLenght))
+			return
+		}
+		if strings.ContainsAny(valueEntered, vars.SpecialChars) == false {
+			funcs.P.PrintRed("\n\tPassword does not contain at least one special character\n")
+			funcs.P.PrintRed(fmt.Sprintf("\tSpecial character allowed: (%s), aborting...\n", vars.SpecialChars))
+			return
+		}
 		vars.WorkRecord.Fields[fieldName] = valueEntered
 		vars.WorkRecord.Fields["shadowLastChange"] = vars.Template["shadowLastChange"].Value
 	} else {
