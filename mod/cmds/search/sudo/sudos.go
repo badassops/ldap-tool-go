@@ -35,11 +35,11 @@ func printSudos(records []*ldapv3.Entry, recordCount int, protectedSudoRules []s
 	}
 }
 
-func Sudos(c *ldap.Connection, funcs *vars.Funcs) {
+func Sudos(conn *ldap.Connection, funcs *vars.Funcs) {
 	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Search Sudo Rules", 15, true))
-	c.SearchInfo.SearchBase = vars.SudoRuleSearchBase
-	c.SearchInfo.SearchAttribute = []string{}
-	records, recordCount := c.Search()
-	printSudos(records.Entries, recordCount, c.Config.SudoValues.ExcludeSudo, funcs)
+	conn.SearchInfo.SearchBase = vars.SudoRuleSearchBase
+	conn.SearchInfo.SearchAttribute = []string{}
+	records, recordCount := conn.Search()
+	printSudos(records.Entries, recordCount, conn.Config.SudoValues.ExcludeSudo, funcs)
 	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

@@ -121,7 +121,7 @@ func (conn *Connection) GetAllGroups() []string {
 }
 
 // get all the posixGroup's group GID
-func (conn *Connection) GetAlGroupsGID() map[string]string {
+func (conn *Connection) GetAllGroupsGID() map[string]string {
 	gitNumberList := make(map[string]string)
 	conn.SearchInfo.SearchBase = "(&(objectClass=posixGroup))"
 	conn.SearchInfo.SearchAttribute = []string{"gidNumber", "cn"}

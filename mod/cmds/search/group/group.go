@@ -43,12 +43,12 @@ func printGroup(records *ldapv3.SearchResult, funcs *vars.Funcs) {
 	}
 }
 
-func Group(c *ldap.Connection, funcs *vars.Funcs) {
+func Group(conn *ldap.Connection, funcs *vars.Funcs) {
 	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Search Group", 18, true))
 	vars.SearchResultData.WildCardSearchBase = vars.GroupWildCardSearchBase
 	vars.SearchResultData.RecordSearchbase = vars.GroupWildCardSearchBase
 	vars.SearchResultData.DisplayFieldID = vars.GroupDisplayFieldID
-	if common.GetObjectRecord(c, true, "group", funcs) {
+	if common.GetObjectRecord(conn, true, "group", funcs) {
 		printGroup(vars.SearchResultData.SearchResult, funcs)
 	}
 	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))

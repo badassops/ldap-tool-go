@@ -263,7 +263,7 @@ func createModifyUserRecord(conn *ldap.Connection, records *ldapv3.SearchResult,
 		valueEntered, _ = reader.ReadString('\n')
 		valueEntered = strings.ToLower(strings.TrimSuffix(valueEntered, "\n"))
 		switch valueEntered {
-		case "y", "yes" :
+		case "y", "yes":
 			conn.Record.GroupAddList = append(conn.Record.GroupAddList, joinGroup)
 		}
 	}

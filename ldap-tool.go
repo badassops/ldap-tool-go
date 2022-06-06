@@ -27,11 +27,11 @@ import (
 	"github.com/badassops/packages-go/spinner"
 
 	// the menus
-	searchMenu "badassops.ldap/cmds/search/menu"
 	createMenu "badassops.ldap/cmds/create/menu"
 	deleteMenu "badassops.ldap/cmds/delete/menu"
+	limit "badassops.ldap/cmds/limit"
 	modifyMenu "badassops.ldap/cmds/modify/menu"
-	// limit	  "badassops.ldap/cmds/limit"
+	searchMenu "badassops.ldap/cmds/search/menu"
 )
 
 func main() {
@@ -90,7 +90,7 @@ func main() {
 	// check if server was set to allow read-write
 	if config.ServerValues.ReadWrite == false {
 		funcs.P.PrintRed(
-			fmt.Sprintf("\n\tThe server %s is set to be ready only.\n\tOnly the Search options is available...\n",
+			fmt.Sprintf("\n\tThe server %s is set to be ready only.\n\tOnly the Search option is available...\n",
 				config.ServerValues.Server))
 		funcs.P.PrintGreen("\tPress enter to continue to search: ")
 		fmt.Scanln()
@@ -122,16 +122,15 @@ func main() {
 	conn := ldap.New(config)
 
 	// semi-hardcoded
-	if config.ServerValues.Admin != "cn=admin," + config.ServerValues.BaseDN {
-	//   switch config.Cmd {
-	// 	case "search":
-	// 	  limit.UserRecord() //conn)
-	// 	case "modify":
-	// 	  limit.ModifyUserPasswordSSHKey() //conn)
-	// 	default:
-	// 	  u.PrintRed("\n\tThis command is only available for admin...\n\n")
-	//   }
-		fmt.Printf(" GO AWAY \n")
+	if config.ServerValues.Admin != "cn=admin,"+config.ServerValues.BaseDN {
+		switch config.Cmd {
+		case "search":
+			limit.UserRecord(conn, funcs)
+		case "modify":
+			limit.ModifyUserPasswordSSHKey(conn, funcs)
+		default:
+			funcs.P.PrintRed("\n\tThis command is only available for admin...\n\n")
+		}
 	} else {
 		switch config.Cmd {
 		case "search":

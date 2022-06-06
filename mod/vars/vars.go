@@ -36,15 +36,15 @@ var (
 	OneLineUP    = "\x1b[A"
 	DangerZone   = fmt.Sprintf("%sDanger Zone%s, be sure you understand the implication!",
 		RedUnderline, Off)
-	ReplicaAlert = fmt.Sprintf("The server is a %sreplica%s!, access is set to read-only" ,
-        RedUnderline, Off)
+	ReplicaAlert = fmt.Sprintf("The server is a %sreplica%s!, access is set to read-only",
+		RedUnderline, Off)
 )
 
 type Funcs struct {
-	E	*epoch.Epoch
-	I	*is.Is
-	P	*print.Print
-	R	*random.Random
+	E *epoch.Epoch
+	I *is.Is
+	P *print.Print
+	R *random.Random
 }
 
 // for ldap search
@@ -113,6 +113,7 @@ var (
 	Logs Log
 
 	// we sets these under variable
+	// default values
 	LogsDir       = "/var/log/ldap-go"
 	LogFile       = fmt.Sprintf("%s.log", MyProgname)
 	LogMaxSize    = 128 // megabytes
@@ -151,6 +152,6 @@ var (
 	SudoDisplayFieldID     = "cn"
 
 	// query to check whatever the server is a replica
-	ReplicatorSearchBase	= "(&(objectClass=simpleSecurityObject)(objectClass=organizationalRole)(cn=VALUE))"
-	ReplicatorDisplayField	= "cn"
+	ReplicatorSearchBase   = "(&(objectClass=simpleSecurityObject)(objectClass=organizationalRole)(cn=VALUE))"
+	ReplicatorDisplayField = "cn"
 )

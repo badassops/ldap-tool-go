@@ -91,7 +91,7 @@ func createGroup(conn *ldap.Connection, funcs *vars.Funcs) bool {
 		valueEntered, _ := reader.ReadString('\n')
 		valueEntered = strings.TrimSuffix(valueEntered, "\n")
 		if len(valueEntered) > 0 {
-			gitNumberList := conn.GetAlGroupsGID()
+			gitNumberList := conn.GetAllGroupsGID()
 			if groupname, found := gitNumberList[valueEntered]; found {
 				funcs.P.PrintRed(fmt.Sprintf("\n\tGiven group id %s already use by the group %s , aborting...\n",
 					valueEntered, groupname))

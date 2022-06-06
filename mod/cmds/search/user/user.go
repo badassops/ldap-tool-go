@@ -17,13 +17,13 @@ import (
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
-func printUser(c *ldap.Connection, records *ldapv3.SearchResult, funcs *vars.Funcs) {
+func printUser(conn *ldap.Connection, records *ldapv3.SearchResult, funcs *vars.Funcs) {
 	// the values are in days so we need to multiple by 86400
 	value, _ := strconv.ParseInt(records.Entries[0].GetAttributeValue("shadowLastChange"), 10, 64)
-	passChanged := e.ReadableEpoch(value * 86400)
+	passChanged := funcs.E.ReadableEpoch(value * 86400)
 
 	value, _ = strconv.ParseInt(records.Entries[0].GetAttributeValue("shadowExpire"), 10, 64)
-	passExpired := e.ReadableEpoch(value * 86400)
+	passExpired := funcs.E.ReadableEpoch(value * 86400)
 
 	userName := records.Entries[0].GetAttributeValue("uid")
 	fmt.Printf("\n\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
@@ -33,11 +33,11 @@ func printUser(c *ldap.Connection, records *ldapv3.SearchResult, funcs *vars.Fun
 		funcs.P.PrintCyan(fmt.Sprintf("\t%s: %s\n", fieldName, records.Entries[0].GetAttributeValue(fieldName)))
 	}
 
-	c.SearchInfo.SearchBase =
+	conn.SearchInfo.SearchBase =
 		fmt.Sprintf("(|(&(objectClass=posixGroup)(memberUid=%s))(&(objectClass=groupOfNames)(member=%s)))",
 			userName, userDN)
-	c.SearchInfo.SearchAttribute = []string{"dn"}
-	groupRecords, _ := c.Search()
+	conn.SearchInfo.SearchAttribute = []string{"dn"}
+	groupRecords, _ := conn.Search()
 	fmt.Printf("\n\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 	funcs.P.PrintPurple(fmt.Sprintf("\tUser %s groups:\n", userName))
 	for _, entry := range groupRecords.Entries {
@@ -50,13 +50,13 @@ func printUser(c *ldap.Connection, records *ldapv3.SearchResult, funcs *vars.Fun
 	funcs.P.PrintRed(fmt.Sprintf("\tPassword will expired on %s\n\n", passExpired))
 }
 
-func User(c *ldap.Connection, funcs *vars.Funcs) {
+func User(conn *ldap.Connection, funcs *vars.Funcs) {
 	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Search User", 18, true))
 	vars.SearchResultData.WildCardSearchBase = vars.UserWildCardSearchBase
 	vars.SearchResultData.RecordSearchbase = vars.UserWildCardSearchBase
 	vars.SearchResultData.DisplayFieldID = vars.UserDisplayFieldID
-	if common.GetObjectRecord(c, true, "user", funcs) {
-		printUser(c, vars.SearchResultData.SearchResult, funcs)
+	if common.GetObjectRecord(conn, true, "user", funcs) {
+		printUser(conn, vars.SearchResultData.SearchResult, funcs)
 	}
 	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

@@ -14,7 +14,7 @@ import (
 	"badassops.ldap/configurator"
 	"badassops.ldap/vars"
 	"github.com/badassops/packages-go/epoch"
-    "github.com/badassops/packages-go/is"
+	"github.com/badassops/packages-go/is"
 	"github.com/badassops/packages-go/print"
 	"github.com/badassops/packages-go/random"
 )
@@ -24,7 +24,7 @@ var (
 )
 
 // initialize the system/variable/template
-func Init(configurator *configurator.Config) *vars.Funcs {
+func Init(config *configurator.Config) *vars.Funcs {
 	// ldap fields that will be used
 	vars.UserFields = []string{"uid", "givenName", "sn", "cn", "displayName",
 		"gecos", "uidNumber", "gidNumber", "departmentNumber",
@@ -50,12 +50,24 @@ func Init(configurator *configurator.Config) *vars.Funcs {
 
 	vars.SudoObjectClass = []string{"top", "sudoRole"}
 
-	vars.Logs.LogsDir = vars.LogsDir
-	vars.Logs.LogFile = vars.LogFile
-	vars.Logs.LogMaxSize = vars.LogMaxSize
-	vars.Logs.LogMaxBackups = vars.LogMaxBackups
-	vars.Logs.LogMaxAge = vars.LogMaxAge
+	// set to default if not set in the configuration file
+	if config.LogValues.LogsDir == "" {
+		vars.Logs.LogsDir = vars.LogsDir
+	}
+	if config.LogValues.LogFile == "" {
+		vars.Logs.LogFile = vars.LogFile
+	}
+	if config.LogValues.LogMaxSize == 0 {
+		vars.Logs.LogMaxSize = vars.LogMaxSize
+	}
+	if config.LogValues.LogMaxBackups == 0 {
+		vars.Logs.LogMaxBackups = vars.LogMaxBackups
+	}
+	if config.LogValues.LogMaxAge == 0 {
+		vars.Logs.LogMaxAge = vars.LogMaxAge
+	}
 
+	// initialize the maps
 	vars.WorkRecord.Fields = make(map[string]string)
 	vars.WorkRecord.Group = make(map[string]string)
 	vars.WorkRecord.SudoAddList = make(map[string][]string)
@@ -66,7 +78,7 @@ func Init(configurator *configurator.Config) *vars.Funcs {
 	epochPtr := epoch.New()
 	printPtr := print.New()
 	isPtr := is.New()
-	currExpired := strconv.FormatInt(epochPtr.Days()+int64(configurator.DefaultValues.ShadowMax), 10)
+	currExpired := strconv.FormatInt(epochPtr.Days()+int64(config.DefaultValues.ShadowMax), 10)
 
 	// user
 	vars.Template["uid"] =
@@ -112,7 +124,7 @@ func Init(configurator *configurator.Config) *vars.Funcs {
 	vars.Template["departmentNumber"] =
 		vars.Record{
 			Prompt:   "Enter department",
-			Value:    configurator.DefaultValues.GroupName,
+			Value:    config.DefaultValues.GroupName,
 			NoEmpty:  false,
 			UseValue: true,
 		}
@@ -120,7 +132,7 @@ func Init(configurator *configurator.Config) *vars.Funcs {
 	vars.Template["loginShell"] =
 		vars.Record{
 			Prompt:   "Enter shell",
-			Value:    configurator.DefaultValues.Shell,
+			Value:    config.DefaultValues.Shell,
 			NoEmpty:  false,
 			UseValue: true,
 		}
@@ -136,7 +148,7 @@ func Init(configurator *configurator.Config) *vars.Funcs {
 	vars.Template["shadowMax"] =
 		vars.Record{
 			Prompt:   "Enter the max password age",
-			Value:    strconv.Itoa(configurator.DefaultValues.ShadowAge),
+			Value:    strconv.Itoa(config.DefaultValues.ShadowAge),
 			NoEmpty:  false,
 			UseValue: true,
 		}
@@ -144,7 +156,7 @@ func Init(configurator *configurator.Config) *vars.Funcs {
 	vars.Template["shadowWarning"] =
 		vars.Record{
 			Prompt:   "Enter the days notification before the password expires",
-			Value:    strconv.Itoa(configurator.DefaultValues.ShadowWarning),
+			Value:    strconv.Itoa(config.DefaultValues.ShadowWarning),
 			NoEmpty:  false,
 			UseValue: true,
 		}
@@ -221,7 +233,7 @@ func Init(configurator *configurator.Config) *vars.Funcs {
 	vars.Template["member"] =
 		vars.Record{
 			Prompt:   "Auto filled based on the groupDN value",
-			Value:    fmt.Sprintf("uid=initial-member,%s", configurator.ServerValues.UserDN),
+			Value:    fmt.Sprintf("uid=initial-member,%s", config.ServerValues.UserDN),
 			NoEmpty:  true,
 			UseValue: false,
 		}
@@ -269,10 +281,10 @@ func Init(configurator *configurator.Config) *vars.Funcs {
 			UseValue: true,
 		}
 
-  return &vars.Funcs{
-        E:	epochPtr,
-        I:	isPtr,
-		P:	printPtr,
-		R:	random.New(configurator.DefaultValues.PassComplex, configurator.DefaultValues.PassLenght),
-    }
+	return &vars.Funcs{
+		E: epochPtr,
+		I: isPtr,
+		P: printPtr,
+		R: random.New(config.DefaultValues.PassComplex, config.DefaultValues.PassLenght),
+	}
 }

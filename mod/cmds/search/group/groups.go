@@ -42,11 +42,11 @@ func printGroups(records *ldapv3.SearchResult, recordCount int, funcs *vars.Func
 	}
 }
 
-func Groups(c *ldap.Connection, funcs *vars.Funcs) {
+func Groups(conn *ldap.Connection, funcs *vars.Funcs) {
 	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Search Groups", 20, true))
-	c.SearchInfo.SearchBase = vars.GroupSearchBase
-	c.SearchInfo.SearchAttribute = []string{}
-	records, recordCount := c.Search()
+	conn.SearchInfo.SearchBase = vars.GroupSearchBase
+	conn.SearchInfo.SearchAttribute = []string{}
+	records, recordCount := conn.Search()
 	printGroups(records, recordCount, funcs)
 	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
 }

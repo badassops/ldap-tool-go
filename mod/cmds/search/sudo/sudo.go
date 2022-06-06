@@ -35,12 +35,12 @@ func printSudo(records []*ldapv3.Entry, funcs *vars.Funcs) {
 	fmt.Printf("\n")
 }
 
-func Sudo(c *ldap.Connection, funcs *vars.Funcs) {
+func Sudo(conn *ldap.Connection, funcs *vars.Funcs) {
 	fmt.Printf("\t%s\n", funcs.P.PrintHeader(vars.Blue, vars.Purple, "Search Sudo Rule", 16, true))
 	vars.SearchResultData.WildCardSearchBase = vars.SudoWildCardSearchBase
 	vars.SearchResultData.RecordSearchbase = vars.SudoWildCardSearchBase
 	vars.SearchResultData.DisplayFieldID = vars.SudoDisplayFieldID
-	if common.GetObjectRecord(c, true, "sudo rule", funcs) {
+	if common.GetObjectRecord(conn, true, "sudo rule", funcs) {
 		printSudo(vars.SearchResultData.SearchResult.Entries, funcs)
 	}
 	fmt.Printf("\t%s\n", funcs.P.PrintLine(vars.Purple, 50))
