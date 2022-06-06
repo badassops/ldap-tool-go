@@ -149,7 +149,7 @@ func (c *Config) InitializeArgs() {
 		&argparse.Options{
 			Required: false,
 			Help:     "Path to the configuration file to be use",
-			Default:  "/usr/local/etc/ldap-tool/ldap-tool.ini",
+			Default:  "/usr/local/etc/ldap-tool/config.ini",
 		})
 
 	server := parser.String("s", "server",
@@ -251,16 +251,37 @@ func (config *Config) InitializeConfigs() {
 		len(configValues.Servers[config.Server].Admin) == 0 ||
 		len(configValues.Servers[config.Server].AdminPass) == 0 ||
 		len(configValues.Servers[config.Server].UserDN) == 0 ||
-		len(configValues.Servers[config.Server].GroupDN) == 0 ||
-		len(configValues.Servers[config.Server].EmailDomain) == 0 {
+		len(configValues.Servers[config.Server].GroupDN) == 0 {
 		Print.PrintRed("\tError reading the configuration file, some value are missing\n")
-		Print.PrintBlue("\tRequired fields: server, baseDN, admin, adminPass, userDN, GroupDN and emailDomain\n")
+		Print.PrintBlue("\tRequired fields: server, baseDN, admin, adminPass, userDN and GroupDN\n")
+		Print.PrintBlue("\tOptional fields: emailDomain, noTLS and readWrite\n")
 		Print.PrintBlue(fmt.Sprintf("\tMake sure there is configuration for the server %s%s%s\n",
 			vars.Red, config.Server, vars.Off))
 		Print.PrintBlue(fmt.Sprintf("\tThere should be %s[server.%s]%s%s under the %s[servers]%s section%s\n",
 			vars.Cyan, config.Server, vars.Off, vars.Yellow, vars.Cyan, vars.Yellow, vars.Off))
 		Print.PrintBlue("\tAborting...\n")
 		os.Exit(1)
+	}
+
+	if configValues.Servers[config.Server].Admin != "cn=admin," + configValues.Servers[config.Server].BaseDN {
+		// hardcoded that password length (min 16) and force complex
+		// and set password age settings to safe values
+		// this is the case the script uses an user configuration instead one from an admin
+		if configValues.Defaults.PassLenght < 16 {
+			configValues.Defaults.PassLenght = 16
+		}
+		if configValues.Defaults.PassComplex == false {
+			configValues.Defaults.PassComplex = true
+		}
+		if configValues.Defaults.ShadowMin < 30 {
+			configValues.Defaults.ShadowMin = 30
+		}
+		if configValues.Defaults.ShadowAge < 60 {
+			configValues.Defaults.ShadowAge = 60
+		}
+		if configValues.Defaults.ShadowMax < 90 {
+			configValues.Defaults.ShadowMax = 90
+		}
 	}
 
 	// from the configuration file

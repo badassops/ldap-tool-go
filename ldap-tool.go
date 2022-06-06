@@ -105,14 +105,12 @@ func main() {
 		if _, fileExist, _ := funcs.I.IsExist(config.DefaultValues.LockFile, "file"); fileExist {
 			lockPid, _ := lockPtr.LockGetPid()
 			if progRunning, _ := funcs.I.IsRunning(progBase, lockPid); progRunning {
-				s.Stop()
 				funcs.P.PrintRed(fmt.Sprintf("\nError there is already a process %s running, aborting...\n", progBase))
 				os.Exit(0)
 			}
 		}
 		// save to create new or overwrite the lock file
 		if err := lockPtr.LockIt(LockPid); err != nil {
-			s.Stop()
 			funcs.P.PrintRed(fmt.Sprintf("\nError creating the lock file, error %s, aborting..\n", err.Error()))
 			os.Exit(0)
 		}
@@ -122,12 +120,12 @@ func main() {
 	conn := ldap.New(config)
 
 	// semi-hardcoded
-	if config.ServerValues.Admin != "cn=admin,"+config.ServerValues.BaseDN {
+	if config.ServerValues.Admin != "cn=admin," +config.ServerValues.BaseDN {
 		switch config.Cmd {
 		case "search":
 			limit.UserRecord(conn, funcs)
 		case "modify":
-			limit.ModifyUserPasswordSSHKey(conn, funcs)
+			limit.ModifyUserPassword(conn, funcs)
 		default:
 			funcs.P.PrintRed("\n\tThis command is only available for admin...\n\n")
 		}
