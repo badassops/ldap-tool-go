@@ -45,16 +45,19 @@ var (
 func joinGroup(conn *ldap.Connection, funcs *vars.Funcs) int {
 	var errored int = 0
 	groupList := conn.GetGroupType()
+	// need to save current value to prevent the value is add with previous
+	// value instead the orginal one
+	userID := vars.WorkRecord.ID
 	for _, groupName := range conn.Record.GroupAddList {
 		if funcs.I.IsInList(groupList["posixGroup"], groupName) {
 			vars.WorkRecord.MemberType = "posixGroup"
 			vars.WorkRecord.MemberType = "memberUid"
-			vars.WorkRecord.ID = vars.WorkRecord.ID
+			vars.WorkRecord.ID = userID
 		}
 		if funcs.I.IsInList(groupList["groupOfNames"], groupName) {
 			vars.WorkRecord.MemberType = "groupOfNames"
 			vars.WorkRecord.MemberType = "member"
-			vars.WorkRecord.ID = fmt.Sprintf("uid=%s,%s", vars.WorkRecord.ID, conn.Config.ServerValues.UserDN)
+			vars.WorkRecord.ID = fmt.Sprintf("uid=%s,%s", userID, conn.Config.ServerValues.UserDN)
 		}
 		vars.WorkRecord.DN = groupName
 		if !conn.AddToGroup() {
