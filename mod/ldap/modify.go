@@ -43,7 +43,7 @@ func (conn *Connection) AddToGroup() bool {
 	addReq := ldapv3.NewModifyRequest(vars.WorkRecord.DN)
 	addReq.Add(vars.WorkRecord.MemberType, []string{vars.WorkRecord.ID})
 	if err := conn.Conn.Modify(addReq); err != nil {
-		msg = fmt.Sprintf("Error removing the user %s from group %s, error %s",
+		msg = fmt.Sprintf("Error adding the user %s to group %s, error %s",
 			vars.WorkRecord.ID, vars.WorkRecord.DN, err.Error())
 		logs.Log(msg, "ERROR")
 		return false

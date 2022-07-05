@@ -19,6 +19,11 @@ import (
 	ldapv3 "gopkg.in/ldap.v2"
 )
 
+var (
+	noMatch bool = false
+	enterData string
+)
+
 func GetObjectRecord(c *ldap.Connection, firstTime bool, displayName string, funcs *vars.Funcs) bool {
 	var records *ldapv3.SearchResult
 	var recordCount int
@@ -26,9 +31,14 @@ func GetObjectRecord(c *ldap.Connection, firstTime bool, displayName string, fun
 	var wildCardSearchBase = vars.SearchResultData.WildCardSearchBase
 	var recordSearchbase = vars.SearchResultData.RecordSearchbase
 
+	if (noMatch == true ) {
+		funcs.P.PrintYellow(fmt.Sprintf("\n\tNo record matching wildcard %s was found, aborting...\n", enterData))
+		return false
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Printf("\tEnter %s name to be use: ", displayName)
-	enterData, _ := reader.ReadString('\n')
+	enterData, _ = reader.ReadString('\n')
 	enterData = strings.TrimSuffix(enterData, "\n")
 
 	if enterData == "" {
@@ -45,7 +55,11 @@ func GetObjectRecord(c *ldap.Connection, firstTime bool, displayName string, fun
 			wildCardSearchBase = strings.ReplaceAll(wildCardSearchBase, "VALUE", enterData)
 			c.SearchInfo.SearchBase = wildCardSearchBase
 			c.SearchInfo.SearchAttribute = []string{displayFieldID}
-			records, _ = c.Search()
+			records, recordCount = c.Search()
+			if recordCount == 0 {
+				noMatch = true
+				return GetObjectRecord(c, false, displayName, funcs)
+			}
 			for idx, _ := range records.Entries {
 				funcs.P.PrintBlue(fmt.Sprintf("\t%s: %s\n",
 					displayFieldID,

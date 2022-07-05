@@ -97,15 +97,8 @@ type SearchResult struct {
 	DisplayFieldID     string
 }
 
-const (
-    Numeric      = "1234567890"
-    Alpha        = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    Alphanumeric = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
-    SpecialChars = "@#$%^*(){}[]<>/\\-+!"
-)
-
 var (
-	MyVersion   = "0.2.1a"
+	MyVersion   = "0.2.1b"
 	now         = time.Now()
 	MyProgname  = path.Base(os.Args[0])
 	myAuthor    = "Luc Suryo"
